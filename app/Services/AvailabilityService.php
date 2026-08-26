@@ -35,8 +35,8 @@ class AvailabilityService
         })->values();
     }
 
-    public function hasConflict(CarbonImmutable $start, CarbonImmutable $end): bool
+    public function hasConflict(CarbonImmutable $start, CarbonImmutable $end, ?int $exceptAppointmentId = null): bool
     {
-        return Appointment::query()->whereNotIn('status', [AppointmentStatus::Cancelled->value, AppointmentStatus::Rescheduled->value, AppointmentStatus::NoShow->value])->where('starts_at', '<', $end)->where('ends_at', '>', $start)->exists();
+        return Appointment::query()->when($exceptAppointmentId, fn ($query) => $query->whereKeyNot($exceptAppointmentId))->whereNotIn('status', [AppointmentStatus::Cancelled->value, AppointmentStatus::Rescheduled->value, AppointmentStatus::NoShow->value])->where('starts_at', '<', $end->utc())->where('ends_at', '>', $start->utc())->exists();
     }
 }

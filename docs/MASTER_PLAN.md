@@ -30,7 +30,7 @@ Mobile applications will be first-class clients of the same versioned API. Busin
 |---|---|---|
 | 1 | Laravel 13 foundation, React/TS shell, design system, roles, core schema | Complete |
 | 2 | Verified public content, services, about, career, achievements, publications, education, contact | Started |
-| 3 | Availability, booking, conflict protection, operational calendar, notifications | Started |
+| 3 | Availability, booking, conflict protection, operational calendar, notifications | In progress |
 | 4 | Secure patient portal, profile, documents, appointments and messages | Planned |
 | 5 | Provider-neutral online consultation and waiting room | Planned |
 | 6 | Safe component-based visual CMS, drafts, preview, approval and publishing | Planned |
@@ -88,6 +88,29 @@ Acceptance criteria:
 
 Implementation note: this task establishes API and policy foundations. Email delivery remains configured through Laravel's mail abstraction; production SMTP/transactional-provider credentials are a deployment concern.
 
-## Next major task
+## Previous task handoff: staff operations
 
 Build the staff operations foundation: role-aware Admin and Moderator dashboards, patient lookup with minimum-necessary data, appointment request review, status transitions, rescheduling/cancellation rules, availability management and an operational calendar API.
+
+## Current task: Staff operations foundation
+
+Status: Complete — 17 tests with 77 assertions and the production frontend build passed on 26 August 2026.
+
+Acceptance criteria:
+
+- Admin, Moderator and Power Admin receive a role-aware operational dashboard; Patient accounts are denied.
+- Dashboard metrics include today's appointments, pending requests, upcoming online consultations and recent patients.
+- Staff can search patients by name, email or phone and receive only minimum operational fields.
+- Appointment lists support date, status, consultation method and patient filters.
+- Valid status transitions are enforced on the server and invalid transitions are rejected.
+- Confirm, cancel and reschedule actions are audited; rescheduling rechecks availability and conflicts.
+- Availability rules can be listed and managed by staff with validated times and no arbitrary schedule data.
+- A calendar API returns bounded date ranges suitable for day, week, month and agenda clients.
+- Moderator UI remains operationally simple and responsive; Admin/Power Admin receive the appropriate expanded context.
+- Automated tests cover role access, transition rules, conflict-safe rescheduling, patient-search minimization and audit creation.
+
+Implementation note: the current calendar API is complete for bounded event feeds; interactive day/week/month presentation, drag-and-drop and leave/holiday exceptions remain in the next calendar enhancement task.
+
+## Next major task
+
+Complete the patient-portal core: editable minimum-necessary profile, appointment detail and patient-safe cancellation requests, secure document metadata/private storage, practice messaging threads, in-app notifications and reminder-ready events. Add the corresponding staff inbox and patient-context views without expanding into a hospital EMR.

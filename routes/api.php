@@ -12,6 +12,11 @@ use App\Http\Controllers\AvailabilityController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\MyAppointmentController;
 use App\Http\Controllers\PublicContentController;
+use App\Http\Controllers\Staff\AppointmentController as StaffAppointmentController;
+use App\Http\Controllers\Staff\AvailabilityRuleController;
+use App\Http\Controllers\Staff\CalendarController;
+use App\Http\Controllers\Staff\DashboardController;
+use App\Http\Controllers\Staff\PatientSearchController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/public', PublicContentController::class);
@@ -35,5 +40,15 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/me/appointments', [MyAppointmentController::class, 'index']);
         Route::get('/me/appointments/{appointment}', [MyAppointmentController::class, 'show']);
     });
-    Route::get('/staff/ping', fn () => response()->json(['message' => 'Staff access confirmed.']))->middleware('role:admin,moderator,power_admin');
+    Route::prefix('staff')->middleware('role:admin,moderator,power_admin')->group(function () {
+        Route::get('/dashboard', DashboardController::class);
+        Route::get('/patients/search', PatientSearchController::class)->middleware('throttle:60,1');
+        Route::get('/appointments', [StaffAppointmentController::class, 'index']);
+        Route::patch('/appointments/{appointment}/status', [StaffAppointmentController::class, 'updateStatus']);
+        Route::patch('/appointments/{appointment}/reschedule', [StaffAppointmentController::class, 'reschedule']);
+        Route::get('/calendar', CalendarController::class);
+        Route::get('/availability-rules', [AvailabilityRuleController::class, 'index']);
+        Route::post('/availability-rules', [AvailabilityRuleController::class, 'store']);
+        Route::put('/availability-rules/{availabilityRule}', [AvailabilityRuleController::class, 'update']);
+    });
 });

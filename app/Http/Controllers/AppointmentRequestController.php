@@ -33,7 +33,7 @@ class AppointmentRequestController extends Controller
                 throw ValidationException::withMessages(['starts_at' => 'This appointment slot is no longer available. Please select another time.']);
             }
             $patient = User::firstOrCreate(['email' => mb_strtolower($data['email'])], ['name' => $data['name'], 'phone' => $data['phone'], 'role' => UserRole::Patient, 'password' => Hash::make(Str::password(32))]);
-            $appointment = Appointment::create(['public_id' => Str::uuid(), 'patient_id' => $patient->id, 'service_id' => $data['service_id'], 'starts_at' => $start, 'ends_at' => $end, 'timezone' => 'Africa/Lagos', 'status' => 'requested', 'consultation_method' => $data['consultation_method'], 'reason' => $data['reason'], 'location' => $data['consultation_method'] === 'in_person' ? 'Practice location shared after confirmation' : null]);
+            $appointment = Appointment::create(['public_id' => Str::uuid(), 'patient_id' => $patient->id, 'service_id' => $data['service_id'], 'starts_at' => $start->utc(), 'ends_at' => $end->utc(), 'timezone' => 'Africa/Lagos', 'status' => 'requested', 'consultation_method' => $data['consultation_method'], 'reason' => $data['reason'], 'location' => $data['consultation_method'] === 'in_person' ? 'Practice location shared after confirmation' : null]);
             AuditLog::create(['actor_id' => $patient->id, 'action' => 'appointment.requested', 'subject_type' => Appointment::class, 'subject_id' => $appointment->id, 'metadata' => ['method' => $data['consultation_method']]]);
 
             return $appointment;

@@ -90,9 +90,9 @@ class AuthenticationTest extends TestCase
         $staff = User::factory()->create(['role' => UserRole::Moderator]);
 
         Sanctum::actingAs($patient);
-        $this->getJson('/api/staff/ping')->assertForbidden();
+        $this->getJson('/api/staff/dashboard')->assertForbidden();
         Sanctum::actingAs($staff);
         $this->getJson('/api/me')->assertOk();
-        $this->getJson('/api/staff/ping')->assertOk();
+        $this->getJson('/api/staff/dashboard')->assertOk();
     }
 }

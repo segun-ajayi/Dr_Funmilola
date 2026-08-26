@@ -3,6 +3,8 @@ import { Routes, Route, Link, NavLink } from 'react-router-dom';
 import { ArrowRight, CalendarDays, HeartPulse, Menu, Microscope, ShieldCheck, Stethoscope, Video, BookOpen, MapPin } from 'lucide-react';
 import type { PublicData } from './types';
 import BookingPage from './pages/BookingPage';
+import { ForgotPasswordPage, RegisterPage, ResetPasswordPage, SignInPage } from './pages/AuthPage';
+import PortalPage from './pages/PortalPage';
 
 const getPublic = async (): Promise<PublicData> => { const r = await fetch('/api/public'); if (!r.ok) throw new Error('Unable to load practice information'); return r.json(); };
 
@@ -11,7 +13,7 @@ function Layout({ children }: { children: React.ReactNode }) {
     <Link className="brand" to="/"><span className="brand-mark" aria-hidden="true"><HeartPulse size={22}/></span><span><b>Dr. Funmilola Wuraola</b><small>Breast Oncology Practice</small></span></Link>
     <button className="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#nav" aria-label="Open navigation"><Menu/></button>
     <div id="nav" className="collapse navbar-collapse justify-content-end"><div className="navbar-nav align-items-lg-center gap-lg-2">
-      <NavLink className="nav-link" to="/">Home</NavLink><NavLink className="nav-link" to="/about">About</NavLink><NavLink className="nav-link" to="/services">Services</NavLink><NavLink className="nav-link" to="/research">Research</NavLink><Link className="btn btn-primary ms-lg-3" to="/book">Book appointment</Link>
+      <NavLink className="nav-link" to="/">Home</NavLink><NavLink className="nav-link" to="/about">About</NavLink><NavLink className="nav-link" to="/services">Services</NavLink><NavLink className="nav-link" to="/research">Research</NavLink><NavLink className="nav-link" to="/portal">Patient portal</NavLink><Link className="btn btn-primary ms-lg-3" to="/book">Book appointment</Link>
     </div></div></div></nav></header><main>{children}</main><Footer/></>;
 }
 
@@ -32,4 +34,4 @@ function Research({ data }: { data?: PublicData }) { return <PageHero eyebrow="R
 function PageHero({eyebrow,title,intro,children}:{eyebrow:string;title:string;intro:string;children:React.ReactNode}) { return <><section className="page-hero"><div className="container"><span className="eyebrow">{eyebrow}</span><h1>{title}</h1><p>{intro}</p></div></section><section className="section"><div className="container narrow">{children}</div></section></>; }
 function ContentColumns(){return <div className="row g-5 mt-2"><div className="col-md-6"><h2>Professional profile</h2><p>Lecturer and Consultant General Surgeon. Further biography, education, specialist training and current appointments are pending verification before public release.</p></div><div className="col-md-6"><h2>Areas of inquiry</h2><p>Available seed material indicates work across breast cancer care, breast surgery, screening, genetics, survivorship and health systems. Each claim remains subject to source review.</p></div></div>}
 
-export default function App(){ const {data} = useQuery({queryKey:['public'],queryFn:getPublic}); return <Layout><Routes><Route path="/" element={<Home data={data}/>}/><Route path="/about" element={<About/>}/><Route path="/services" element={<Services data={data}/>}/><Route path="/research" element={<Research data={data}/>}/><Route path="/book" element={<BookingPage services={data?.services ?? []}/>}/><Route path="*" element={<Home data={data}/>}/></Routes></Layout> }
+export default function App(){ const {data} = useQuery({queryKey:['public'],queryFn:getPublic}); return <Routes><Route path="/sign-in" element={<SignInPage/>}/><Route path="/register" element={<RegisterPage/>}/><Route path="/forgot-password" element={<ForgotPasswordPage/>}/><Route path="/reset-password" element={<ResetPasswordPage/>}/><Route path="*" element={<Layout><Routes><Route path="/" element={<Home data={data}/>}/><Route path="/about" element={<About/>}/><Route path="/services" element={<Services data={data}/>}/><Route path="/research" element={<Research data={data}/>}/><Route path="/book" element={<BookingPage services={data?.services ?? []}/>}/><Route path="/portal" element={<PortalPage/>}/><Route path="*" element={<Home data={data}/>}/></Routes></Layout>}/></Routes> }

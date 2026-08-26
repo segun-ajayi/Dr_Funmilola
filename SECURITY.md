@@ -9,3 +9,5 @@
 - Log security-sensitive administrative actions without storing secrets or unnecessary clinical text.
 - Require HTTPS, secure cookies, rate limiting, environment secrets and encrypted production backups.
 - Before clinical launch, complete a privacy impact assessment against applicable Nigerian data-protection and medical-record obligations.
+- Browser authentication uses CSRF-protected same-origin sessions; native applications use scoped, expiring, revocable tokens stored in platform-secure storage.
+- Unverified accounts cannot read appointment information, including accounts created initially by a guest booking request.

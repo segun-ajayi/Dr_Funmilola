@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
             ['Power Admin', 'power.admin@example.test', 'power_admin'], ['Admin', 'admin@example.test', 'admin'],
             ['Moderator', 'moderator@example.test', 'moderator'], ['Demo Patient', 'patient@example.test', 'patient'],
         ] as [$name, $email, $role]) {
-            User::updateOrCreate(['email' => $email], ['name' => $name, 'role' => $role, 'password' => 'ChangeMe!2026']);
+            User::updateOrCreate(['email' => $email], ['name' => $name, 'role' => $role, 'password' => 'ChangeMe!2026', 'account_claimed_at' => now()]);
         }
 
         $services = [

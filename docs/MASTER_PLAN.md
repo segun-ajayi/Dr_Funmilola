@@ -65,6 +65,29 @@ Acceptance criteria:
 - Public content follows draft → preview → approval → publish.
 - Research records are seed material and cannot become public without explicit verification.
 
-## Next major task
+## Previous task handoff
 
 Complete authenticated patient and staff access: secure login/registration, email verification, password reset, session revocation, policy coverage, patient isolation tests and mobile-ready token strategy.
+
+## Current task: Identity and access vertical slice
+
+Status: Complete — automated identity and isolation tests plus a production frontend build passed on 26 August 2026.
+
+Acceptance criteria:
+
+- Patients can register, sign in, sign out, request a password-reset link and set a new password.
+- Authenticated users can fetch their own profile and appointments only.
+- Disabled accounts cannot sign in or use protected APIs.
+- Exactly the four approved roles are enforced, and public registration can create only patients.
+- Staff-only routes reject patients; patient records are isolated from other patients.
+- Browser clients use secure same-origin sessions with CSRF protection.
+- Android and iOS clients can later use scoped, revocable Sanctum tokens without duplicating identity logic.
+- Sign-in, sign-out and password-reset events create privacy-conscious audit records.
+- Authentication endpoints are rate-limited and do not disclose whether an email address is registered.
+- Automated identity, authorization and patient-isolation tests pass.
+
+Implementation note: this task establishes API and policy foundations. Email delivery remains configured through Laravel's mail abstraction; production SMTP/transactional-provider credentials are a deployment concern.
+
+## Next major task
+
+Build the staff operations foundation: role-aware Admin and Moderator dashboards, patient lookup with minimum-necessary data, appointment request review, status transitions, rescheduling/cancellation rules, availability management and an operational calendar API.

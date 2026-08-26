@@ -31,7 +31,7 @@ Mobile applications will be first-class clients of the same versioned API. Busin
 | 1 | Laravel 13 foundation, React/TS shell, design system, roles, core schema | Complete |
 | 2 | Verified public content, services, about, career, achievements, publications, education, contact | Started |
 | 3 | Availability, booking, conflict protection, operational calendar, notifications | In progress |
-| 4 | Secure patient portal, profile, documents, appointments and messages | Planned |
+| 4 | Secure patient portal, profile, documents, appointments and messages | Complete |
 | 5 | Provider-neutral online consultation and waiting room | Planned |
 | 6 | Safe component-based visual CMS, drafts, preview, approval and publishing | Planned |
 | 7 | Academic portfolio and Research & Verification Queue | Started |
@@ -114,3 +114,25 @@ Implementation note: the current calendar API is complete for bounded event feed
 ## Next major task
 
 Complete the patient-portal core: editable minimum-necessary profile, appointment detail and patient-safe cancellation requests, secure document metadata/private storage, practice messaging threads, in-app notifications and reminder-ready events. Add the corresponding staff inbox and patient-context views without expanding into a hospital EMR.
+
+## Current task: Patient portal core
+
+Status: Complete — 22 automated tests with 98 assertions, production frontend build and 390×844 responsive browser check passed on 26 August 2026.
+
+Acceptance criteria:
+
+- Verified patients can view and update only their minimum-necessary contact and preference profile; sensitive changes are audited.
+- Patients can open appointment details and request cancellation without directly forcing a clinical schedule status change.
+- Patient documents are stored on a private disk, expose safe metadata, validate type/size, and download only through authorized routes.
+- Patients can create practice message threads and reply within their own threads; staff can triage and reply through a bounded inbox.
+- Patient-context staff views combine minimum operational profile, appointments, documents and message summaries without creating hospital-EMR features.
+- In-app notifications cover cancellation requests and new messages, support read state, and use Laravel events suitable for later queued email/push reminders.
+- All new endpoints enforce patient isolation, staff role rules, verified email and active-account checks.
+- API responses remain suitable for the future Android and iOS applications; business rules remain server-side.
+- Automated tests, the production frontend build and responsive browser checks pass before commit and push.
+
+Privacy boundary: this milestone does not add diagnoses, clinical notes, prescriptions, laboratory results or a longitudinal medical record. Uploaded documents are patient-supplied administrative/care-coordination files only.
+
+## Next major task
+
+Complete the advanced scheduling and notification layer: availability exceptions and leave, operational day/week/month calendar views, reminder scheduling with queued delivery channels, notification preferences, appointment change notices and delivery auditability. Preserve provider-neutral consultation links and the shared mobile API boundary.

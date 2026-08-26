@@ -136,3 +136,15 @@ Privacy boundary: this milestone does not add diagnoses, clinical notes, prescri
 ## Next major task
 
 Complete the advanced scheduling and notification layer: availability exceptions and leave, operational day/week/month calendar views, reminder scheduling with queued delivery channels, notification preferences, appointment change notices and delivery auditability. Preserve provider-neutral consultation links and the shared mobile API boundary.
+
+## Supporting task: Verified demonstration accounts
+
+Status: Complete — local database seeded; 23 automated tests with 110 assertions and the production frontend build passed on 26 August 2026.
+
+Acceptance criteria:
+
+- Local seeding creates exactly one documented demonstration account for each primary role.
+- All four demonstration accounts are active, claimed and email-verified so role-specific screens can be reviewed immediately.
+- Seeding is repeatable and does not create duplicate accounts.
+- Addresses use the reserved `.test` domain and documentation prohibits production use of the shared demonstration password.
+- An automated test verifies role, active state and verification state for every account.

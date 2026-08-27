@@ -1,0 +1,70 @@
+services:
+  app:
+    image: ${APP_IMAGE:?Set APP_IMAGE to the immutable application image tag}
+    env_file: .env.production
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    volumes:
+      - private_storage:/var/www/html/storage/app/private
+    networks: [internal]
+
+  web:
+    image: ${WEB_IMAGE:?Set WEB_IMAGE to the immutable Nginx asset image tag}
+    restart: unless-stopped
+    depends_on:
+      app: { condition: service_healthy }
+    ports: ["127.0.0.1:8080:8080"]
+    networks: [internal]
+
+  worker:
+    image: ${APP_IMAGE:?Set APP_IMAGE to the immutable application image tag}
+    env_file: .env.production
+    restart: unless-stopped
+    command: ["php","artisan","queue:work","redis","--sleep=2","--tries=3","--timeout=90","--max-time=3600"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    volumes:
+      - private_storage:/var/www/html/storage/app/private
+    networks: [internal]
+
+  scheduler:
+    image: ${APP_IMAGE:?Set APP_IMAGE to the immutable application image tag}
+    env_file: .env.production
+    restart: unless-stopped
+    command: ["php","artisan","schedule:work"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    volumes:
+      - private_storage:/var/www/html/storage/app/private
+    networks: [internal]
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets: [postgres_password]
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL","pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"], interval: 10s, timeout: 5s, retries: 10 }
+    networks: [internal]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server","--appendonly","yes","--requirepass","${REDIS_PASSWORD:?Set REDIS_PASSWORD}"]
+    volumes: [redis_data:/data]
+    healthcheck: { test: ["CMD-SHELL","redis-cli -a $$REDIS_PASSWORD ping | grep PONG"], interval: 10s, timeout: 5s, retries: 10 }
+    environment: { REDIS_PASSWORD: "${REDIS_PASSWORD:?Set REDIS_PASSWORD}" }
+    networks: [internal]
+
+networks: { internal: {} }
+volumes: { postgres_data: {}, redis_data: {}, private_storage: {} }
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt

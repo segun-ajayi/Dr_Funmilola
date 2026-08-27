@@ -37,7 +37,7 @@ Mobile applications will be first-class clients of the same versioned API. Busin
 | 7 | Academic portfolio and Research & Verification Queue | Complete |
 | 8 | Security hardening, audit coverage, rate limits, private storage and backup runbooks | Complete |
 | 9 | Full unit, feature, frontend, end-to-end and authorization testing | Complete |
-| 10 | PostgreSQL/Redis production deployment, queues, scheduler, monitoring and backups | Planned |
+| 10 | PostgreSQL/Redis production deployment, queues, scheduler, monitoring and backups | Complete — deployment artifacts ready |
 | 11 | Shared mobile API contract and mobile authentication hardening | Planned |
 | 12 | Android and iOS patient apps, accessibility QA and store delivery | Planned |
 
@@ -279,3 +279,23 @@ Implementation note: authenticated visual journeys remain a controlled staging g
 ## Next major task
 
 Complete production delivery foundations for PostgreSQL 17+, Redis, queue/scheduler workers, hardened environment configuration, container or server deployment, migrations, TLS/readiness, monitoring, log rotation, encrypted backups and rollback. Produce reproducible deployment artifacts without embedding secrets or claiming a live production launch without infrastructure credentials.
+
+## Current task: Production delivery foundations
+
+Status: Complete — Docker Compose configuration validation, 51 backend tests with 255 assertions, 3 frontend tests and production asset build passed on 27 August 2026.
+
+Acceptance criteria:
+
+- Reproducible production images build PHP-FPM application assets with required PostgreSQL, Redis, intl, zip and OPcache support.
+- Deployment manifest separates Nginx, PHP application, queue worker, scheduler, PostgreSQL 17 and Redis responsibilities with health checks and persistent volumes.
+- Production environment template uses placeholders only, disables debug, requires secure cookies/TLS-aware configuration and selects PostgreSQL/Redis/database-independent drivers correctly.
+- Deploy procedure performs backup, maintenance mode, migrations, cache warmup, worker restart, readiness validation and safe return to traffic in an explicit order.
+- Rollback distinguishes application rollback from schema/data restoration and never recommends destructive migration reversal without backup review.
+- Monitoring covers readiness, HTTP errors, queue failures/age, scheduler heartbeat, database/storage capacity, authentication anomalies and backup freshness.
+- Container and configuration syntax are validated where local tooling exists; lack of infrastructure credentials is recorded as a deployment boundary, not misreported as a live launch.
+
+Deployment boundary: the repository now contains validated production artifacts and runbooks, but no live infrastructure, domain, TLS certificate, secret manager, mail provider or approved video provider was supplied. Consequently no production environment has been launched or claimed.
+
+## Next major task
+
+Freeze and harden the versioned mobile API contract: mobile-specific authentication/device lifecycle, stable JSON envelopes/resources, capability discovery, pagination/error conventions, offline-safe mutation identifiers, device notification registration boundaries and generated/shared TypeScript contract types. Document the native architecture decision before scaffolding Android and iOS.

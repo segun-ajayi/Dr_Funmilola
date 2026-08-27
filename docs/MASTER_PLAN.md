@@ -32,7 +32,7 @@ Mobile applications will be first-class clients of the same versioned API. Busin
 | 2 | Verified public content, services, about, career, achievements, publications, education, contact | Started |
 | 3 | Availability, booking, conflict protection, operational calendar, notifications | Complete |
 | 4 | Secure patient portal, profile, documents, appointments and messages | Complete |
-| 5 | Provider-neutral online consultation and waiting room | Planned |
+| 5 | Provider-neutral online consultation and waiting room | Complete |
 | 6 | Safe component-based visual CMS, drafts, preview, approval and publishing | Planned |
 | 7 | Academic portfolio and Research & Verification Queue | Started |
 | 8 | Security hardening, audit coverage, rate limits, private storage and backup runbooks | Planned |
@@ -170,3 +170,25 @@ Implementation note: email reminders are queued through Laravel's mail channel a
 ## Next major task
 
 Build the provider-neutral online consultation foundation: secure staff-managed meeting configuration, patient waiting room, time-bounded join authorization, consultation consent and attendance states, without embedding clinical notes or committing the product to a single video vendor.
+
+## Current task: Online consultation foundation
+
+Status: Complete — 33 automated tests with 151 assertions, production frontend build and guarded-route browser review passed on 27 August 2026.
+
+Acceptance criteria:
+
+- Only confirmed online appointments can receive one consultation session, created or managed by authorized staff.
+- Consultation provider behavior is defined behind a server-side interface; stored session data does not hard-code a commercial vendor.
+- Patients can view only their own consultation and enter a waiting room during a bounded time window around the appointment.
+- Staff can admit a waiting patient, start and end the consultation through validated server-side state transitions.
+- Patient consent is explicit, timestamped, versioned and required before join authorization is issued.
+- Join authorization is short-lived, signed and rechecks active account, appointment ownership/staff role, appointment method and consultation state.
+- Attendance events record joined/left timestamps and participant role without storing audio, video or clinical notes.
+- The room UI provides accessible waiting, device-readiness and leave controls while clearly identifying that live media depends on the configured provider.
+- Automated authorization, isolation, consent, expiry and transition tests plus production build and responsive browser checks pass.
+
+Implementation note: the default provider intentionally supplies no live media. Selecting and configuring a real video provider requires a separate privacy, hosting-region and data-processing review; all authorization and workflow code is ready behind `VideoProviderInterface`.
+
+## Next major task
+
+Build the safe component-based visual CMS: structured pages and sections, drafts, preview tokens, approval/publishing, version history and rollback, sanitized rich text, media references, navigation and theme tokens. Restrict structural and publishing controls to Power Admin and never permit executable code, unrestricted HTML or SQL.

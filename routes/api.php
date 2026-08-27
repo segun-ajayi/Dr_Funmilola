@@ -16,6 +16,7 @@ use App\Http\Controllers\MessageThreadController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NotificationPreferenceController;
 use App\Http\Controllers\CancellationRequestController;
+use App\Http\Controllers\ConsultationController;
 use App\Http\Controllers\MyAppointmentController;
 use App\Http\Controllers\PublicContentController;
 use App\Http\Controllers\Staff\AppointmentController as StaffAppointmentController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\PatientSearchController;
 use App\Http\Controllers\Staff\InboxController;
 use App\Http\Controllers\Staff\AvailabilityExceptionController;
+use App\Http\Controllers\Staff\ConsultationController as StaffConsultationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/public', PublicContentController::class);
@@ -50,6 +52,10 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/documents/{document}/download', [PatientDocumentController::class, 'download']);
         Route::get('/me/notifications', [NotificationController::class, 'index']);
         Route::patch('/me/notifications/{id}/read', [NotificationController::class, 'read']);
+        Route::get('/consultations/{consultation}', [ConsultationController::class, 'show']);
+        Route::post('/consultations/{consultation}/join-authorization', [ConsultationController::class, 'authorizeJoin'])->middleware('throttle:20,1');
+        Route::get('/consultations/{consultation}/room', [ConsultationController::class, 'room'])->middleware(['signed','throttle:20,1'])->name('consultations.room');
+        Route::post('/consultations/{consultation}/leave', [ConsultationController::class, 'leave']);
         Route::middleware('role:patient')->group(function () {
             Route::post('/me/appointments/{appointment}/cancellation-request', [CancellationRequestController::class, 'store']);
             Route::get('/me/profile', [PatientProfileController::class, 'show']);
@@ -61,6 +67,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
             Route::post('/me/message-threads/{thread}/messages', [MessageThreadController::class, 'reply'])->middleware('throttle:30,1');
             Route::get('/me/notification-preferences', [NotificationPreferenceController::class, 'show']);
             Route::put('/me/notification-preferences', [NotificationPreferenceController::class, 'update']);
+            Route::get('/me/consultations', [ConsultationController::class, 'index']);
+            Route::post('/consultations/{consultation}/consent', [ConsultationController::class, 'consent']);
+            Route::post('/consultations/{consultation}/waiting-room', [ConsultationController::class, 'wait']);
         });
     });
     Route::prefix('staff')->middleware('role:admin,moderator,power_admin')->group(function () {
@@ -80,5 +89,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('/message-threads/{thread}/messages', [InboxController::class, 'reply']);
         Route::patch('/cancellation-requests/{cancellation}', [InboxController::class, 'reviewCancellation']);
         Route::get('/patients/{patient}', [InboxController::class, 'patient']);
+        Route::get('/consultations', [StaffConsultationController::class, 'index']);
+        Route::post('/appointments/{appointment}/consultation', [StaffConsultationController::class, 'store']);
+        Route::patch('/consultations/{consultation}/status', [StaffConsultationController::class, 'transition']);
     });
 });

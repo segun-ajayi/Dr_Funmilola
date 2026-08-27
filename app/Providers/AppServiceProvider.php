@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Contracts\VideoProviderInterface;
+use App\Services\Video\UnconfiguredVideoProvider;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 
@@ -12,7 +14,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(VideoProviderInterface::class,UnconfiguredVideoProvider::class);
     }
 
     /**

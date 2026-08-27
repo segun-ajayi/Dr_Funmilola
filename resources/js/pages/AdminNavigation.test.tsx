@@ -1,0 +1,12 @@
+import { QueryClient,QueryClientProvider } from '@tanstack/react-query';
+import { fireEvent,render,screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { beforeEach,expect,test,vi } from 'vitest';
+import { Layout } from '../App';import StaffDashboardPage from './StaffDashboardPage';import { api } from '../api';
+vi.mock('../api',()=>({api:{get:vi.fn(),post:vi.fn(),patch:vi.fn()}}));
+const get=vi.mocked(api.get);
+function view(node:React.ReactNode,path='/staff'){return render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><MemoryRouter initialEntries={[path]}>{node}</MemoryRouter></QueryClientProvider>)}
+beforeEach(()=>get.mockReset());
+test('Power Admin dashboard exposes working operational and publishing links',async()=>{get.mockImplementation(async(url:string)=>url==='/staff/dashboard'?{data:{role:'power_admin',metrics:{today:0,pending:0,online_today:0,unclaimed_patients:0},pending_requests:[],today_appointments:[]}} as any:{data:{data:[]}} as any);view(<StaffDashboardPage/>);expect(await screen.findByRole('link',{name:/Website pages/})).toHaveAttribute('href','/staff/cms');expect(screen.getByRole('link',{name:/Publications/})).toHaveAttribute('href','/staff/research-review');expect(screen.getByRole('link',{name:/Education/})).toHaveAttribute('href','/staff/education');expect(screen.getByRole('link',{name:/Audit log/})).toHaveAttribute('href','/staff/audit');expect(screen.getByRole('link',{name:/Appointments/})).toHaveAttribute('href','/staff/calendar');});
+test('ordinary staff do not receive Power Admin publishing links',async()=>{get.mockResolvedValue({data:{role:'admin',metrics:{today:0,pending:0,online_today:0,unclaimed_patients:0},pending_requests:[],today_appointments:[]}} as any);view(<StaffDashboardPage/>);await screen.findByRole('heading',{name:'Practice today'});expect(screen.queryByRole('link',{name:/Website pages/})).not.toBeInTheDocument();expect(screen.getByRole('link',{name:/Inbox/})).toHaveAttribute('href','/staff/inbox');});
+test('public site provides an authenticated Power Admin edit toggle',async()=>{get.mockResolvedValue({data:{user:{role:'power_admin'}}} as any);view(<Layout><h1>Public page</h1></Layout>,'/research');const toggle=await screen.findByRole('button',{name:'Edit site'});fireEvent.click(toggle);expect(screen.getByRole('navigation',{name:'Power Admin editing tools'})).toBeInTheDocument();expect(screen.getByRole('link',{name:/Edit this area/})).toHaveAttribute('href','/staff/research-review');});

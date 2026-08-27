@@ -345,3 +345,21 @@ Release boundary: Android and iOS JavaScript/native configuration exports are va
 ## Next major task
 
 Run the controlled external release: provision production infrastructure and protected EAS environments, complete legal/privacy and clinical-copy approval, perform physical-device accessibility and security acceptance, create store records/signing credentials, produce signed internal builds, resolve review feedback and submit approved Android and iOS releases.
+
+## Current task: Admin navigation and Power Admin editing repair
+
+Status: Complete — strict TypeScript checking, 6 frontend tests and production asset build passed on 27 August 2026.
+
+Acceptance criteria:
+
+- Every staff sidebar item is a real route link with a clear active state; no placeholder anchors remain.
+- Shared staff navigation exposes dashboard, calendar, inbox and consultations to authorised staff.
+- Power Admin additionally receives website pages, research/publication review, education management and audit-log navigation.
+- The public website shows an authenticated Power Admin edit-mode control that opens contextual editing and publishing tools without exposing them to other roles.
+- Existing staff/CMS pages use consistent navigation and provide a reliable route back to the dashboard.
+- Missing management screens required by the navigation use the existing protected APIs and show loading, empty, success and failure states.
+- Role visibility and route behavior are covered by automated frontend/backend checks plus authenticated browser verification.
+
+Implementation note: the original Today, Appointments and Patients entries were inert placeholder anchors. They are now working destinations, and Power Admin receives direct navigation to website pages, publication review, education management and the sanitised audit log. A role-aware Edit site control appears on public pages only for an authenticated Power Admin and opens contextual publishing shortcuts.
+
+Verification boundary: role-aware rendering and destinations are covered by deterministic component tests. The refreshed authenticated browser session remains the final human visual check because entering privileged credentials through browser automation requires explicit action-time confirmation.

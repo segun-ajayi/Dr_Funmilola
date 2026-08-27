@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { Routes, Route, Link, NavLink } from 'react-router-dom';
-import { ArrowRight, CalendarDays, HeartPulse, Menu, Microscope, ShieldCheck, Stethoscope, Video, BookOpen, MapPin } from 'lucide-react';
+import { useState } from 'react';
+import { Routes, Route, Link, NavLink, useLocation } from 'react-router-dom';
+import { ArrowRight, CalendarDays, HeartPulse, Menu, Microscope, ShieldCheck, Stethoscope, Video, BookOpen, MapPin, Pencil, X } from 'lucide-react';
 import type { PublicData } from './types';
 import BookingPage from './pages/BookingPage';
 import { ForgotPasswordPage, RegisterPage, ResetPasswordPage, SignInPage } from './pages/AuthPage';
@@ -16,16 +17,23 @@ import CmsEditorPage from './pages/CmsEditorPage';
 import VerificationQueuePage from './pages/VerificationQueuePage';
 import AcademicPortfolioPage from './pages/AcademicPortfolioPage';
 import EducationPage from './pages/EducationPage';
+import EducationManagerPage from './pages/EducationManagerPage';
+import AuditLogPage from './pages/AuditLogPage';
+import { api } from './api';
 
 const getPublic = async (): Promise<PublicData> => { const r = await fetch('/api/public'); if (!r.ok) throw new Error('Unable to load practice information'); return r.json(); };
 
-function Layout({ children }: { children: React.ReactNode }) {
+export function Layout({ children }: { children: React.ReactNode }) {
+  const location=useLocation(),[editing,setEditing]=useState(false);
+  const me=useQuery({queryKey:['me'],queryFn:async()=>(await api.get('/me')).data.user,retry:false});
+  const power=me.data?.role==='power_admin';
+  const contextual=location.pathname.startsWith('/research')||location.pathname.startsWith('/academic')?'/staff/research-review':location.pathname.startsWith('/education')?'/staff/education':'/staff/cms';
   return <><header className="site-header"><nav className="navbar navbar-expand-lg"><div className="container">
     <Link className="brand" to="/"><span className="brand-mark" aria-hidden="true"><HeartPulse size={22}/></span><span><b>Dr. Funmilola Wuraola</b><small>Breast Oncology Practice</small></span></Link>
     <button className="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#nav" aria-label="Open navigation"><Menu/></button>
     <div id="nav" className="collapse navbar-collapse justify-content-end"><div className="navbar-nav align-items-lg-center gap-lg-2">
       <NavLink className="nav-link" to="/">Home</NavLink><NavLink className="nav-link" to="/about">About</NavLink><NavLink className="nav-link" to="/services">Services</NavLink><NavLink className="nav-link" to="/research">Research</NavLink><NavLink className="nav-link" to="/portal">Patient portal</NavLink><Link className="btn btn-primary ms-lg-3" to="/book">Book appointment</Link>
-    </div></div></div></nav></header><main>{children}</main><Footer/></>;
+    </div></div></div></nav></header>{power&&<div className={`power-edit-tools ${editing?'open':''}`}><button aria-expanded={editing} onClick={()=>setEditing(!editing)}>{editing?<X/>:<Pencil/>}{editing?'Close editing':'Edit site'}</button>{editing&&<nav aria-label="Power Admin editing tools"><Link to={contextual}><Pencil/> Edit this area</Link><Link to="/staff/cms">Website pages</Link><Link to="/staff/research-review">Publications</Link><Link to="/staff/education">Education</Link><Link to="/staff">Admin dashboard</Link></nav>}</div>}<main>{children}</main><Footer/></>;
 }
 
 function Footer() { return <footer><div className="container"><div className="row g-4"><div className="col-lg-5"><div className="footer-brand">Dr. Funmilola Wuraola</div><p>Specialist, evidence-informed breast care delivered with clarity, dignity and compassion.</p><p className="medical-note">Website information is educational and does not replace an individual medical consultation.</p></div><div className="col-6 col-lg-3"><h3>Practice</h3><Link to="/services">Services</Link><Link to="/book">Appointments</Link><Link to="/research">Research</Link></div><div className="col-6 col-lg-4"><h3>Location</h3><p><MapPin size={16}/> Ile-Ife, Osun State, Nigeria</p><p>Exact clinic details are shared with confirmed patients.</p></div></div><div className="footer-bottom">© {new Date().getFullYear()} Dr. Funmilola Olanike Wuraola · Privacy · Terms · Accessibility</div></div></footer>; }
@@ -45,4 +53,11 @@ function Research({ data }: { data?: PublicData }) { return <PageHero eyebrow="R
 function PageHero({eyebrow,title,intro,children}:{eyebrow:string;title:string;intro:string;children:React.ReactNode}) { return <><section className="page-hero"><div className="container"><span className="eyebrow">{eyebrow}</span><h1>{title}</h1><p>{intro}</p></div></section><section className="section"><div className="container narrow">{children}</div></section></>; }
 function ContentColumns(){return <div className="row g-5 mt-2"><div className="col-md-6"><h2>Professional profile</h2><p>Lecturer and Consultant General Surgeon. Further biography, education, specialist training and current appointments are pending verification before public release.</p></div><div className="col-md-6"><h2>Areas of inquiry</h2><p>Available seed material indicates work across breast cancer care, breast surgery, screening, genetics, survivorship and health systems. Each claim remains subject to source review.</p></div></div>}
 
-export default function App(){ const {data} = useQuery({queryKey:['public'],queryFn:getPublic}); return <Routes><Route path="/sign-in" element={<SignInPage/>}/><Route path="/register" element={<RegisterPage/>}/><Route path="/forgot-password" element={<ForgotPasswordPage/>}/><Route path="/reset-password" element={<ResetPasswordPage/>}/><Route path="/staff" element={<StaffDashboardPage/>}/><Route path="/staff/inbox" element={<StaffInboxPage/>}/><Route path="/staff/calendar" element={<StaffCalendarPage/>}/><Route path="/staff/consultations" element={<StaffConsultationsPage/>}/><Route path="/staff/cms" element={<CmsEditorPage/>}/><Route path="/staff/research-review" element={<VerificationQueuePage/>}/><Route path="/preview/:token" element={<CmsPublicPage preview/>}/><Route path="*" element={<Layout><Routes><Route path="/" element={<Home data={data}/>}/><Route path="/about" element={<About/>}/><Route path="/services" element={<Services data={data}/>}/><Route path="/research" element={<Research data={data}/>}/><Route path="/academic" element={<AcademicPortfolioPage/>}/><Route path="/education" element={<EducationPage/>}/><Route path="/book" element={<BookingPage services={data?.services ?? []}/>}/><Route path="/portal" element={<PortalPage/>}/><Route path="/portal/reminders" element={<ReminderPreferencesPage/>}/><Route path="/portal/consultations" element={<ConsultationsPage/>}/><Route path="/p/:slug" element={<CmsPublicPage/>}/><Route path="*" element={<Home data={data}/>}/></Routes></Layout>}/></Routes> }
+export default function App(){
+ const {data}=useQuery({queryKey:['public'],queryFn:getPublic});
+ return <Routes>
+  <Route path="/sign-in" element={<SignInPage/>}/><Route path="/register" element={<RegisterPage/>}/><Route path="/forgot-password" element={<ForgotPasswordPage/>}/><Route path="/reset-password" element={<ResetPasswordPage/>}/>
+  <Route path="/staff" element={<StaffDashboardPage/>}/><Route path="/staff/inbox" element={<StaffInboxPage/>}/><Route path="/staff/calendar" element={<StaffCalendarPage/>}/><Route path="/staff/consultations" element={<StaffConsultationsPage/>}/><Route path="/staff/cms" element={<CmsEditorPage/>}/><Route path="/staff/research-review" element={<VerificationQueuePage/>}/><Route path="/staff/education" element={<EducationManagerPage/>}/><Route path="/staff/audit" element={<AuditLogPage/>}/><Route path="/preview/:token" element={<CmsPublicPage preview/>}/>
+  <Route path="*" element={<Layout><Routes><Route path="/" element={<Home data={data}/>}/><Route path="/about" element={<About/>}/><Route path="/services" element={<Services data={data}/>}/><Route path="/research" element={<Research data={data}/>}/><Route path="/academic" element={<AcademicPortfolioPage/>}/><Route path="/education" element={<EducationPage/>}/><Route path="/book" element={<BookingPage services={data?.services??[]}/>}/><Route path="/portal" element={<PortalPage/>}/><Route path="/portal/reminders" element={<ReminderPreferencesPage/>}/><Route path="/portal/consultations" element={<ConsultationsPage/>}/><Route path="/p/:slug" element={<CmsPublicPage/>}/><Route path="*" element={<Home data={data}/>}/></Routes></Layout>}/>
+ </Routes>;
+}

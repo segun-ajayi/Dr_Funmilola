@@ -321,3 +321,27 @@ Architecture decision: one React Native/Expo TypeScript application will produce
 ## Next major task
 
 Build the Android and iOS patient application from the accepted React Native architecture: secure sign-in/token storage, accessible native navigation, dashboard, appointments and cancellation requests, profile, documents, messages, notifications, reminder preferences and consultation waiting room. Add platform configuration, tests, privacy/store-readiness documentation and reproducible Android/iOS build profiles.
+
+## Current task: Android and iOS patient application
+
+Status: Complete — 56 backend tests with 294 assertions, 3 web frontend tests, 6 native-app tests, strict TypeScript checks, 21/21 Expo Doctor checks, production web build, Android/iOS Expo exports and an accessible browser smoke test passed on 27 August 2026.
+
+Acceptance criteria:
+
+- One Expo/React Native TypeScript codebase produces independently configured Android and iOS applications using the identifiers and deep-link scheme recorded in source control.
+- Patient authentication uses the versioned mobile API, stores only the bearer token in native secure storage and clears all sensitive in-memory state on sign-out or authorization failure.
+- Accessible native navigation provides dashboard, appointments, profile, documents, messages, notifications, consultation waiting room and settings journeys with useful loading, empty, offline and failure states.
+- Appointment cancellation uses a UUID mutation identifier so safe retries cannot duplicate side effects; unsupported video and push features remain honestly disabled through server capabilities.
+- Reminder preferences and device/session management use supported server contracts, while unavailable native push registration is represented without pretending it is active.
+- Shared API types come from `@dr-funmilola/mobile-contract`; validation and API errors are rendered consistently without logging tokens, document contents or medical message bodies.
+- Automated mobile tests cover authentication/session handling, API envelope errors, accessible screens and idempotent cancellation behavior; strict TypeScript checking passes.
+- EAS development, preview and production profiles, platform permissions, icons/splash assets, privacy notes, store metadata checklist and build/release instructions are documented without embedded secrets.
+- Android and iOS configuration/export validation passes where local tooling permits; signing, store submission and live-provider activation remain explicit external release gates.
+
+Implementation note: the shared Expo SDK 57 application now provides secure Patient sign-in, protected native navigation, dashboard, appointments and idempotent cancellation requests, profile/settings, documents, messages, notifications and consultation status. Native bearer tokens use device-only SecureStore protection; health data remains in memory and is cleared with the session. The browser preview deliberately uses memory-only token storage because native SecureStore is unavailable there.
+
+Release boundary: Android and iOS JavaScript/native configuration exports are validated. Store-signed binaries and submission require externally controlled Expo, Apple Developer and Google Play accounts, signing credentials, approved privacy/support URLs, production TLS configuration and store-review approval; none are embedded or falsely claimed as completed.
+
+## Next major task
+
+Run the controlled external release: provision production infrastructure and protected EAS environments, complete legal/privacy and clinical-copy approval, perform physical-device accessibility and security acceptance, create store records/signing credentials, produce signed internal builds, resolve review feedback and submit approved Android and iOS releases.

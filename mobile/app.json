@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "Dr Funmilola Patient",
+    "slug": "dr-funmilola-patient",
+    "scheme": "drfunmilola",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/brand-icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.drfunmilola.patient",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.drfunmilola.patient",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#F7F4EC",
+        "foregroundImage": "./assets/brand-icon.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": true,
+      "permissions": []
+    },
+    "web": {
+      "favicon": "./assets/brand-icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/brand-icon.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#F7F4EC",
+          "dark": { "backgroundColor": "#162823" }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

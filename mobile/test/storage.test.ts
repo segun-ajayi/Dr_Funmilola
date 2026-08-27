@@ -1,0 +1,3 @@
+jest.mock('expo-secure-store',()=>({WHEN_UNLOCKED_THIS_DEVICE_ONLY:'device-only',getItemAsync:jest.fn(),setItemAsync:jest.fn(),deleteItemAsync:jest.fn()}));
+import * as SecureStore from 'expo-secure-store';import { tokenStorage } from '@/lib/storage';
+it('stores native tokens using device-only protected storage',async()=>{await tokenStorage.set('secret');expect(SecureStore.setItemAsync).toHaveBeenCalledWith('dr_funmilola_mobile_token_v1','secret',{keychainAccessible:'device-only'});await tokenStorage.clear();expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('dr_funmilola_mobile_token_v1');});

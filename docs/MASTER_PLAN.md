@@ -30,7 +30,7 @@ Mobile applications will be first-class clients of the same versioned API. Busin
 |---|---|---|
 | 1 | Laravel 13 foundation, React/TS shell, design system, roles, core schema | Complete |
 | 2 | Verified public content, services, about, career, achievements, publications, education, contact | Started |
-| 3 | Availability, booking, conflict protection, operational calendar, notifications | In progress |
+| 3 | Availability, booking, conflict protection, operational calendar, notifications | Complete |
 | 4 | Secure patient portal, profile, documents, appointments and messages | Complete |
 | 5 | Provider-neutral online consultation and waiting room | Planned |
 | 6 | Safe component-based visual CMS, drafts, preview, approval and publishing | Planned |
@@ -148,3 +148,25 @@ Acceptance criteria:
 - Seeding is repeatable and does not create duplicate accounts.
 - Addresses use the reserved `.test` domain and documentation prohibits production use of the shared demonstration password.
 - An automated test verifies role, active state and verification state for every account.
+
+## Current task: Advanced scheduling and notifications
+
+Status: Complete — 28 automated tests with 126 assertions, production frontend build, live staff calendar review and 390×844 responsive browser check passed on 26 August 2026.
+
+Acceptance criteria:
+
+- Staff can create and remove bounded full-day or timed availability exceptions for leave, closures and additional clinics.
+- Public slot generation excludes closures and leave, and can include approved additional-clinic windows without bypassing appointment conflict checks.
+- Staff receive accessible day, week and month calendar views from the same bounded calendar API.
+- Patients can manage in-app and email reminder preferences; future mobile push preference is represented without enabling an unavailable delivery channel.
+- Confirmed appointments generate idempotent 24-hour and 2-hour reminder records through a scheduled, queue-ready command.
+- Appointment confirmation, rescheduling, cancellation and reminder activity creates patient notifications and privacy-conscious delivery audit records.
+- Online appointments retain provider-neutral meeting metadata; no vendor is hard-coded before the consultation integration phase.
+- New scheduling and notification endpoints preserve staff roles, patient isolation, Lagos display time and UTC storage.
+- Automated tests, production build and responsive browser checks pass before commit and push.
+
+Implementation note: email reminders are queued through Laravel's mail channel and require the documented production scheduler and queue workers. Mobile push remains intentionally disabled until device-token lifecycle and the native applications exist.
+
+## Next major task
+
+Build the provider-neutral online consultation foundation: secure staff-managed meeting configuration, patient waiting room, time-bounded join authorization, consultation consent and attendance states, without embedding clinical notes or committing the product to a single video vendor.

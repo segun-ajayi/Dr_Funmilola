@@ -14,6 +14,7 @@ use App\Http\Controllers\PatientProfileController;
 use App\Http\Controllers\PatientDocumentController;
 use App\Http\Controllers\MessageThreadController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\NotificationPreferenceController;
 use App\Http\Controllers\CancellationRequestController;
 use App\Http\Controllers\MyAppointmentController;
 use App\Http\Controllers\PublicContentController;
@@ -23,6 +24,7 @@ use App\Http\Controllers\Staff\CalendarController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\PatientSearchController;
 use App\Http\Controllers\Staff\InboxController;
+use App\Http\Controllers\Staff\AvailabilityExceptionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/public', PublicContentController::class);
@@ -57,6 +59,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
             Route::get('/me/message-threads', [MessageThreadController::class, 'index']);
             Route::post('/me/message-threads', [MessageThreadController::class, 'store'])->middleware('throttle:20,1');
             Route::post('/me/message-threads/{thread}/messages', [MessageThreadController::class, 'reply'])->middleware('throttle:30,1');
+            Route::get('/me/notification-preferences', [NotificationPreferenceController::class, 'show']);
+            Route::put('/me/notification-preferences', [NotificationPreferenceController::class, 'update']);
         });
     });
     Route::prefix('staff')->middleware('role:admin,moderator,power_admin')->group(function () {
@@ -69,6 +73,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/availability-rules', [AvailabilityRuleController::class, 'index']);
         Route::post('/availability-rules', [AvailabilityRuleController::class, 'store']);
         Route::put('/availability-rules/{availabilityRule}', [AvailabilityRuleController::class, 'update']);
+        Route::get('/availability-exceptions', [AvailabilityExceptionController::class, 'index']);
+        Route::post('/availability-exceptions', [AvailabilityExceptionController::class, 'store']);
+        Route::delete('/availability-exceptions/{availabilityException}', [AvailabilityExceptionController::class, 'destroy']);
         Route::get('/inbox', [InboxController::class, 'index']);
         Route::post('/message-threads/{thread}/messages', [InboxController::class, 'reply']);
         Route::patch('/cancellation-requests/{cancellation}', [InboxController::class, 'reviewCancellation']);

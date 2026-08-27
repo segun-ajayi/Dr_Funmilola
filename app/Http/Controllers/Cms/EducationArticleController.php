@@ -1,0 +1,11 @@
+<?php
+namespace App\Http\Controllers\Cms;
+use App\Http\Controllers\Controller;use App\Models\AuditLog;use App\Models\EducationArticle;use Illuminate\Http\JsonResponse;use Illuminate\Http\Request;use Illuminate\Validation\Rule;
+class EducationArticleController extends Controller{
+ public function index():JsonResponse{return response()->json(['data'=>EducationArticle::latest()->get()]);}
+ public function store(Request $request):JsonResponse{$article=EducationArticle::create($this->validated($request));$this->audit($request,$article,'education.created');return response()->json(['data'=>$article],201);}
+ public function update(Request $request,EducationArticle $article):JsonResponse{$article->update($this->validated($request,$article));$this->audit($request,$article,'education.updated');return response()->json(['data'=>$article]);}
+ public function publish(Request $request,EducationArticle $article):JsonResponse{$article->update(['status'=>'published','published_at'=>now()]);$this->audit($request,$article,'education.published');return response()->json(['data'=>$article]);}
+ private function validated(Request $request,?EducationArticle $article=null):array{$data=$request->validate(['title'=>['required','string','max:180'],'slug'=>['required','alpha_dash','max:120',Rule::unique('education_articles')->ignore($article)],'summary'=>['required','string','max:500'],'content'=>['required','string','max:20000'],'author'=>['required','string','max:120'],'medical_reviewer'=>['required','string','max:120'],'reviewed_at'=>['required','date','before_or_equal:today'],'content_updated_at'=>['required','date','before_or_equal:today'],'category'=>['required','string','max:80'],'tags'=>['nullable','array','max:12'],'tags.*'=>['string','max:40'],'medical_disclaimer'=>['required','string','min:40','max:1000']]);foreach(['title','summary','content','author','medical_reviewer','medical_disclaimer'] as $field)abort_if($data[$field]!==strip_tags($data[$field]),422,'Article content must be plain text.');return$data;}
+ private function audit(Request $request,EducationArticle $article,string $action):void{AuditLog::create(['actor_id'=>$request->user()->id,'action'=>$action,'subject_type'=>EducationArticle::class,'subject_id'=>$article->id]);}
+}

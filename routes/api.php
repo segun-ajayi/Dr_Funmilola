@@ -31,6 +31,9 @@ use App\Http\Controllers\PublicCmsController;
 use App\Http\Controllers\Cms\PageController as CmsPageController;
 use App\Http\Controllers\Cms\SectionController as CmsSectionController;
 use App\Http\Controllers\Cms\SettingController as CmsSettingController;
+use App\Http\Controllers\AcademicContentController;
+use App\Http\Controllers\Cms\VerificationQueueController;
+use App\Http\Controllers\Cms\EducationArticleController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/public', PublicContentController::class);
@@ -39,6 +42,11 @@ Route::post('/appointment-requests', AppointmentRequestController::class)->middl
 Route::get('/cms/pages/{slug}', [PublicCmsController::class, 'show']);
 Route::get('/cms/preview/{token}', [PublicCmsController::class, 'preview'])->middleware('throttle:30,1');
 Route::get('/cms/public-settings', [PublicCmsController::class, 'settings']);
+Route::get('/academic/profile',[AcademicContentController::class,'profile']);
+Route::get('/academic/publications',[AcademicContentController::class,'publications']);
+Route::get('/academic/publications/{publication}',[AcademicContentController::class,'publication']);
+Route::get('/education/articles',[AcademicContentController::class,'articles']);
+Route::get('/education/articles/{slug}',[AcademicContentController::class,'article']);
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', RegisterController::class)->middleware('throttle:5,1');
@@ -116,5 +124,12 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/settings',[CmsSettingController::class,'show']);
         Route::put('/settings/{key}',[CmsSettingController::class,'update']);
         Route::post('/settings/{key}/publish',[CmsSettingController::class,'publish']);
+        Route::get('/verification-queue',[VerificationQueueController::class,'index']);
+        Route::patch('/verification-queue/{claim}',[VerificationQueueController::class,'decide']);
+        Route::post('/verification-queue/{claim}/publish',[VerificationQueueController::class,'publish']);
+        Route::get('/education',[EducationArticleController::class,'index']);
+        Route::post('/education',[EducationArticleController::class,'store']);
+        Route::put('/education/{article}',[EducationArticleController::class,'update']);
+        Route::post('/education/{article}/publish',[EducationArticleController::class,'publish']);
     });
 });

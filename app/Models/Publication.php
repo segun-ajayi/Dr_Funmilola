@@ -10,6 +10,6 @@ class Publication extends Model
 
     protected function casts(): array
     {
-        return ['published_at' => 'date', 'featured' => 'boolean'];
+        return ['published_at' => 'date', 'featured' => 'boolean', 'keywords' => 'array'];
     }
 }

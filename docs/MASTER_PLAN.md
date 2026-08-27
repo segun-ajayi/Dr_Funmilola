@@ -29,12 +29,12 @@ Mobile applications will be first-class clients of the same versioned API. Busin
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Laravel 13 foundation, React/TS shell, design system, roles, core schema | Complete |
-| 2 | Verified public content, services, about, career, achievements, publications, education, contact | Started |
+| 2 | Verified public content, services, about, career, achievements, publications, education, contact | Complete — approval queue remains operational |
 | 3 | Availability, booking, conflict protection, operational calendar, notifications | Complete |
 | 4 | Secure patient portal, profile, documents, appointments and messages | Complete |
 | 5 | Provider-neutral online consultation and waiting room | Complete |
 | 6 | Safe component-based visual CMS, drafts, preview, approval and publishing | Complete |
-| 7 | Academic portfolio and Research & Verification Queue | Started |
+| 7 | Academic portfolio and Research & Verification Queue | Complete |
 | 8 | Security hardening, audit coverage, rate limits, private storage and backup runbooks | Planned |
 | 9 | Full unit, feature, frontend, end-to-end and authorization testing | Planned |
 | 10 | PostgreSQL/Redis production deployment, queues, scheduler, monitoring and backups | Planned |
@@ -215,3 +215,25 @@ Implementation note: CMS media currently uses validated safe URL references. Man
 ## Next major task
 
 Complete the verified public content and academic portfolio: structured biography/career/achievements/education/contact resources, searchable publication details, public education articles with medical review metadata, and a Power Admin Research & Verification Queue that alone can promote sourced claims into approved public records.
+
+## Current task: Verified content and academic portfolio
+
+Status: Complete — authoritative source review documented; 43 automated tests with 195 assertions, production frontend build and 390×844 public academic browser check passed on 27 August 2026.
+
+Acceptance criteria:
+
+- Career, achievement, profile and academic records carry source, verification and publication states; unapproved records never appear publicly.
+- Publications support verified DOI/PMID metadata, search, category filters, sorting, pagination and public detail responses.
+- The Research & Verification Queue supports Pending Review, Verified, Rejected and Published states with Power Admin-only decisions and reviewer audit data.
+- Promoting a claim creates or updates the correct structured public record through explicit, validated mapping rather than copying arbitrary text into the site.
+- Public education articles require author, medical reviewer, review date, updated date, category, tags and medical disclaimer before publication.
+- Contact and practice-location records expose only approved professional details; exact private clinic details remain restricted to confirmed patients.
+- Source seeding uses authoritative ORCID, PubMed, Crossref, institutional or journal records and remains pending until Power Admin approval.
+- Public interfaces provide clear pending/empty states and never imply that unverified qualifications or achievements are established facts.
+- Automated authorization, workflow, public-visibility, search and validation tests plus production build and responsive browser checks pass.
+
+Implementation note: authoritative facts are intentionally seeded as Pending Review. “Complete” means the verification, publishing, public portfolio and education systems are operational; it does not misrepresent unapproved biographical claims as public facts.
+
+## Next major task
+
+Complete security and operational hardening: audit-query coverage, security headers, stricter rate limits, upload malware-scanning hooks, session/device management, private-data retention controls, health/readiness checks, backup and incident-response runbooks, and automated security regression tests.

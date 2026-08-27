@@ -10,6 +10,6 @@ class ResearchClaim extends Model
 
     protected function casts(): array
     {
-        return ['source_date' => 'date', 'reviewed_at' => 'datetime'];
+        return ['source_date' => 'date', 'reviewed_at' => 'datetime', 'target_payload' => 'array'];
     }
 }

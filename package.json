@@ -5,7 +5,8 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "test": "vitest run --maxWorkers=1"
+        "test": "vitest run --maxWorkers=1",
+        "typecheck": "tsc --noEmit"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

@@ -38,7 +38,7 @@ Mobile applications will be first-class clients of the same versioned API. Busin
 | 8 | Security hardening, audit coverage, rate limits, private storage and backup runbooks | Complete |
 | 9 | Full unit, feature, frontend, end-to-end and authorization testing | Complete |
 | 10 | PostgreSQL/Redis production deployment, queues, scheduler, monitoring and backups | Complete — deployment artifacts ready |
-| 11 | Shared mobile API contract and mobile authentication hardening | Planned |
+| 11 | Shared mobile API contract and mobile authentication hardening | Complete |
 | 12 | Android and iOS patient apps, accessibility QA and store delivery | Planned |
 
 ## Current task: Foundation vertical slice
@@ -299,3 +299,25 @@ Deployment boundary: the repository now contains validated production artifacts 
 ## Next major task
 
 Freeze and harden the versioned mobile API contract: mobile-specific authentication/device lifecycle, stable JSON envelopes/resources, capability discovery, pagination/error conventions, offline-safe mutation identifiers, device notification registration boundaries and generated/shared TypeScript contract types. Document the native architecture decision before scaffolding Android and iOS.
+
+## Current task: Versioned mobile API contract
+
+Status: Complete — 56 backend tests with 294 assertions, 3 frontend tests, strict TypeScript contract check and production build passed on 27 August 2026.
+
+Acceptance criteria:
+
+- Native clients use `/api/v1` while existing web endpoints remain backward compatible.
+- Mobile sign-in returns a named, scoped, expiring Sanctum bearer token only for active, claimed, verified Patient accounts.
+- Capability discovery identifies API version, practice timezone, enabled features, upload limits and unavailable integrations without exposing secrets.
+- Patient profile, appointments, documents, messages, notifications and consultations use stable JSON envelopes and bounded pagination.
+- Mobile mutations accept a UUID client request identifier and replay the original response without duplicating side effects.
+- Device push-token registration has an explicit authenticated contract but refuses activation while push is unavailable.
+- Errors follow a stable code/message/field-errors shape for authentication, validation, authorization and conflicts.
+- Shared TypeScript types and an architecture decision record are source-controlled and consumed by the native app scaffold.
+- Automated tests prove token scopes/expiry, patient isolation, envelope shape and idempotent replay.
+
+Architecture decision: one React Native/Expo TypeScript application will produce independently signed Android and iOS binaries. Tokens use native secure storage, sensitive server data remains memory-only initially, and the shared `@dr-funmilola/mobile-contract` package defines v1 client types.
+
+## Next major task
+
+Build the Android and iOS patient application from the accepted React Native architecture: secure sign-in/token storage, accessible native navigation, dashboard, appointments and cancellation requests, profile, documents, messages, notifications, reminder preferences and consultation waiting room. Add platform configuration, tests, privacy/store-readiness documentation and reproducible Android/iOS build profiles.

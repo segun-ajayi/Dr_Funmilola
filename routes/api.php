@@ -51,6 +51,7 @@ Route::get('/academic/publications/{publication}',[AcademicContentController::cl
 Route::get('/education/articles',[AcademicContentController::class,'articles']);
 Route::get('/education/articles/{slug}',[AcademicContentController::class,'article']);
 Route::get('/ready',ReadinessController::class)->middleware('throttle:30,1');
+Route::prefix('v1')->group(base_path('routes/mobile.php'));
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', RegisterController::class)->middleware('throttle:5,1');

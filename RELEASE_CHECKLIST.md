@@ -7,7 +7,8 @@ Run every gate from the repository root. A release candidate fails if any comman
 1. `php artisan test --compact` — backend behavior, authorization, isolation, workflows and security regression suite.
 2. `npm test` — React component and accessible-state tests in deterministic jsdom with mocked APIs.
 3. `npm run build` — TypeScript/Vite production compilation and asset generation.
-4. `git diff --check` — whitespace/conflict-marker check.
+4. `npm run typecheck` — strict web and shared mobile-contract TypeScript validation.
+5. `git diff --check` — whitespace/conflict-marker check.
 5. `php artisan route:list` — inspect middleware and route naming for unexpected public mutations.
 6. `php artisan schedule:list` — confirm reminder schedule registration.
 7. `php artisan practice:prune-expired` — dry-run retention report only.

@@ -1,0 +1,17 @@
+export type ApiVersion='v1';
+export type ApiErrorCode='validation_failed'|'unauthenticated'|'forbidden'|'not_found'|'conflict'|'gone'|'rate_limited'|'request_failed'|'server_error';
+export interface ApiError{error:{code:ApiErrorCode;message:string;fields?:Record<string,string[]>}}
+export interface DataEnvelope<T>{data:T;message?:string}
+export interface PaginatedEnvelope<T>{data:T[];meta:{current_page:number;per_page:number;total:number;last_page:number};links:{next:string|null;previous:string|null}}
+export interface MobileCapabilities{api_version:ApiVersion;practice_timezone:'Africa/Lagos';features:{appointments:boolean;messages:boolean;documents:boolean;consultations:boolean;push_notifications:boolean;live_video:boolean};uploads:{max_bytes:number;mime_types:string[]}}
+export interface MobileUser{id:number;name:string;email:string;phone:string|null;profile:PatientProfile|null}
+export interface PatientProfile{date_of_birth:string|null;address:string|null;emergency_contact_name:string|null;emergency_contact_phone:string|null;preferred_communication:'email'|'phone'|'sms'}
+export type AppointmentStatus='requested'|'pending_confirmation'|'confirmed'|'checked_in'|'in_progress'|'completed'|'cancelled'|'rescheduled'|'no_show';
+export interface Appointment{id:number;public_id:string;starts_at:string;ends_at:string;timezone:string;status:AppointmentStatus;consultation_method:'online'|'in_person';location:string|null;reason:string;service:{id:number;name:string;slug:string};consultation?:{id:number;status:ConsultationStatus}|null}
+export type ConsultationStatus='scheduled'|'waiting'|'ready'|'in_progress'|'ended';
+export interface PatientDocument{id:number;public_id:string;label:string;original_name:string;mime_type:string;size_bytes:number;created_at:string}
+export interface PracticeMessage{id:number;body:string;created_at:string;sender:{id:number;name:string;role:string}}
+export interface MessageThread{id:number;public_id:string;subject:string;status:'open'|'closed';last_message_at:string;messages:PracticeMessage[]}
+export interface MobileNotification{id:string;type:string;data:{title:string;message:string;kind:string};read_at:string|null;created_at:string}
+export interface AuthTokenResponse{access_token:string;token_type:'Bearer';expires_at:string;user:Pick<MobileUser,'id'|'name'|'email'>}
+export interface IdempotentMutation{client_request_id:string}

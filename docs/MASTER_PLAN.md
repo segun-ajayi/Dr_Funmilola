@@ -33,7 +33,7 @@ Mobile applications will be first-class clients of the same versioned API. Busin
 | 3 | Availability, booking, conflict protection, operational calendar, notifications | Complete |
 | 4 | Secure patient portal, profile, documents, appointments and messages | Complete |
 | 5 | Provider-neutral online consultation and waiting room | Complete |
-| 6 | Safe component-based visual CMS, drafts, preview, approval and publishing | Planned |
+| 6 | Safe component-based visual CMS, drafts, preview, approval and publishing | Complete |
 | 7 | Academic portfolio and Research & Verification Queue | Started |
 | 8 | Security hardening, audit coverage, rate limits, private storage and backup runbooks | Planned |
 | 9 | Full unit, feature, frontend, end-to-end and authorization testing | Planned |
@@ -192,3 +192,26 @@ Implementation note: the default provider intentionally supplies no live media. 
 ## Next major task
 
 Build the safe component-based visual CMS: structured pages and sections, drafts, preview tokens, approval/publishing, version history and rollback, sanitized rich text, media references, navigation and theme tokens. Restrict structural and publishing controls to Power Admin and never permit executable code, unrestricted HTML or SQL.
+
+## Current task: Safe visual CMS
+
+Status: Complete — 38 automated tests with 177 assertions, production frontend build and guarded editor-route browser review passed on 27 August 2026.
+
+Acceptance criteria:
+
+- Power Admin can create pages from an allowlisted template and add, edit, reorder, hide or remove allowlisted section types.
+- Section content is validated structured JSON with plain text, safe URLs and bounded presentation tokens; arbitrary HTML, JavaScript, CSS, PHP and SQL are never accepted.
+- Draft changes never alter the public page until an explicit Power Admin publish action.
+- Time-bounded preview tokens expose the draft only through a dedicated preview endpoint and do not create a public record.
+- Every meaningful draft/publish/rollback action creates an immutable version snapshot and audit record.
+- Power Admin can inspect version history and restore an earlier snapshot into a new draft without erasing history.
+- Navigation entries and theme tokens use strict allowlists and safe bounds; protected application routes cannot be overridden.
+- Public CMS APIs return published data only, and non-Power-Admin roles cannot access editor endpoints.
+- The editor remains usable on mobile and labels all controls in non-technical language.
+- Automated validation, authorization, preview-expiry, publish and rollback tests plus production build and browser checks pass.
+
+Implementation note: CMS media currently uses validated safe URL references. Managed image upload, focal-point editing and responsive renditions will be added during the media/deployment hardening work; executable content remains prohibited.
+
+## Next major task
+
+Complete the verified public content and academic portfolio: structured biography/career/achievements/education/contact resources, searchable publication details, public education articles with medical review metadata, and a Power Admin Research & Verification Queue that alone can promote sourced claims into approved public records.

@@ -27,11 +27,18 @@ use App\Http\Controllers\Staff\PatientSearchController;
 use App\Http\Controllers\Staff\InboxController;
 use App\Http\Controllers\Staff\AvailabilityExceptionController;
 use App\Http\Controllers\Staff\ConsultationController as StaffConsultationController;
+use App\Http\Controllers\PublicCmsController;
+use App\Http\Controllers\Cms\PageController as CmsPageController;
+use App\Http\Controllers\Cms\SectionController as CmsSectionController;
+use App\Http\Controllers\Cms\SettingController as CmsSettingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/public', PublicContentController::class);
 Route::get('/availability/{service}', AvailabilityController::class)->middleware('throttle:60,1');
 Route::post('/appointment-requests', AppointmentRequestController::class)->middleware('throttle:10,1');
+Route::get('/cms/pages/{slug}', [PublicCmsController::class, 'show']);
+Route::get('/cms/preview/{token}', [PublicCmsController::class, 'preview'])->middleware('throttle:30,1');
+Route::get('/cms/public-settings', [PublicCmsController::class, 'settings']);
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', RegisterController::class)->middleware('throttle:5,1');
@@ -92,5 +99,22 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/consultations', [StaffConsultationController::class, 'index']);
         Route::post('/appointments/{appointment}/consultation', [StaffConsultationController::class, 'store']);
         Route::patch('/consultations/{consultation}/status', [StaffConsultationController::class, 'transition']);
+    });
+    Route::prefix('cms')->middleware(['verified','role:power_admin'])->group(function(){
+        Route::get('/pages',[CmsPageController::class,'index']);
+        Route::post('/pages',[CmsPageController::class,'store']);
+        Route::get('/pages/{page}',[CmsPageController::class,'show']);
+        Route::put('/pages/{page}',[CmsPageController::class,'update']);
+        Route::post('/pages/{page}/preview',[CmsPageController::class,'preview']);
+        Route::post('/pages/{page}/publish',[CmsPageController::class,'publish']);
+        Route::get('/pages/{page}/versions',[CmsPageController::class,'versions']);
+        Route::post('/pages/{page}/versions/{version}/restore',[CmsPageController::class,'restore']);
+        Route::post('/pages/{page}/sections',[CmsSectionController::class,'store']);
+        Route::put('/pages/{page}/sections/{section}',[CmsSectionController::class,'update']);
+        Route::delete('/pages/{page}/sections/{section}',[CmsSectionController::class,'destroy']);
+        Route::put('/pages/{page}/sections-order',[CmsSectionController::class,'reorder']);
+        Route::get('/settings',[CmsSettingController::class,'show']);
+        Route::put('/settings/{key}',[CmsSettingController::class,'update']);
+        Route::post('/settings/{key}/publish',[CmsSettingController::class,'publish']);
     });
 });

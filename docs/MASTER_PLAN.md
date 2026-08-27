@@ -35,7 +35,7 @@ Mobile applications will be first-class clients of the same versioned API. Busin
 | 5 | Provider-neutral online consultation and waiting room | Complete |
 | 6 | Safe component-based visual CMS, drafts, preview, approval and publishing | Complete |
 | 7 | Academic portfolio and Research & Verification Queue | Complete |
-| 8 | Security hardening, audit coverage, rate limits, private storage and backup runbooks | Planned |
+| 8 | Security hardening, audit coverage, rate limits, private storage and backup runbooks | Complete |
 | 9 | Full unit, feature, frontend, end-to-end and authorization testing | Planned |
 | 10 | PostgreSQL/Redis production deployment, queues, scheduler, monitoring and backups | Planned |
 | 11 | Shared mobile API contract and mobile authentication hardening | Planned |
@@ -237,3 +237,25 @@ Implementation note: authoritative facts are intentionally seeded as Pending Rev
 ## Next major task
 
 Complete security and operational hardening: audit-query coverage, security headers, stricter rate limits, upload malware-scanning hooks, session/device management, private-data retention controls, health/readiness checks, backup and incident-response runbooks, and automated security regression tests.
+
+## Current task: Security and operational hardening
+
+Status: Complete — 48 automated tests with 224 assertions, production frontend build, dry-run retention check and browser security-route guard review passed on 27 August 2026.
+
+Acceptance criteria:
+
+- All web/API responses receive restrictive security headers appropriate to the same-origin React/Laravel architecture.
+- Patient uploads pass through a replaceable file-scanning interface before private storage; suspicious executable content is rejected and audited.
+- Mobile access tokens are named, scoped, expiring, listable and individually revocable by their owner; staff can revoke compromised tokens under audited authority.
+- Power Admin receives bounded, filterable audit-log access with no password, token, document body or message body exposure.
+- Readiness checks validate database, cache and private-storage dependencies without exposing configuration or secrets.
+- Retention commands default to dry-run, identify only explicitly supported expired operational records and require an explicit execute flag.
+- Authentication, messaging, upload, preview, join and staff mutation endpoints have proportionate rate limits.
+- Backup, restore verification, queue/scheduler supervision, security incident response and breach escalation are documented.
+- Automated tests cover headers, scanner rejection, token isolation/revocation, audit authorization, readiness and retention safety.
+
+Implementation note: the default upload scanner is an in-process signature boundary, not a replacement for enterprise malware analysis. Production should bind `FileScannerInterface` to ClamAV or an approved managed scanner and monitor scan failures.
+
+## Next major task
+
+Complete the comprehensive quality phase: frontend component tests, expanded API authorization matrices, end-to-end browser journeys for public booking and authenticated role workspaces, accessibility checks, mobile viewport coverage, failure-state tests and a traceable release-quality checklist.

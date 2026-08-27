@@ -12,4 +12,6 @@ class AuditLog extends Model
     {
         return ['metadata' => 'array'];
     }
+
+    public function actor() { return $this->belongsTo(User::class, 'actor_id'); }
 }

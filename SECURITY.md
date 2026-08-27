@@ -11,3 +11,23 @@
 - Before clinical launch, complete a privacy impact assessment against applicable Nigerian data-protection and medical-record obligations.
 - Browser authentication uses CSRF-protected same-origin sessions; native applications use scoped, expiring, revocable tokens stored in platform-secure storage.
 - Unverified accounts cannot read appointment information, including accounts created initially by a guest booking request.
+
+## Response and browser controls
+
+Every Laravel response receives `nosniff`, clickjacking protection, a restrictive same-origin Content Security Policy, referrer policy, cross-origin isolation guidance and a permissions policy. HSTS is emitted only on HTTPS requests so local HTTP development is not poisoned.
+
+## Files
+
+Patient documents are stored on the private disk and downloaded only through authorization. PDF/JPEG/PNG validation, a 10 MB bound and `FileScannerInterface` run before storage. The default scanner rejects common executable/script signatures and records privacy-minimal rejection audits. Production may replace it with a ClamAV or managed scanner adapter without changing upload authorization.
+
+## Devices and tokens
+
+Native tokens are named, scoped, expire after 30 days and can be listed/revoked only by their owner. Plain tokens are returned once and never stored. Device-list responses expose metadata, not token hashes. Revocation is audited.
+
+## Audit access
+
+Power Admin-only audit queries are limited to 90-day ranges and 50 records per page. Filters support action prefix, actor and dates. Metadata keys suggesting passwords, tokens, secrets, message bodies or content are stripped from the response.
+
+## Readiness and retention
+
+`/api/ready` reports only generic database/private-storage readiness. `practice:prune-expired` is dry-run by default and supports only expired preview tokens, expired mobile tokens and read notifications older than one year. Destructive execution requires `--execute`; audit history and patient documents are not part of automated pruning.

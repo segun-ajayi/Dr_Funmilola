@@ -34,6 +34,9 @@ use App\Http\Controllers\Cms\SettingController as CmsSettingController;
 use App\Http\Controllers\AcademicContentController;
 use App\Http\Controllers\Cms\VerificationQueueController;
 use App\Http\Controllers\Cms\EducationArticleController;
+use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\ReadinessController;
+use App\Http\Controllers\Cms\AuditLogController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/public', PublicContentController::class);
@@ -47,6 +50,7 @@ Route::get('/academic/publications',[AcademicContentController::class,'publicati
 Route::get('/academic/publications/{publication}',[AcademicContentController::class,'publication']);
 Route::get('/education/articles',[AcademicContentController::class,'articles']);
 Route::get('/education/articles/{slug}',[AcademicContentController::class,'article']);
+Route::get('/ready',ReadinessController::class)->middleware('throttle:30,1');
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', RegisterController::class)->middleware('throttle:5,1');
@@ -59,6 +63,8 @@ Route::prefix('auth')->group(function () {
 Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/me', MeController::class);
     Route::post('/auth/logout', LogoutController::class);
+    Route::get('/me/devices',[DeviceController::class,'index']);
+    Route::delete('/me/devices/{token}',[DeviceController::class,'destroy'])->middleware('throttle:20,1');
     Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->middleware('signed')->name('verification.verify');
     Route::post('/email/verification-notification', [VerificationController::class, 'resend'])->middleware('throttle:3,1');
     Route::middleware('verified')->group(function () {
@@ -131,5 +137,6 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('/education',[EducationArticleController::class,'store']);
         Route::put('/education/{article}',[EducationArticleController::class,'update']);
         Route::post('/education/{article}/publish',[EducationArticleController::class,'publish']);
+        Route::get('/audit-logs',[AuditLogController::class,'index'])->middleware('throttle:60,1');
     });
 });

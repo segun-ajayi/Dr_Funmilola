@@ -36,7 +36,7 @@ Mobile applications will be first-class clients of the same versioned API. Busin
 | 6 | Safe component-based visual CMS, drafts, preview, approval and publishing | Complete |
 | 7 | Academic portfolio and Research & Verification Queue | Complete |
 | 8 | Security hardening, audit coverage, rate limits, private storage and backup runbooks | Complete |
-| 9 | Full unit, feature, frontend, end-to-end and authorization testing | Planned |
+| 9 | Full unit, feature, frontend, end-to-end and authorization testing | Complete |
 | 10 | PostgreSQL/Redis production deployment, queues, scheduler, monitoring and backups | Planned |
 | 11 | Shared mobile API contract and mobile authentication hardening | Planned |
 | 12 | Android and iOS patient apps, accessibility QA and store delivery | Planned |
@@ -259,3 +259,23 @@ Implementation note: the default upload scanner is an in-process signature bound
 ## Next major task
 
 Complete the comprehensive quality phase: frontend component tests, expanded API authorization matrices, end-to-end browser journeys for public booking and authenticated role workspaces, accessibility checks, mobile viewport coverage, failure-state tests and a traceable release-quality checklist.
+
+## Current task: Comprehensive release quality
+
+Status: Complete — 51 backend tests with 255 assertions, 3 frontend component tests, production build and a 390×844 public booking browser journey passed on 27 August 2026.
+
+Acceptance criteria:
+
+- Vitest and Testing Library execute deterministically with DOM matchers and no live network dependency.
+- Component tests cover published CMS rendering, protected/empty states and key accessible names/landmarks.
+- A parameterized backend authorization matrix proves Patient, Moderator, Admin and Power Admin boundaries across patient, staff and CMS APIs.
+- Failure tests cover invalid transitions, expired signatures/tokens, conflicts, unsafe uploads, unpublished content and unavailable dependencies.
+- Browser journeys cover public navigation and booking selection plus protected-role route guards at desktop and 390×844 mobile widths without submitting medical actions.
+- Production build, PHP suite, frontend suite and source/diff checks form one documented release gate.
+- Known provider/deployment limitations remain explicit and are not hidden by test success.
+
+Implementation note: authenticated visual journeys remain a controlled staging gate because browser credential entry and medical-action submission require human confirmation. Equivalent role boundaries and workflows are covered by the automated authorization/feature suite.
+
+## Next major task
+
+Complete production delivery foundations for PostgreSQL 17+, Redis, queue/scheduler workers, hardened environment configuration, container or server deployment, migrations, TLS/readiness, monitoring, log rotation, encrypted backups and rollback. Produce reproducible deployment artifacts without embedding secrets or claiming a live production launch without infrastructure credentials.

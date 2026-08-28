@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AcademicContentController;
 use App\Http\Controllers\AppointmentRequestController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
@@ -9,48 +10,48 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\VerificationController;
 use App\Http\Controllers\AvailabilityController;
-use App\Http\Controllers\MeController;
-use App\Http\Controllers\PatientProfileController;
-use App\Http\Controllers\PatientDocumentController;
-use App\Http\Controllers\MessageThreadController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\NotificationPreferenceController;
 use App\Http\Controllers\CancellationRequestController;
-use App\Http\Controllers\ConsultationController;
-use App\Http\Controllers\MyAppointmentController;
-use App\Http\Controllers\PublicContentController;
-use App\Http\Controllers\Staff\AppointmentController as StaffAppointmentController;
-use App\Http\Controllers\Staff\AvailabilityRuleController;
-use App\Http\Controllers\Staff\CalendarController;
-use App\Http\Controllers\Staff\DashboardController;
-use App\Http\Controllers\Staff\PatientSearchController;
-use App\Http\Controllers\Staff\InboxController;
-use App\Http\Controllers\Staff\AvailabilityExceptionController;
-use App\Http\Controllers\Staff\ConsultationController as StaffConsultationController;
-use App\Http\Controllers\PublicCmsController;
+use App\Http\Controllers\Cms\AuditLogController;
+use App\Http\Controllers\Cms\EducationArticleController;
 use App\Http\Controllers\Cms\PageController as CmsPageController;
 use App\Http\Controllers\Cms\SectionController as CmsSectionController;
 use App\Http\Controllers\Cms\SettingController as CmsSettingController;
-use App\Http\Controllers\AcademicContentController;
 use App\Http\Controllers\Cms\VerificationQueueController;
-use App\Http\Controllers\Cms\EducationArticleController;
+use App\Http\Controllers\ConsultationController;
 use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\MeController;
+use App\Http\Controllers\MessageThreadController;
+use App\Http\Controllers\MyAppointmentController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\NotificationPreferenceController;
+use App\Http\Controllers\PatientDocumentController;
+use App\Http\Controllers\PatientProfileController;
+use App\Http\Controllers\PublicCmsController;
+use App\Http\Controllers\PublicContentController;
 use App\Http\Controllers\ReadinessController;
-use App\Http\Controllers\Cms\AuditLogController;
+use App\Http\Controllers\Staff\AppointmentController as StaffAppointmentController;
+use App\Http\Controllers\Staff\AvailabilityExceptionController;
+use App\Http\Controllers\Staff\AvailabilityRuleController;
+use App\Http\Controllers\Staff\CalendarController;
+use App\Http\Controllers\Staff\ConsultationController as StaffConsultationController;
+use App\Http\Controllers\Staff\DashboardController;
+use App\Http\Controllers\Staff\InboxController;
+use App\Http\Controllers\Staff\PatientSearchController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/public', PublicContentController::class);
 Route::get('/availability/{service}', AvailabilityController::class)->middleware('throttle:60,1');
 Route::post('/appointment-requests', AppointmentRequestController::class)->middleware('throttle:10,1');
-Route::get('/cms/pages/{slug}', [PublicCmsController::class, 'show']);
+Route::get('/content/pages/{slug}', [PublicCmsController::class, 'show'])
+    ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*');
 Route::get('/cms/preview/{token}', [PublicCmsController::class, 'preview'])->middleware('throttle:30,1');
 Route::get('/cms/public-settings', [PublicCmsController::class, 'settings']);
-Route::get('/academic/profile',[AcademicContentController::class,'profile']);
-Route::get('/academic/publications',[AcademicContentController::class,'publications']);
-Route::get('/academic/publications/{publication}',[AcademicContentController::class,'publication']);
-Route::get('/education/articles',[AcademicContentController::class,'articles']);
-Route::get('/education/articles/{slug}',[AcademicContentController::class,'article']);
-Route::get('/ready',ReadinessController::class)->middleware('throttle:30,1');
+Route::get('/academic/profile', [AcademicContentController::class, 'profile']);
+Route::get('/academic/publications', [AcademicContentController::class, 'publications']);
+Route::get('/academic/publications/{publication}', [AcademicContentController::class, 'publication']);
+Route::get('/education/articles', [AcademicContentController::class, 'articles']);
+Route::get('/education/articles/{slug}', [AcademicContentController::class, 'article']);
+Route::get('/ready', ReadinessController::class)->middleware('throttle:30,1');
 Route::prefix('v1')->group(base_path('routes/mobile.php'));
 
 Route::prefix('auth')->group(function () {
@@ -64,8 +65,8 @@ Route::prefix('auth')->group(function () {
 Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/me', MeController::class);
     Route::post('/auth/logout', LogoutController::class);
-    Route::get('/me/devices',[DeviceController::class,'index']);
-    Route::delete('/me/devices/{token}',[DeviceController::class,'destroy'])->middleware('throttle:20,1');
+    Route::get('/me/devices', [DeviceController::class, 'index']);
+    Route::delete('/me/devices/{token}', [DeviceController::class, 'destroy'])->middleware('throttle:20,1');
     Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->middleware('signed')->name('verification.verify');
     Route::post('/email/verification-notification', [VerificationController::class, 'resend'])->middleware('throttle:3,1');
     Route::middleware('verified')->group(function () {
@@ -76,7 +77,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::patch('/me/notifications/{id}/read', [NotificationController::class, 'read']);
         Route::get('/consultations/{consultation}', [ConsultationController::class, 'show']);
         Route::post('/consultations/{consultation}/join-authorization', [ConsultationController::class, 'authorizeJoin'])->middleware('throttle:20,1');
-        Route::get('/consultations/{consultation}/room', [ConsultationController::class, 'room'])->middleware(['signed','throttle:20,1'])->name('consultations.room');
+        Route::get('/consultations/{consultation}/room', [ConsultationController::class, 'room'])->middleware(['signed', 'throttle:20,1'])->name('consultations.room');
         Route::post('/consultations/{consultation}/leave', [ConsultationController::class, 'leave']);
         Route::middleware('role:patient')->group(function () {
             Route::post('/me/appointments/{appointment}/cancellation-request', [CancellationRequestController::class, 'store']);
@@ -115,29 +116,29 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('/appointments/{appointment}/consultation', [StaffConsultationController::class, 'store']);
         Route::patch('/consultations/{consultation}/status', [StaffConsultationController::class, 'transition']);
     });
-    Route::prefix('cms')->middleware(['verified','role:power_admin'])->group(function(){
-        Route::get('/pages',[CmsPageController::class,'index']);
-        Route::post('/pages',[CmsPageController::class,'store']);
-        Route::get('/pages/{page}',[CmsPageController::class,'show']);
-        Route::put('/pages/{page}',[CmsPageController::class,'update']);
-        Route::post('/pages/{page}/preview',[CmsPageController::class,'preview']);
-        Route::post('/pages/{page}/publish',[CmsPageController::class,'publish']);
-        Route::get('/pages/{page}/versions',[CmsPageController::class,'versions']);
-        Route::post('/pages/{page}/versions/{version}/restore',[CmsPageController::class,'restore']);
-        Route::post('/pages/{page}/sections',[CmsSectionController::class,'store']);
-        Route::put('/pages/{page}/sections/{section}',[CmsSectionController::class,'update']);
-        Route::delete('/pages/{page}/sections/{section}',[CmsSectionController::class,'destroy']);
-        Route::put('/pages/{page}/sections-order',[CmsSectionController::class,'reorder']);
-        Route::get('/settings',[CmsSettingController::class,'show']);
-        Route::put('/settings/{key}',[CmsSettingController::class,'update']);
-        Route::post('/settings/{key}/publish',[CmsSettingController::class,'publish']);
-        Route::get('/verification-queue',[VerificationQueueController::class,'index']);
-        Route::patch('/verification-queue/{claim}',[VerificationQueueController::class,'decide']);
-        Route::post('/verification-queue/{claim}/publish',[VerificationQueueController::class,'publish']);
-        Route::get('/education',[EducationArticleController::class,'index']);
-        Route::post('/education',[EducationArticleController::class,'store']);
-        Route::put('/education/{article}',[EducationArticleController::class,'update']);
-        Route::post('/education/{article}/publish',[EducationArticleController::class,'publish']);
-        Route::get('/audit-logs',[AuditLogController::class,'index'])->middleware('throttle:60,1');
+    Route::prefix('cms')->middleware(['verified', 'role:power_admin'])->group(function () {
+        Route::get('/pages', [CmsPageController::class, 'index']);
+        Route::post('/pages', [CmsPageController::class, 'store']);
+        Route::get('/pages/{page}', [CmsPageController::class, 'show'])->whereNumber('page');
+        Route::put('/pages/{page}', [CmsPageController::class, 'update'])->whereNumber('page');
+        Route::post('/pages/{page}/preview', [CmsPageController::class, 'preview'])->whereNumber('page');
+        Route::post('/pages/{page}/publish', [CmsPageController::class, 'publish'])->whereNumber('page');
+        Route::get('/pages/{page}/versions', [CmsPageController::class, 'versions'])->whereNumber('page');
+        Route::post('/pages/{page}/versions/{version}/restore', [CmsPageController::class, 'restore'])->whereNumber('page')->whereNumber('version');
+        Route::post('/pages/{page}/sections', [CmsSectionController::class, 'store'])->whereNumber('page');
+        Route::put('/pages/{page}/sections/{section}', [CmsSectionController::class, 'update'])->whereNumber('page')->whereNumber('section');
+        Route::delete('/pages/{page}/sections/{section}', [CmsSectionController::class, 'destroy'])->whereNumber('page')->whereNumber('section');
+        Route::put('/pages/{page}/sections-order', [CmsSectionController::class, 'reorder'])->whereNumber('page');
+        Route::get('/settings', [CmsSettingController::class, 'show']);
+        Route::put('/settings/{key}', [CmsSettingController::class, 'update']);
+        Route::post('/settings/{key}/publish', [CmsSettingController::class, 'publish']);
+        Route::get('/verification-queue', [VerificationQueueController::class, 'index']);
+        Route::patch('/verification-queue/{claim}', [VerificationQueueController::class, 'decide']);
+        Route::post('/verification-queue/{claim}/publish', [VerificationQueueController::class, 'publish']);
+        Route::get('/education', [EducationArticleController::class, 'index']);
+        Route::post('/education', [EducationArticleController::class, 'store']);
+        Route::put('/education/{article}', [EducationArticleController::class, 'update']);
+        Route::post('/education/{article}/publish', [EducationArticleController::class, 'publish']);
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->middleware('throttle:60,1');
     });
 });

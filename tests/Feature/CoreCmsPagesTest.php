@@ -34,11 +34,11 @@ class CoreCmsPagesTest extends TestCase
         $page = CmsPage::where('slug', 'home')->firstOrFail();
         $publishedHeading = $page->published_snapshot['sections'][0]['content']['heading'];
 
-        $this->getJson('/api/cms/pages/home')->assertOk()->assertJsonPath('data.slug', 'home')->assertJsonPath('data.sections.0.content.heading', $publishedHeading);
+        $this->getJson('/api/content/pages/home')->assertOk()->assertJsonPath('data.slug', 'home')->assertJsonPath('data.sections.0.content.heading', $publishedHeading);
 
         $page->sections()->first()->update(['content' => ['heading' => 'Private draft heading']]);
         $page->update(['status' => 'draft']);
 
-        $this->getJson('/api/cms/pages/home')->assertJsonPath('data.sections.0.content.heading', $publishedHeading);
+        $this->getJson('/api/content/pages/home')->assertJsonPath('data.sections.0.content.heading', $publishedHeading);
     }
 }

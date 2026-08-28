@@ -14,6 +14,6 @@ class AppointmentPolicy
 
     public function update(User $user, Appointment $appointment): bool
     {
-        return $user->isStaff() || ($appointment->patient_id === $user->id && in_array($appointment->status->value, ['requested', 'pending_confirmation', 'confirmed'], true));
+        return $user->isStaff() || ($appointment->patient_id === $user->id && in_array($appointment->status->value, ['requested', 'pending_confirmation', 'confirmed', 'rescheduled'], true));
     }
 }

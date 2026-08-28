@@ -70,7 +70,8 @@ class AdvancedSchedulingTest extends TestCase
     {
         $patient = User::factory()->create();
         $patient->notificationPreference()->create(['in_app_reminders' => true, 'email_reminders' => false, 'push_reminders' => false]);
-        $this->appointment($patient, now()->addHour());
+        $appointment = $this->appointment($patient, now()->addHour());
+        $appointment->update(['status' => 'rescheduled']);
         Artisan::call('appointments:send-reminders');
         Artisan::call('appointments:send-reminders');
         $this->assertDatabaseCount('notification_deliveries', 2);

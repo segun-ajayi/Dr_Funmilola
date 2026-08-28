@@ -14,11 +14,12 @@ class ConsultationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_only_confirmed_online_appointment_can_receive_one_room():void
+    public function test_only_confirmed_or_rescheduled_online_appointment_can_receive_one_room():void
     {
         $staff=User::factory()->create(['role'=>UserRole::Moderator]);$patient=User::factory()->create();$online=$this->appointment($patient,now()->addMinutes(10));Sanctum::actingAs($staff);
         $response=$this->postJson("/api/staff/appointments/{$online->id}/consultation")->assertCreated()->assertJsonMissingPath('data.room_locator');
         $this->postJson("/api/staff/appointments/{$online->id}/consultation")->assertCreated();$this->assertDatabaseCount('consultations',1);
+        $rescheduled=$this->appointment($patient,now()->addHours(2));$rescheduled->update(['status'=>'rescheduled']);$this->postJson("/api/staff/appointments/{$rescheduled->id}/consultation")->assertCreated();
         $inPerson=$this->appointment($patient,now()->addDay(),'in_person');$this->postJson("/api/staff/appointments/{$inPerson->id}/consultation")->assertUnprocessable();
         $this->assertNotNull($response->json('data.public_id'));
     }

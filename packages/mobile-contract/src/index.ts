@@ -7,7 +7,10 @@ export interface MobileCapabilities{api_version:ApiVersion;practice_timezone:'Af
 export interface MobileUser{id:number;name:string;email:string;phone:string|null;profile:PatientProfile|null}
 export interface PatientProfile{date_of_birth:string|null;address:string|null;emergency_contact_name:string|null;emergency_contact_phone:string|null;preferred_communication:'email'|'phone'|'sms'}
 export type AppointmentStatus='requested'|'pending_confirmation'|'confirmed'|'checked_in'|'in_progress'|'completed'|'cancelled'|'rescheduled'|'no_show';
-export interface Appointment{id:number;public_id:string;starts_at:string;ends_at:string;timezone:string;status:AppointmentStatus;consultation_method:'online'|'in_person';location:string|null;reason:string;service:{id:number;name:string;slug:string};consultation?:{id:number;status:ConsultationStatus}|null}
+export type AppointmentPatientAction='request_cancellation'|'request_reschedule';
+export interface AppointmentChangeRequest{id:number;status:'pending'|'approved'|'declined';requested_starts_at?:string}
+export interface AvailabilitySlot{starts_at:string;ends_at:string;label:string}
+export interface Appointment{id:number;public_id:string;starts_at:string;ends_at:string;timezone:string;status:AppointmentStatus;consultation_method:'online'|'in_person';location:string|null;reason:string;service:{id:number;name:string;slug:string};consultation?:{id:number;status:ConsultationStatus}|null;cancellation_request?:AppointmentChangeRequest|null;reschedule_request?:AppointmentChangeRequest|null;allowed_actions:AppointmentPatientAction[]}
 export type ConsultationStatus='scheduled'|'waiting'|'ready'|'in_progress'|'ended';
 export interface PatientDocument{id:number;public_id:string;label:string;original_name:string;mime_type:string;size_bytes:number;created_at:string}
 export interface PracticeMessage{id:number;body:string;created_at:string;sender:{id:number;name:string;role:string}}

@@ -1,10 +1,10 @@
 <?php
 namespace App\Http\Controllers\Mobile;
-use App\Http\Controllers\Controller;use Illuminate\Http\JsonResponse;use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;use App\Models\Appointment;use App\Services\AppointmentWorkflowService;use Illuminate\Http\JsonResponse;use Illuminate\Http\Request;
 class MobilePatientController extends Controller{
  public function capabilities():JsonResponse{return response()->json(['data'=>['api_version'=>'v1','practice_timezone'=>'Africa/Lagos','features'=>['appointments'=>true,'messages'=>true,'documents'=>true,'consultations'=>true,'push_notifications'=>false,'live_video'=>false],'uploads'=>['max_bytes'=>10485760,'mime_types'=>['application/pdf','image/jpeg','image/png']]]]);}
  public function me(Request $request):JsonResponse{$u=$request->user()->load('patientProfile');return response()->json(['data'=>['id'=>$u->id,'name'=>$u->name,'email'=>$u->email,'phone'=>$u->phone,'profile'=>$u->patientProfile]]);}
- public function appointments(Request $request):JsonResponse{return $this->page($request->user()->appointments()->with(['service:id,name,slug','consultation:id,appointment_id,status'])->latest('starts_at')->paginate($this->size($request)));}
+ public function appointments(Request $request,AppointmentWorkflowService $workflow):JsonResponse{return $this->page($request->user()->appointments()->with(['service:id,name,slug','consultation:id,appointment_id,status','cancellationRequest:id,appointment_id,status','rescheduleRequest:id,appointment_id,status,requested_starts_at'])->latest('starts_at')->paginate($this->size($request))->through(function(Appointment $appointment)use($workflow){$appointment->setAttribute('allowed_actions',$workflow->allowedPatientActions($appointment));return $appointment;}));}
  public function documents(Request $request):JsonResponse{return $this->page($request->user()->documents()->latest()->paginate($this->size($request))->through(fn($d)=>$d->makeHidden(['storage_path','patient_id'])));}
  public function threads(Request $request):JsonResponse{return $this->page($request->user()->messageThreads()->with(['messages'=>fn($q)=>$q->with('sender:id,name,role')->oldest()])->latest('last_message_at')->paginate($this->size($request)));}
  public function notifications(Request $request):JsonResponse{return $this->page($request->user()->notifications()->latest()->paginate($this->size($request)));}

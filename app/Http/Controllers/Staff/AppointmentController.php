@@ -45,6 +45,6 @@ class AppointmentController extends Controller
         $start = CarbonImmutable::parse($data['starts_at'])->setTimezone('Africa/Lagos');
         $updated = $workflow->reschedule($appointment->loadMissing('service'), $start, $request->user(), $availability);
 
-        return response()->json(['message' => 'Appointment rescheduled and confirmed.', 'data' => $updated]);
+        return response()->json(['message' => 'Appointment rescheduled.', 'data' => $updated]);
     }
 }

@@ -63,7 +63,7 @@ class AvailabilityService
 
     public function hasConflict(CarbonImmutable $start, CarbonImmutable $end, ?int $exceptAppointmentId = null): bool
     {
-        return Appointment::query()->when($exceptAppointmentId, fn ($query) => $query->whereKeyNot($exceptAppointmentId))->whereNotIn('status', [AppointmentStatus::Cancelled->value, AppointmentStatus::Rescheduled->value, AppointmentStatus::NoShow->value])->where('starts_at', '<', $end->utc())->where('ends_at', '>', $start->utc())->exists();
+        return Appointment::query()->when($exceptAppointmentId, fn ($query) => $query->whereKeyNot($exceptAppointmentId))->whereNotIn('status', [AppointmentStatus::Cancelled->value, AppointmentStatus::NoShow->value])->where('starts_at', '<', $end->utc())->where('ends_at', '>', $start->utc())->exists();
     }
 
     private function slotsWithinWindow(CarbonImmutable $cursor, CarbonImmutable $limit, int $step, Service $service, Collection $closures, ?int $exceptAppointmentId): Collection

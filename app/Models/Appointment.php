@@ -32,5 +32,6 @@ class Appointment extends Model
     }
 
     public function cancellationRequest() { return $this->hasOne(AppointmentCancellationRequest::class); }
+    public function rescheduleRequest() { return $this->hasOne(AppointmentRescheduleRequest::class); }
     public function consultation() { return $this->hasOne(Consultation::class); }
 }

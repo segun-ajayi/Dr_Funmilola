@@ -15,7 +15,7 @@ class ConsultationService
     public function __construct(private readonly VideoProviderInterface $provider){}
     public function create(Appointment $appointment,User $actor): Consultation
     {
-        if($appointment->consultation_method!=='online'||$appointment->status->value!=='confirmed')throw ValidationException::withMessages(['appointment'=>'Only confirmed online appointments can receive a consultation room.']);
+        if($appointment->consultation_method!=='online'||!in_array($appointment->status->value,['confirmed','rescheduled'],true))throw ValidationException::withMessages(['appointment'=>'Only confirmed or rescheduled online appointments can receive a consultation room.']);
         return DB::transaction(function()use($appointment,$actor){$reference=(string)Str::uuid();$room=$this->provider->createRoom($reference);$consultation=Consultation::firstOrCreate(['appointment_id'=>$appointment->id],['public_id'=>$reference,'provider_key'=>$room['provider_key'],'room_locator'=>$room['room_locator'],'created_by'=>$actor->id]);$this->audit($consultation,$actor,'consultation.created');return $consultation->load('appointment.patient:id,name,email');});
     }
     public function transition(Consultation $consultation,string $status,User $actor): Consultation

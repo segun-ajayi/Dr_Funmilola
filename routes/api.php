@@ -29,6 +29,7 @@ use App\Http\Controllers\PatientProfileController;
 use App\Http\Controllers\PublicCmsController;
 use App\Http\Controllers\PublicContentController;
 use App\Http\Controllers\ReadinessController;
+use App\Http\Controllers\RescheduleRequestController;
 use App\Http\Controllers\Staff\AppointmentController as StaffAppointmentController;
 use App\Http\Controllers\Staff\AvailabilityExceptionController;
 use App\Http\Controllers\Staff\AvailabilityRuleController;
@@ -81,6 +82,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('/consultations/{consultation}/leave', [ConsultationController::class, 'leave']);
         Route::middleware('role:patient')->group(function () {
             Route::post('/me/appointments/{appointment}/cancellation-request', [CancellationRequestController::class, 'store']);
+            Route::post('/me/appointments/{appointment}/reschedule-request', [RescheduleRequestController::class, 'store']);
             Route::get('/me/profile', [PatientProfileController::class, 'show']);
             Route::put('/me/profile', [PatientProfileController::class, 'update']);
             Route::get('/me/documents', [PatientDocumentController::class, 'index']);
@@ -111,6 +113,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/inbox', [InboxController::class, 'index']);
         Route::post('/message-threads/{thread}/messages', [InboxController::class, 'reply']);
         Route::patch('/cancellation-requests/{cancellation}', [InboxController::class, 'reviewCancellation']);
+        Route::patch('/reschedule-requests/{reschedule}', [InboxController::class, 'reviewReschedule']);
         Route::get('/patients/{patient}', [InboxController::class, 'patient']);
         Route::get('/consultations', [StaffConsultationController::class, 'index']);
         Route::post('/appointments/{appointment}/consultation', [StaffConsultationController::class, 'store']);

@@ -95,10 +95,37 @@ class CmsTest extends TestCase
     {
         $this->power();
         $this->putJson('/api/cms/settings/navigation', ['value' => [['label' => 'Care', 'path' => '/services']]])->assertOk();
+        $this->getJson('/api/cms/public-settings')->assertOk()->assertJsonMissingPath('data.navigation');
+        $this->getJson('/api/cms/settings')->assertOk()->assertJsonPath('data.navigation.draft_value.0.label', 'Care');
         $this->putJson('/api/cms/settings/navigation', ['value' => [['label' => 'Bad', 'path' => 'javascript:alert(1)']]])->assertUnprocessable();
         $this->putJson('/api/cms/settings/theme', ['value' => ['palette' => 'wine', 'density' => 'comfortable', 'heading_style' => 'editorial']])->assertOk();
+        $this->postJson('/api/cms/settings/navigation/publish')->assertOk();
         $this->postJson('/api/cms/settings/theme/publish')->assertOk();
-        $this->getJson('/api/cms/public-settings')->assertOk()->assertJsonPath('data.theme.palette', 'wine');
+        $this->getJson('/api/cms/public-settings')->assertOk()->assertJsonPath('data.navigation.0.label', 'Care')->assertJsonPath('data.theme.palette', 'wine');
+
+        $this->putJson('/api/cms/settings/navigation', ['value' => [['label' => 'Private draft', 'path' => '/about']]])->assertOk();
+        $this->putJson('/api/cms/settings/theme', ['value' => ['palette' => 'plum', 'density' => 'compact', 'heading_style' => 'modern']])->assertOk();
+        $this->getJson('/api/cms/public-settings')->assertJsonPath('data.navigation.0.label', 'Care')->assertJsonPath('data.theme.palette', 'wine');
+    }
+
+    public function test_every_structured_section_and_presentation_control_round_trips(): void
+    {
+        $page = $this->page();
+        $sections = [
+            'hero' => ['eyebrow' => 'Care', 'heading' => 'Hero', 'text' => 'Intro', 'primary_label' => 'Book', 'primary_url' => '/book', 'secondary_label' => 'Learn', 'secondary_url' => 'https://example.test/learn'],
+            'text' => ['eyebrow' => 'Profile', 'heading' => 'Text', 'body' => "First paragraph\nSecond paragraph"],
+            'cta' => ['eyebrow' => 'Next', 'heading' => 'CTA', 'text' => 'Act now', 'button_label' => 'Contact', 'button_url' => '/contact'],
+            'stats' => ['eyebrow' => 'Impact', 'heading' => 'Stats', 'text' => 'Selected measures', 'items' => [['value' => '25+', 'label' => 'Years']]],
+            'image_text' => ['eyebrow' => 'Team', 'heading' => 'Image', 'text' => 'Approved photograph', 'image_url' => 'https://example.test/photo.jpg', 'image_alt' => 'Clinician speaking with a patient'],
+        ];
+        foreach ($sections as $type => $content) {
+            $this->postJson("/api/cms/pages/{$page->id}/sections", [
+                'type' => $type, 'content' => $content,
+                'presentation' => ['background' => 'blush', 'alignment' => 'center', 'width' => 'wide', 'spacing' => 'generous'],
+                'is_visible' => false,
+            ])->assertCreated()->assertJsonPath('data.presentation.width', 'wide')->assertJsonPath('data.is_visible', false);
+        }
+        $this->getJson("/api/cms/pages/{$page->id}")->assertOk()->assertJsonCount(5, 'data.sections')->assertJsonPath('data.sections.3.content.items.0.label', 'Years');
     }
 
     private function power(): User

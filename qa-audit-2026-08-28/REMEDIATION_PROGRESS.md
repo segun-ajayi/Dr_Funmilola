@@ -38,8 +38,8 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 | Finding | Step | Status | Minimum closure evidence | Revision / files / tests / runtime evidence / remaining risk |
 | --- | ---: | --- | --- | --- |
 | QA-001 | 1 | READY FOR RETEST | Numeric protected page 200, public slug works, role denials and real editor E2E | Implementation `cf396fd`; route/editor integration and public-browser evidence in `evidence/QA-001`; independent authenticated browser retest pending |
-| QA-002 | 6 | NOT STARTED | Every visual CMS control in REQ-065–084 passes E2E/accessibility | Queued; evidence folder `evidence/QA-002` |
-| QA-003 | 6 | NOT STARTED | Published nav/theme visibly changes public renderer; draft does not | Queued; evidence folder `evidence/QA-003` |
+| QA-002 | 6 | IN PROGRESS | Every visual CMS control in REQ-065–084 passes E2E/accessibility | Page details, complete structured-section controls, visibility, presentation, preview/publish, settings and version restore are being integrated; managed media/crop remains dependent on the approved public-media pipeline; evidence folder `evidence/QA-002` |
+| QA-003 | 6 | IN PROGRESS | Published nav/theme visibly changes public renderer; draft does not | Public renderer integration and draft/publish regression are in progress; evidence folder `evidence/QA-003` |
 | QA-004 | 2 | READY FOR RETEST | Off-rule/closed/method-invalid POSTs fail; generated slot succeeds | Implementation `adf7156`; shared availability decision and regression evidence in `evidence/QA-004` |
 | QA-005 | 2 | BLOCKED | Repeated PostgreSQL concurrent test commits exactly one overlap | PostgreSQL advisory-lock implementation `adf7156`; true concurrent PostgreSQL runtime unavailable; evidence in `evidence/QA-005` |
 | QA-006 | 2 | READY FOR RETEST | slot_minutes/buffer semantics documented and boundary-tested | Implementation `adf7156`; cadence contract/test in `evidence/QA-006` |
@@ -124,3 +124,9 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 - Tests: full backend 82 tests/499 assertions; dedicated lifecycle suite 5 tests/61 assertions; web TypeScript, 5 files/9 tests and production build passed; native TypeScript, 5 suites/7 tests and Expo public iOS/Android configuration passed. Latest migration rollback/re-migration passed.
 - Runtime: authenticated in-app Chromium loaded the staff inbox with separate, labelled cancellation and reschedule review queues and no rendering failure. Component tests exercised the patient web reschedule form and native server-derived-slot flow.
 - Remaining risk: independent patient/staff browser E2E with populated queues, physical iOS/Android interaction/accessibility, additional browser engines and production PostgreSQL concurrent approval evidence remain required before PASS.
+
+### Step 6 — Connect the visual CMS to the public website
+
+- Status: IN PROGRESS.
+- Scope: make published navigation and theme settings drive the public layout; keep drafts private; expose all allowlisted structured content and presentation fields; add page details, visibility, preview/publish status, and version restore controls; verify keyboard labels and responsive behavior.
+- Safety boundary: public media remains URL-based until the approved malware scanning, hosting, retention and image-processing design from QA-022 is available. An unscanned upload/crop shortcut will not be introduced.

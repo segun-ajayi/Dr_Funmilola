@@ -25,6 +25,10 @@ class CoreCmsPagesTest extends TestCase
         $this->assertDatabaseHas('cms_pages', ['slug' => 'about', 'title' => 'Custom About']);
         $this->assertDatabaseHas('cms_pages', ['slug' => 'home', 'status' => 'published']);
         $this->assertSame(3, CmsPage::where('status', 'published')->count());
+        $this->assertDatabaseCount('cms_settings', 2);
+        $this->getJson('/api/cms/public-settings')->assertOk()
+            ->assertJsonPath('data.navigation.0.label', 'Home')
+            ->assertJsonPath('data.theme.palette', 'wine');
     }
 
     public function test_seeded_core_page_is_public_at_cms_contract_and_draft_changes_stay_private(): void

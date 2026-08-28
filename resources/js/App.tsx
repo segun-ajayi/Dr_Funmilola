@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Routes, Route, Link, NavLink, useLocation } from 'react-router-dom';
 import { ArrowRight, CalendarDays, HeartPulse, Menu, Microscope, ShieldCheck, Stethoscope, Video, BookOpen, MapPin, Pencil, X } from 'lucide-react';
 import type { PublicData } from './types';
@@ -24,16 +24,22 @@ import { api } from './api';
 const getPublic = async (): Promise<PublicData> => { const r = await fetch('/api/public'); if (!r.ok) throw new Error('Unable to load practice information'); return r.json(); };
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const location=useLocation(),[editing,setEditing]=useState(false);
+  const location=useLocation(),[editing,setEditing]=useState(false),[menuOpen,setMenuOpen]=useState(false);
   const me=useQuery({queryKey:['me'],queryFn:async()=>(await api.get('/me')).data.user,retry:false});
+  const publicSettings=useQuery({queryKey:['cms-public-settings'],queryFn:async()=>(await api.get('/cms/public-settings')).data.data,retry:false,staleTime:60_000});
   const power=me.data?.role==='power_admin';
-  const contextual=location.pathname.startsWith('/research')||location.pathname.startsWith('/academic')?'/staff/research-review':location.pathname.startsWith('/education')?'/staff/education':'/staff/cms';
-  return <><header className="site-header"><nav className="navbar navbar-expand-lg"><div className="container">
+  const defaults=[{label:'Home',path:'/'},{label:'About',path:'/about'},{label:'Services',path:'/services'},{label:'Research',path:'/research'},{label:'Patient portal',path:'/portal'},{label:'Book appointment',path:'/book'}];
+  const navigation=Array.isArray(publicSettings.data?.navigation)&&publicSettings.data.navigation.length?publicSettings.data.navigation:defaults;
+  const theme=publicSettings.data?.theme??{palette:'wine',density:'comfortable',heading_style:'editorial'};
+  const coreSlug=location.pathname==='/'?'home':['about','services','research'].includes(location.pathname.slice(1))?location.pathname.slice(1):location.pathname.startsWith('/p/')?location.pathname.slice(3):'';
+  const contextual=location.pathname.startsWith('/academic')?'/staff/research-review':location.pathname.startsWith('/education')?'/staff/education':coreSlug?`/staff/cms?slug=${encodeURIComponent(coreSlug)}`:'/staff/cms';
+  useEffect(()=>setMenuOpen(false),[location.pathname]);
+  return <div className={`site-shell theme-${theme.palette||'wine'} density-${theme.density||'comfortable'} headings-${theme.heading_style||'editorial'}`}><header className="site-header"><nav className="navbar navbar-expand-lg" aria-label="Main navigation"><div className="container">
     <Link className="brand" to="/"><span className="brand-mark" aria-hidden="true"><HeartPulse size={22}/></span><span><b>Dr. Funmilola Wuraola</b><small>Breast Oncology Practice</small></span></Link>
-    <button className="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#nav" aria-label="Open navigation"><Menu/></button>
-    <div id="nav" className="collapse navbar-collapse justify-content-end"><div className="navbar-nav align-items-lg-center gap-lg-2">
-      <NavLink className="nav-link" to="/">Home</NavLink><NavLink className="nav-link" to="/about">About</NavLink><NavLink className="nav-link" to="/services">Services</NavLink><NavLink className="nav-link" to="/research">Research</NavLink><NavLink className="nav-link" to="/portal">Patient portal</NavLink><Link className="btn btn-primary ms-lg-3" to="/book">Book appointment</Link>
-    </div></div></div></nav></header>{power&&<div className={`power-edit-tools ${editing?'open':''}`}><button aria-expanded={editing} onClick={()=>setEditing(!editing)}>{editing?<X/>:<Pencil/>}{editing?'Close editing':'Edit site'}</button>{editing&&<nav aria-label="Power Admin editing tools"><Link to={contextual}><Pencil/> Edit this area</Link><Link to="/staff/cms">Website pages</Link><Link to="/staff/research-review">Publications</Link><Link to="/staff/education">Education</Link><Link to="/staff">Admin dashboard</Link></nav>}</div>}<main>{children}</main><Footer/></>;
+    <button type="button" className="navbar-toggler" aria-controls="main-navigation-links" aria-expanded={menuOpen} aria-label={menuOpen?'Close navigation':'Open navigation'} onClick={()=>setMenuOpen(open=>!open)}>{menuOpen?<X/>:<Menu/>}</button>
+    <div id="main-navigation-links" className={`collapse navbar-collapse justify-content-end ${menuOpen?'show':''}`}><div className="navbar-nav align-items-lg-center gap-lg-2">
+      {navigation.map((item:any)=>item.path==='/book'?<Link className="btn btn-primary ms-lg-3" to={item.path} key={`${item.path}-${item.label}`}>{item.label}</Link>:<NavLink className="nav-link" to={item.path} key={`${item.path}-${item.label}`}>{item.label}</NavLink>)}
+    </div></div></div></nav></header>{power&&<div className={`power-edit-tools ${editing?'open':''}`}><button aria-expanded={editing} onClick={()=>setEditing(!editing)}>{editing?<X/>:<Pencil/>}{editing?'Close editing':'Edit site'}</button>{editing&&<nav aria-label="Power Admin editing tools"><Link to={contextual}><Pencil/> Edit this area</Link><Link to="/staff/cms">Website pages</Link><Link to="/staff/research-review">Publications</Link><Link to="/staff/education">Education</Link><Link to="/staff">Admin dashboard</Link></nav>}</div>}<main>{children}</main><Footer/></div>;
 }
 
 function Footer() { return <footer><div className="container"><div className="row g-4"><div className="col-lg-5"><div className="footer-brand">Dr. Funmilola Wuraola</div><p>Specialist, evidence-informed breast care delivered with clarity, dignity and compassion.</p><p className="medical-note">Website information is educational and does not replace an individual medical consultation.</p></div><div className="col-6 col-lg-3"><h3>Practice</h3><Link to="/services">Services</Link><Link to="/book">Appointments</Link><Link to="/research">Research</Link></div><div className="col-6 col-lg-4"><h3>Location</h3><p><MapPin size={16}/> Ile-Ife, Osun State, Nigeria</p><p>Exact clinic details are shared with confirmed patients.</p></div></div><div className="footer-bottom">© {new Date().getFullYear()} Dr. Funmilola Olanike Wuraola · Privacy · Terms · Accessibility</div></div></footer>; }

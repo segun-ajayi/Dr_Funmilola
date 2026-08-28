@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\CmsPage;
+use App\Models\CmsSetting;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -37,6 +38,19 @@ class CoreCmsPageSeeder extends Seeder
             $page->versions()->create([
                 'version' => 1, 'reason' => 'Core website page seeded',
                 'snapshot' => $snapshot, 'created_by' => $owner->id,
+            ]);
+        }
+
+        foreach ([
+            'navigation' => [
+                ['label' => 'Home', 'path' => '/'], ['label' => 'About', 'path' => '/about'],
+                ['label' => 'Services', 'path' => '/services'], ['label' => 'Research', 'path' => '/research'],
+                ['label' => 'Patient portal', 'path' => '/portal'], ['label' => 'Book appointment', 'path' => '/book'],
+            ],
+            'theme' => ['palette' => 'wine', 'density' => 'comfortable', 'heading_style' => 'editorial'],
+        ] as $key => $value) {
+            CmsSetting::firstOrCreate(['key' => $key], [
+                'draft_value' => $value, 'published_value' => $value, 'updated_by' => $owner->id,
             ]);
         }
     }

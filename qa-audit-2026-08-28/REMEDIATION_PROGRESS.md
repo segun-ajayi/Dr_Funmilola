@@ -40,9 +40,9 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 | QA-001 | 1 | READY FOR RETEST | Numeric protected page 200, public slug works, role denials and real editor E2E | Implementation `cf396fd`; route/editor integration and public-browser evidence in `evidence/QA-001`; independent authenticated browser retest pending |
 | QA-002 | 6 | NOT STARTED | Every visual CMS control in REQ-065–084 passes E2E/accessibility | Queued; evidence folder `evidence/QA-002` |
 | QA-003 | 6 | NOT STARTED | Published nav/theme visibly changes public renderer; draft does not | Queued; evidence folder `evidence/QA-003` |
-| QA-004 | 2 | NOT STARTED | Off-rule/closed/method-invalid POSTs fail; generated slot succeeds | Queued; evidence folder `evidence/QA-004` |
-| QA-005 | 2 | NOT STARTED | Repeated PostgreSQL concurrent test commits exactly one overlap | Queued; PostgreSQL runtime currently blocked; evidence folder `evidence/QA-005` |
-| QA-006 | 2 | NOT STARTED | slot_minutes/buffer semantics documented and boundary-tested | Queued; evidence folder `evidence/QA-006` |
+| QA-004 | 2 | READY FOR RETEST | Off-rule/closed/method-invalid POSTs fail; generated slot succeeds | Implementation `adf7156`; shared availability decision and regression evidence in `evidence/QA-004` |
+| QA-005 | 2 | BLOCKED | Repeated PostgreSQL concurrent test commits exactly one overlap | PostgreSQL advisory-lock implementation `adf7156`; true concurrent PostgreSQL runtime unavailable; evidence in `evidence/QA-005` |
+| QA-006 | 2 | READY FOR RETEST | slot_minutes/buffer semantics documented and boundary-tested | Implementation `adf7156`; cadence contract/test in `evidence/QA-006` |
 | QA-007 | 5 | NOT STARTED | Declined cancellation can be resubmitted and displays accurately | Queued; evidence folder `evidence/QA-007` |
 | QA-008 | 5 | NOT STARTED | Reschedule lifecycle consistent in DB/API/UI/audit/notifications | Queued; evidence folder `evidence/QA-008` |
 | QA-009 | 10 | NOT STARTED | Day/week/month/agenda plus operations/filters/responsive/a11y pass | Queued; evidence folder `evidence/QA-009` |
@@ -85,3 +85,12 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 - Tests: full backend 62 tests/349 assertions; targeted CMS 9 tests/59 assertions; web typecheck, 7 tests, and production build passed.
 - Runtime: public Home rendered through `/api/content/pages/home` in the in-app Chromium browser with the expected heading and no console errors. The real backend integration completed list/select, numeric load, draft edit, preview, publish, and public read. Patient, Moderator, and Admin numeric access returned 403; missing numeric ID and missing slug returned safe 404s.
 - Remaining risk: the browser session was unauthenticated, so the visual Power Admin click-through was not repeated without entering credentials. Independent authenticated browser retest remains required before PASS.
+
+### Step 2 — Make booking submission use scheduling truth
+
+- Status: IMPLEMENTED; QA-004 and QA-006 READY FOR RETEST; QA-005 BLOCKED ON POSTGRESQL RUNTIME EVIDENCE.
+- Revision: `adf7156`.
+- Files: `app/Services/AvailabilityService.php`, booking and reschedule services/controllers, scheduling documentation, and related feature tests.
+- Tests: full backend 64 tests/357 assertions; targeted scheduling/booking/staff suite 13 tests/61 assertions.
+- Runtime: SQLite regression proves generated slot success, repeated-slot rejection, off-cadence rejection, unsupported online method rejection, rule/closure/additional-clinic generation, and staff reschedule parity.
+- Remaining risk: PostgreSQL 17 and a true simultaneous create/create plus create/reschedule harness remain unavailable because the local Docker engine and PostgreSQL port are unavailable. The date-scoped `pg_advisory_xact_lock` branch is implemented but not claimed as runtime-proven.

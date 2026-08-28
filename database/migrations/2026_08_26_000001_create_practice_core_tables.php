@@ -122,6 +122,10 @@ return new class extends Migration
         Schema::dropIfExists('availability_rules');
         Schema::dropIfExists('services');
         Schema::dropIfExists('patient_profiles');
-        Schema::table('users', fn (Blueprint $table) => $table->dropColumn(['role', 'phone', 'is_active', 'last_login_at']));
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropIndex(['role']);
+            $table->dropIndex(['phone']);
+            $table->dropColumn(['role', 'phone', 'is_active', 'last_login_at']);
+        });
     }
 };

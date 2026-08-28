@@ -128,6 +128,70 @@ class CmsTest extends TestCase
         $this->getJson("/api/cms/pages/{$page->id}")->assertOk()->assertJsonCount(5, 'data.sections')->assertJsonPath('data.sections.3.content.items.0.label', 'Years');
     }
 
+    public function test_page_and_section_lifecycle_supports_duplicate_unpublish_seo_and_conflict_detection(): void
+    {
+        $page = $this->page();
+        $section = $this->section($page, 'Lifecycle source');
+        $version = $this->getJson("/api/cms/pages/{$page->id}")->assertOk()->json('data.lock_version');
+        $this->putJson("/api/cms/pages/{$page->id}", [
+            'title' => 'Living well guide', 'slug' => 'living-well', 'template' => 'resource',
+            'seo_title' => 'Living well after breast treatment', 'seo_description' => 'A clear guide to follow-up care.', 'lock_version' => $version,
+        ])->assertOk()->assertJsonPath('data.seo_title', 'Living well after breast treatment');
+        $this->putJson("/api/cms/pages/{$page->id}", [
+            'title' => 'Stale editor', 'slug' => 'living-well', 'template' => 'resource', 'lock_version' => $version,
+        ])->assertConflict();
+
+        $this->postJson("/api/cms/pages/{$page->id}/sections/{$section->id}/duplicate")->assertCreated();
+        $this->assertCount(2, $page->fresh()->sections);
+        $this->postJson("/api/cms/pages/{$page->id}/publish")->assertOk();
+        $this->getJson('/api/content/pages/living-well')->assertOk()->assertJsonPath('data.seo.title', 'Living well after breast treatment');
+
+        $copyId = $this->postJson("/api/cms/pages/{$page->id}/duplicate", ['title' => 'Living well copy', 'slug' => 'living-well-copy'])
+            ->assertCreated()->assertJsonPath('data.status', 'draft')->json('data.id');
+        $this->getJson("/api/cms/pages/{$copyId}")->assertJsonCount(2, 'data.sections');
+        $this->getJson('/api/content/pages/living-well-copy')->assertNotFound();
+
+        $this->postJson("/api/cms/pages/{$page->id}/unpublish")->assertOk();
+        $this->getJson('/api/content/pages/living-well')->assertNotFound();
+    }
+
+    public function test_advanced_button_image_and_typography_options_are_allowlisted(): void
+    {
+        $page = $this->page();
+        $payload = [
+            'type' => 'hero',
+            'content' => ['heading' => 'Options', 'primary_label' => 'Book', 'primary_url' => '/book', 'primary_style' => 'outline', 'primary_icon' => 'calendar', 'primary_visibility' => 'show'],
+            'presentation' => ['background' => 'white', 'alignment' => 'center', 'width' => 'wide', 'spacing' => 'compact', 'font_family' => 'modern', 'font_size' => 'large', 'font_weight' => 'bold', 'emphasis' => 'italic_underline', 'text_color' => 'wine', 'line_height' => 'relaxed'],
+            'is_visible' => true,
+        ];
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertCreated()->assertJsonPath('data.content.primary_icon', 'calendar')->assertJsonPath('data.presentation.emphasis', 'italic_underline');
+        $payload['content']['primary_style'] = 'javascript';
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
+        $payload['content']['primary_style'] = 'primary';
+        $payload['presentation']['font_family'] = 'url(evil)';
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
+    }
+
+    public function test_navigation_supports_visibility_reordering_and_one_safe_submenu_level(): void
+    {
+        $this->power();
+        $navigation = [
+            ['label' => 'Care', 'path' => '/services', 'is_visible' => true, 'children' => [
+                ['label' => 'Second opinion', 'path' => '/book', 'is_visible' => true],
+                ['label' => 'Hidden guide', 'path' => '/p/guide', 'is_visible' => false],
+            ]],
+            ['label' => 'Private', 'path' => '/p/private', 'is_visible' => false],
+        ];
+        $this->putJson('/api/cms/settings/navigation', ['value' => $navigation])->assertOk()
+            ->assertJsonPath('data.draft_value.0.children.0.label', 'Second opinion')
+            ->assertJsonPath('data.draft_value.1.is_visible', false);
+        $this->postJson('/api/cms/settings/navigation/publish')->assertOk();
+        $this->getJson('/api/cms/public-settings')->assertJsonPath('data.navigation.0.children.1.is_visible', false);
+
+        $navigation[0]['children'][0]['children'] = [['label' => 'Too deep', 'path' => '/about']];
+        $this->putJson('/api/cms/settings/navigation', ['value' => $navigation])->assertUnprocessable();
+    }
+
     private function power(): User
     {
         $user = User::factory()->create(['role' => UserRole::PowerAdmin]);

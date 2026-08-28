@@ -64,7 +64,7 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 | QA-025 | 8 | NOT STARTED | Per-route title/description/canonical/OG plus sitemap/404 checks | Queued; evidence folder `evidence/QA-025` |
 | QA-026 | 14 | NOT STARTED | Route chunks/requests meet recorded performance budget | Queued; evidence folder `evidence/QA-026` |
 | QA-027 | 8 | NOT STARTED | Approved Privacy/Terms/Accessibility pages linked and crawl-tested | Queued; owner/legal approval remains required; evidence folder `evidence/QA-027` |
-| QA-028 | 4 | NOT STARTED | Booking attachment is scanned, private, owned, audited and accessible | Queued; scanner closure dependency blocked; evidence folder `evidence/QA-028` |
+| QA-028 | 4 | BLOCKED | Booking attachment is scanned, private, owned, audited and accessible | Implementation `5fa3156`; local acceptance passed; approved production scanner/governance and independent responsive/device acceptance remain unavailable; evidence in `evidence/QA-028` |
 | QA-029 | 5 | NOT STARTED | Patient reschedule request approve/decline/conflict/audit/notify passes | Queued; evidence folder `evidence/QA-029` |
 
 ## Step log
@@ -103,3 +103,13 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 - Tests: full backend 71 tests/396 assertions; targeted upload/security/portal suite 17 tests/89 assertions; web typecheck and 7 tests passed.
 - Runtime behavior: uploads use a random private quarantine name, validate safe single-extension names and container signatures, scan the quarantined object, move only a definitive clean result to patient-owned private storage, remove rejected/indeterminate objects, avoid orphan database metadata, and audit upload/rejection/scanner failure/download with privacy-minimal metadata.
 - Remaining risk: `basic` is explicitly local/test-only. Production defaults to fail-closed `unconfigured`. No approved scanner vendor, hosting region, retention/DPA, monitoring credentials, or staging failure-mode run is available, so the finding cannot be READY or PASS.
+
+### Step 4 — Add secure booking-time attachments
+
+- Status: IMPLEMENTED LOCALLY; QA-028 remains BLOCKED on the Step 3 production-scanner/governance dependency and independent responsive/device acceptance.
+- Revision: `5fa3156`.
+- Files: shared `SecureDocumentService`, booking request/controller and document/appointment models, attachment/idempotency migration, accessible booking form and styles, security retention notes, and backend/web regression tests.
+- Tests: full backend 77 tests/437 assertions; dedicated booking-attachment suite 6 tests/41 assertions; web typecheck, 4 files/8 tests, and production build passed. Fresh SQLite migration/seed, latest-migration rollback and re-migration passed.
+- Runtime behavior: no-file booking remains valid; clean PDF/JPEG/PNG files use the shared quarantine/scan/release path and link to both patient and appointment; rejected or unavailable scans roll back the booking and retain no object; the request UUID makes same-request retries return the original reference without a duplicate appointment or document; verified owner and staff download while another patient receives 403.
+- Browser/UI evidence: the production booking build rendered in the in-app Chromium browser with the existing desktop layout intact. The web component journey exercises date/slot selection, fully associated labels, optional file help/accept rules, selected-file status, multipart request, idempotency key and announced success. Separate physical-device and independent responsive/browser-matrix acceptance is not available.
+- Remaining risk: production still deliberately fails closed until an approved scanner adapter, hosting/retention/privacy approval, monitoring and staging failure-mode evidence exist. The local basic scanner and simulated failure tests are not production malware-scanning evidence.

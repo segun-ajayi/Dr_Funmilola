@@ -20,6 +20,8 @@ Every Laravel response receives `nosniff`, clickjacking protection, a restrictiv
 
 Patient documents are first written under a random quarantine name on the private disk. PDF/JPEG/PNG validation, a 10 MB bound, single-extension safe filename rules, container signatures and `FileScannerInterface` scanning run before release. Only a definitive clean result is moved into the patient-owned private document directory and recorded in the database. Unsafe, unavailable, timed-out or indeterminate scans fail closed and remove the quarantine object. Upload, rejection, scanner failure and authorized download actions use privacy-minimal audit metadata.
 
+An optional booking attachment uses this same pipeline. A clean file is owned by the booking patient and linked to the appointment in the same database transaction; a rejected scan or failed booking leaves no appointment, document record or retained object. The browser supplies an opaque request identifier so a network retry returns the original reference without duplicating either record. An appointment deletion removes only the appointment link; the patient-owned document remains subject to the practice's approved clinical-record retention and deletion process. Abandoned forms never upload a file, and patient documents remain excluded from automated pruning.
+
 `UPLOAD_SCANNER=basic` is limited to isolated local development and automated fixtures. Production defaults to `unconfigured`, which deliberately rejects every upload. A release must bind the interface to an approved ClamAV or managed-scanner adapter and document hosting region, retention, monitoring, incident response and failure-mode test evidence.
 
 ## Devices and tokens

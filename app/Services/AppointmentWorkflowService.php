@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
 use App\Models\AuditLog;
-use App\Models\User;
 use App\Models\NotificationDelivery;
+use App\Models\User;
 use App\Notifications\PortalActivityNotification;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +38,7 @@ class AppointmentWorkflowService
                 'assigned_moderator_id' => $appointment->assigned_moderator_id ?: $actor->id,
             ]);
             $this->audit($appointment, $actor, 'appointment.status_changed', ['from' => $from, 'to' => $status->value]);
-            if (in_array($status->value, ['confirmed','cancelled'], true)) {
+            if (in_array($status->value, ['confirmed', 'cancelled'], true)) {
                 $this->notifyPatient($appointment, 'status_'.$status->value, 'Appointment '.ucfirst($status->value), "Your {$appointment->service->name} appointment is now {$status->value}.");
             }
 
@@ -54,12 +54,13 @@ class AppointmentWorkflowService
         if (! $start->isFuture()) {
             throw ValidationException::withMessages(['starts_at' => 'Please choose a future appointment time.']);
         }
-        $end = $start->addMinutes($appointment->service->duration_minutes);
-        if ($availability->hasConflict($start, $end, $appointment->id)) {
-            throw ValidationException::withMessages(['starts_at' => 'This appointment time conflicts with another appointment.']);
-        }
 
-        return DB::transaction(function () use ($appointment, $start, $end, $actor) {
+        return DB::transaction(function () use ($appointment, $start, $actor, $availability) {
+            $availability->lockSchedule($start);
+            if (! $availability->isBookableSlot($appointment->service, $start, $appointment->consultation_method, $appointment->id)) {
+                throw ValidationException::withMessages(['starts_at' => 'This appointment time is unavailable. Refresh the schedule and choose another current slot.']);
+            }
+            $end = $start->addMinutes($appointment->service->duration_minutes);
             $before = $appointment->starts_at->toIso8601String();
             $appointment->update(['starts_at' => $start->utc(), 'ends_at' => $end->utc(), 'status' => AppointmentStatus::Confirmed, 'confirmed_at' => now(), 'assigned_moderator_id' => $actor->id]);
             $this->audit($appointment, $actor, 'appointment.rescheduled', ['from' => $before, 'to' => $start->toIso8601String()]);
@@ -76,8 +77,8 @@ class AppointmentWorkflowService
 
     private function notifyPatient(Appointment $appointment, string $type, string $title, string $message): void
     {
-        $appointment->loadMissing(['patient','service']);
-        $appointment->patient->notify(new PortalActivityNotification($title,$message,'appointment'));
-        NotificationDelivery::updateOrCreate(['appointment_id'=>$appointment->id,'user_id'=>$appointment->patient_id,'notification_type'=>$type,'channel'=>'in_app'],['status'=>'delivered','delivered_at'=>now()]);
+        $appointment->loadMissing(['patient', 'service']);
+        $appointment->patient->notify(new PortalActivityNotification($title, $message, 'appointment'));
+        NotificationDelivery::updateOrCreate(['appointment_id' => $appointment->id, 'user_id' => $appointment->patient_id, 'notification_type' => $type, 'channel' => 'in_app'], ['status' => 'delivered', 'delivered_at' => now()]);
     }
 }

@@ -23,15 +23,16 @@ class AppointmentRequestController extends Controller
         $data = $request->validate(['name' => ['required', 'string', 'max:150'], 'email' => ['required', 'email', 'max:255'], 'phone' => ['required', 'string', 'max:30'], 'service_id' => ['required', 'exists:services,id'], 'starts_at' => ['required', 'date'], 'consultation_method' => ['required', 'in:online,in_person'], 'reason' => ['required', 'string', 'min:10', 'max:2000']]);
         $service = Service::findOrFail($data['service_id']);
         $start = CarbonImmutable::parse($data['starts_at'])->setTimezone('Africa/Lagos');
-        $end = $start->addMinutes($service->duration_minutes);
         if (! $start->isFuture()) {
             throw ValidationException::withMessages(['starts_at' => 'Please select a future appointment time.']);
         }
 
-        $appointment = DB::transaction(function () use ($data, $start, $end, $availability) {
-            if ($availability->hasConflict($start, $end)) {
-                throw ValidationException::withMessages(['starts_at' => 'This appointment slot is no longer available. Please select another time.']);
+        $appointment = DB::transaction(function () use ($data, $service, $start, $availability) {
+            $availability->lockSchedule($start);
+            if (! $availability->isBookableSlot($service, $start, $data['consultation_method'])) {
+                throw ValidationException::withMessages(['starts_at' => 'This appointment slot is unavailable or no longer current. Please refresh availability and select another time.']);
             }
+            $end = $start->addMinutes($service->duration_minutes);
             $patient = User::firstOrCreate(['email' => mb_strtolower($data['email'])], ['name' => $data['name'], 'phone' => $data['phone'], 'role' => UserRole::Patient, 'password' => Hash::make(Str::password(32))]);
             $appointment = Appointment::create(['public_id' => Str::uuid(), 'patient_id' => $patient->id, 'service_id' => $data['service_id'], 'starts_at' => $start->utc(), 'ends_at' => $end->utc(), 'timezone' => 'Africa/Lagos', 'status' => 'requested', 'consultation_method' => $data['consultation_method'], 'reason' => $data['reason'], 'location' => $data['consultation_method'] === 'in_person' ? 'Practice location shared after confirmation' : null]);
             AuditLog::create(['actor_id' => $patient->id, 'action' => 'appointment.requested', 'subject_type' => Appointment::class, 'subject_id' => $appointment->id, 'metadata' => ['method' => $data['consultation_method']]]);

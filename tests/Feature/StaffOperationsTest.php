@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\UserRole;
 use App\Models\Appointment;
+use App\Models\AvailabilityRule;
 use App\Models\Service;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -51,7 +52,8 @@ class StaffOperationsTest extends TestCase
         Sanctum::actingAs($this->moderator);
 
         $this->patchJson("/api/staff/appointments/{$target->id}/reschedule", ['starts_at' => $occupied->starts_at->toIso8601String()])->assertUnprocessable()->assertJsonValidationErrors('starts_at');
-        $newTime = now()->addWeeks(3)->startOfHour();
+        $newTime = now('Africa/Lagos')->addWeeks(3)->setTime(9, 0);
+        AvailabilityRule::create(['weekday' => $newTime->dayOfWeekIso, 'start_time' => '09:00', 'end_time' => '12:00', 'slot_minutes' => 45, 'buffer_minutes' => 15, 'consultation_method' => 'both', 'is_active' => true]);
         $this->patchJson("/api/staff/appointments/{$target->id}/reschedule", ['starts_at' => $newTime->toIso8601String()])->assertOk();
         $this->assertDatabaseHas('audit_logs', ['action' => 'appointment.rescheduled', 'subject_id' => $target->id]);
     }

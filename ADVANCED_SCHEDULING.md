@@ -9,6 +9,10 @@ Weekly availability rules remain the normal clinic template. Staff can layer two
 
 Exceptions are stored as UTC timestamps and displayed in `Africa/Lagos`. A single exception is limited to 31 days. Public slot generation applies closures before returning slots, deduplicates additional windows and always performs the central appointment conflict check.
 
+`slot_minutes` is the configured cadence between candidate start times. The effective cadence is never shorter than the service duration plus the rule buffer, so appointments cannot overlap their required cleanup/preparation time. Additional-clinic exceptions have no separate cadence field and therefore advance by the selected service duration. Booking submission and staff rescheduling re-run this same slot decision inside the scheduling transaction; client-supplied times are never treated as authoritative.
+
+On PostgreSQL, each create or reschedule transaction takes a date-scoped advisory lock before re-checking the slot and writing the appointment. This serializes competing schedule changes for that clinic date and closes the check-then-insert race. SQLite remains suitable for ordinary local tests, but release evidence must include the dedicated simultaneous PostgreSQL integration test.
+
 ## Calendar
 
 The staff calendar uses the bounded `/api/staff/calendar` feed for day, week and month views. API ranges remain limited to 62 days. Schedule-exception endpoints require Admin, Moderator or Power Admin and all create/delete actions are audited.

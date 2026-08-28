@@ -38,8 +38,8 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 | Finding | Step | Status | Minimum closure evidence | Revision / files / tests / runtime evidence / remaining risk |
 | --- | ---: | --- | --- | --- |
 | QA-001 | 1 | READY FOR RETEST | Numeric protected page 200, public slug works, role denials and real editor E2E | Implementation `cf396fd`; route/editor integration and public-browser evidence in `evidence/QA-001`; independent authenticated browser retest pending |
-| QA-002 | 6 | IN PROGRESS | Every visual CMS control in REQ-065–084 passes E2E/accessibility | Page details, complete structured-section controls, visibility, presentation, preview/publish, settings and version restore are being integrated; managed media/crop remains dependent on the approved public-media pipeline; evidence folder `evidence/QA-002` |
-| QA-003 | 6 | IN PROGRESS | Published nav/theme visibly changes public renderer; draft does not | Public renderer integration and draft/publish regression are in progress; evidence folder `evidence/QA-003` |
+| QA-002 | 6 | BLOCKED | Every visual CMS control in REQ-065–084 passes E2E/accessibility | Implementations `b8bbdeb`, `bec0619`, `d905416`; live edit, safe rich text/link ranges, typography, button, menu, page, section and version controls pass locally. Approved scanned public-media upload/library and independent device/a11y acceptance remain unavailable; evidence in `evidence/QA-002` |
+| QA-003 | 6 | READY FOR RETEST | Published nav/theme visibly changes public renderer; draft does not | Implementation `b8bbdeb`, expanded menu `bec0619`; API draft isolation and rendered public settings regressions pass; evidence in `evidence/QA-003` |
 | QA-004 | 2 | READY FOR RETEST | Off-rule/closed/method-invalid POSTs fail; generated slot succeeds | Implementation `adf7156`; shared availability decision and regression evidence in `evidence/QA-004` |
 | QA-005 | 2 | BLOCKED | Repeated PostgreSQL concurrent test commits exactly one overlap | PostgreSQL advisory-lock implementation `adf7156`; true concurrent PostgreSQL runtime unavailable; evidence in `evidence/QA-005` |
 | QA-006 | 2 | READY FOR RETEST | slot_minutes/buffer semantics documented and boundary-tested | Implementation `adf7156`; cadence contract/test in `evidence/QA-006` |
@@ -127,6 +127,11 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 
 ### Step 6 — Connect the visual CMS to the public website
 
-- Status: IN PROGRESS.
-- Scope: make published navigation and theme settings drive the public layout; keep drafts private; expose all allowlisted structured content and presentation fields; add page details, visibility, preview/publish status, and version restore controls; verify keyboard labels and responsive behavior.
-- Safety boundary: public media remains URL-based until the approved malware scanning, hosting, retention and image-processing design from QA-022 is available. An unscanned upload/crop shortcut will not be introduced.
+- Status: IMPLEMENTED LOCALLY WITH PUBLIC-MEDIA / INDEPENDENT-ACCEPTANCE BLOCKER. QA-003 is READY FOR RETEST; QA-002 remains BLOCKED.
+- Revisions: publishing foundation `b8bbdeb`; live visual editor/lifecycle `bec0619`; safe selected-text marks `d905416`.
+- Public Edit Mode: remains active across public navigation, loads a protected draft only for the Power Admin, outlines selectable/hidden sections, and opens a labelled inline editor on double-click. Selected ranges support bold, italic, underline and validated links without raw HTML.
+- Full controls: allowlisted typography/layout, button style/icon/visibility, image URL/alt/link/dimensions/side/fit/crop-focus/radius, menu rename/add/delete/reorder/hide/submenu, page create/rename/slug/SEO/publish/unpublish/duplicate, section add/remove/duplicate/reorder/hide, and version restore. Stale page/inline saves return 409.
+- Settings: published navigation and palette/density/heading style now drive the public renderer; protected drafts do not leak. The mobile menu uses explicit state and accurate ARIA.
+- Tests: full backend 86 tests/560 assertions; web TypeScript, 5 files/14 tests and production build passed. JS 440.49 KB (133.84 KB gzip); CSS 281.67 KB (40.88 KB gzip). Latest migration rollback/reapply passed.
+- Runtime: authenticated in-app Chromium rendered the full page editor and settings manager, then exercised public About Edit Mode, section outlines and the inline text dialog; Cancel left content unchanged.
+- Remaining risk: managed upload/library/replacement still requires the approved QA-022 scanner and public-media hosting/retention/transformation governance. Physical device, screen-reader, responsive matrix, additional browser and independent QA evidence are unavailable, so QA-002 is not claimed READY or PASS.

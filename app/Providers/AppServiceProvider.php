@@ -2,10 +2,11 @@
 
 namespace App\Providers;
 
-use App\Contracts\VideoProviderInterface;
-use App\Services\Video\UnconfiguredVideoProvider;
 use App\Contracts\FileScannerInterface;
+use App\Contracts\VideoProviderInterface;
 use App\Services\Security\BasicFileScanner;
+use App\Services\Security\UnconfiguredFileScanner;
+use App\Services\Video\UnconfiguredVideoProvider;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 
@@ -16,8 +17,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(VideoProviderInterface::class,UnconfiguredVideoProvider::class);
-        $this->app->bind(FileScannerInterface::class,BasicFileScanner::class);
+        $this->app->bind(VideoProviderInterface::class, UnconfiguredVideoProvider::class);
+        $this->app->bind(FileScannerInterface::class, fn () => match (config('upload-security.scanner')) {
+            'basic' => new BasicFileScanner,
+            default => new UnconfiguredFileScanner,
+        });
     }
 
     /**

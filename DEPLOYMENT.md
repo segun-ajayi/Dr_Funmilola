@@ -16,7 +16,7 @@ The runtime image contains PHP-FPM, PostgreSQL/Redis extensions, optimized Compo
 - TLS terminates at a trusted load balancer/reverse proxy in front of port 8080.
 - Secrets come from a deployment secret manager or protected files, never Git.
 - Restrict PostgreSQL and Redis to the internal network.
-- Bind production `FileScannerInterface` to approved malware scanning.
+- Set `UPLOAD_SCANNER` to an approved production `FileScannerInterface` adapter. Never release with `basic` or `unconfigured`; verify quarantine, clean release, rejection, timeout and provider-outage behavior first.
 - Configure transactional email, encrypted offsite backups, monitoring and alert recipients.
 
 ## First deployment

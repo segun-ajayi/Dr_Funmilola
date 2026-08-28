@@ -18,7 +18,9 @@ Every Laravel response receives `nosniff`, clickjacking protection, a restrictiv
 
 ## Files
 
-Patient documents are stored on the private disk and downloaded only through authorization. PDF/JPEG/PNG validation, a 10 MB bound and `FileScannerInterface` run before storage. The default scanner rejects common executable/script signatures and records privacy-minimal rejection audits. Production may replace it with a ClamAV or managed scanner adapter without changing upload authorization.
+Patient documents are first written under a random quarantine name on the private disk. PDF/JPEG/PNG validation, a 10 MB bound, single-extension safe filename rules, container signatures and `FileScannerInterface` scanning run before release. Only a definitive clean result is moved into the patient-owned private document directory and recorded in the database. Unsafe, unavailable, timed-out or indeterminate scans fail closed and remove the quarantine object. Upload, rejection, scanner failure and authorized download actions use privacy-minimal audit metadata.
+
+`UPLOAD_SCANNER=basic` is limited to isolated local development and automated fixtures. Production defaults to `unconfigured`, which deliberately rejects every upload. A release must bind the interface to an approved ClamAV or managed-scanner adapter and document hosting region, retention, monitoring, incident response and failure-mode test evidence.
 
 ## Devices and tokens
 

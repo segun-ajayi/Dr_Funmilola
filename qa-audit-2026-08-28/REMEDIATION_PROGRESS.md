@@ -58,7 +58,7 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 | QA-019 | 9 | NOT STARTED | Labels, skip link, focus, names and announcements pass manual/axe checks | Queued; physical screen-reader acceptance remains external; evidence folder `evidence/QA-019` |
 | QA-020 | 9 | NOT STARTED | Semantic text/control/focus tokens meet WCAG contrast thresholds | Queued; evidence folder `evidence/QA-020` |
 | QA-021 | 12 | NOT STARTED | Password reset revokes other web sessions and mobile/API tokens | Queued; Redis session retest remains blocked; evidence folder `evidence/QA-021` |
-| QA-022 | 3 | BLOCKED | Approved scanner/quarantine passes clean/reject/timeout/privacy tests | Approved scanner unavailable; independent quarantine implementation remains queued; evidence folder `evidence/QA-022` |
+| QA-022 | 3 | BLOCKED | Approved scanner/quarantine passes clean/reject/timeout/privacy tests | Quarantine/fail-closed implementation `c306f15`; approved provider/privacy/runtime approval unavailable; evidence in `evidence/QA-022` |
 | QA-023 | 12 | NOT STARTED | Audit catalogue actions produce safe actor/resource/before-after records | Queued; evidence folder `evidence/QA-023` |
 | QA-024 | 9 | NOT STARTED | Every major mutation shows preserved, announced, recoverable failure | Queued; evidence folder `evidence/QA-024` |
 | QA-025 | 8 | NOT STARTED | Per-route title/description/canonical/OG plus sitemap/404 checks | Queued; evidence folder `evidence/QA-025` |
@@ -94,3 +94,12 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 - Tests: full backend 64 tests/357 assertions; targeted scheduling/booking/staff suite 13 tests/61 assertions.
 - Runtime: SQLite regression proves generated slot success, repeated-slot rejection, off-cadence rejection, unsupported online method rejection, rule/closure/additional-clinic generation, and staff reschedule parity.
 - Remaining risk: PostgreSQL 17 and a true simultaneous create/create plus create/reschedule harness remain unavailable because the local Docker engine and PostgreSQL port are unavailable. The date-scoped `pg_advisory_xact_lock` branch is implemented but not claimed as runtime-proven.
+
+### Step 3 — Establish the secure upload pipeline
+
+- Status: IMPLEMENTED LOCALLY; QA-022 remains BLOCKED on approved production scanner and governance evidence.
+- Revision: `c306f15`.
+- Files: scanner contract/drivers/configuration, patient document controller, production environment example, security/deployment documentation, and upload regression suite.
+- Tests: full backend 71 tests/396 assertions; targeted upload/security/portal suite 17 tests/89 assertions; web typecheck and 7 tests passed.
+- Runtime behavior: uploads use a random private quarantine name, validate safe single-extension names and container signatures, scan the quarantined object, move only a definitive clean result to patient-owned private storage, remove rejected/indeterminate objects, avoid orphan database metadata, and audit upload/rejection/scanner failure/download with privacy-minimal metadata.
+- Remaining risk: `basic` is explicitly local/test-only. Production defaults to fail-closed `unconfigured`. No approved scanner vendor, hosting region, retention/DPA, monitoring credentials, or staging failure-mode run is available, so the finding cannot be READY or PASS.

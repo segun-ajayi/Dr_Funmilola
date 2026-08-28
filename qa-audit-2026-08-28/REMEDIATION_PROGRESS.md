@@ -37,7 +37,7 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 
 | Finding | Step | Status | Minimum closure evidence | Revision / files / tests / runtime evidence / remaining risk |
 | --- | ---: | --- | --- | --- |
-| QA-001 | 1 | NOT STARTED | Numeric protected page 200, public slug works, role denials and real editor E2E | Queued; evidence folder `evidence/QA-001` |
+| QA-001 | 1 | READY FOR RETEST | Numeric protected page 200, public slug works, role denials and real editor E2E | Implementation `cf396fd`; route/editor integration and public-browser evidence in `evidence/QA-001`; independent authenticated browser retest pending |
 | QA-002 | 6 | NOT STARTED | Every visual CMS control in REQ-065–084 passes E2E/accessibility | Queued; evidence folder `evidence/QA-002` |
 | QA-003 | 6 | NOT STARTED | Published nav/theme visibly changes public renderer; draft does not | Queued; evidence folder `evidence/QA-003` |
 | QA-004 | 2 | NOT STARTED | Off-rule/closed/method-invalid POSTs fail; generated slot succeeds | Queued; evidence folder `evidence/QA-004` |
@@ -76,3 +76,12 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 - Tests: existing backend/web/native baselines and production web build passed; dedicated seeder regression passed (2 tests, 22 assertions); disposable SQLite fresh migration, seed, and full rollback passed.
 - Runtime: local SQLite development environment only. PostgreSQL/Redis/provider/device claims remain blocked as recorded above.
 - Remaining risk: production-like concurrency, Redis queue/session/scheduler, provider failure modes, physical devices, additional browser engines, and independent QA are not yet evidenced.
+
+### Step 1 — Unblock the CMS editor route
+
+- Status: READY FOR RETEST (not self-declared PASS).
+- Revision: `cf396fd`.
+- Files: `routes/api.php`, `resources/js/pages/CmsPublicPage.tsx`, `tests/Feature/CmsTest.php`, `tests/Feature/CoreCmsPagesTest.php`.
+- Tests: full backend 62 tests/349 assertions; targeted CMS 9 tests/59 assertions; web typecheck, 7 tests, and production build passed.
+- Runtime: public Home rendered through `/api/content/pages/home` in the in-app Chromium browser with the expected heading and no console errors. The real backend integration completed list/select, numeric load, draft edit, preview, publish, and public read. Patient, Moderator, and Admin numeric access returned 403; missing numeric ID and missing slug returned safe 404s.
+- Remaining risk: the browser session was unauthenticated, so the visual Power Admin click-through was not repeated without entering credentials. Independent authenticated browser retest remains required before PASS.

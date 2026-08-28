@@ -43,8 +43,8 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 | QA-004 | 2 | READY FOR RETEST | Off-rule/closed/method-invalid POSTs fail; generated slot succeeds | Implementation `adf7156`; shared availability decision and regression evidence in `evidence/QA-004` |
 | QA-005 | 2 | BLOCKED | Repeated PostgreSQL concurrent test commits exactly one overlap | PostgreSQL advisory-lock implementation `adf7156`; true concurrent PostgreSQL runtime unavailable; evidence in `evidence/QA-005` |
 | QA-006 | 2 | READY FOR RETEST | slot_minutes/buffer semantics documented and boundary-tested | Implementation `adf7156`; cadence contract/test in `evidence/QA-006` |
-| QA-007 | 5 | NOT STARTED | Declined cancellation can be resubmitted and displays accurately | Queued; evidence folder `evidence/QA-007` |
-| QA-008 | 5 | NOT STARTED | Reschedule lifecycle consistent in DB/API/UI/audit/notifications | Queued; evidence folder `evidence/QA-008` |
+| QA-007 | 5 | READY FOR RETEST | Declined cancellation can be resubmitted and displays accurately | Implementation `1df4fdc`; reset/reason/status/audit/API/web regression passed; evidence in `evidence/QA-007` |
+| QA-008 | 5 | READY FOR RETEST | Reschedule lifecycle consistent in DB/API/UI/audit/notifications | Implementation `1df4fdc`; active `rescheduled` lifecycle and operational consumers covered; evidence in `evidence/QA-008` |
 | QA-009 | 10 | NOT STARTED | Day/week/month/agenda plus operations/filters/responsive/a11y pass | Queued; evidence folder `evidence/QA-009` |
 | QA-010 | 11 | BLOCKED | Approved live provider passes ownership/expiry/media/failure/device tests | Approved provider/privacy decision absent; independent shell work remains queued; evidence folder `evidence/QA-010` |
 | QA-011 | 8 | NOT STARTED | Contact route and true 404 pass direct/link/status tests | Queued; evidence folder `evidence/QA-011` |
@@ -53,7 +53,7 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 | QA-014 | 7 | NOT STARTED | Fresh seed uses sourced queue only; duplicate migration verified | Queued; evidence folder `evidence/QA-014` |
 | QA-015 | 12 | NOT STARTED | Patient/account/role admin operations pass role/audit edge cases | Queued; evidence folder `evidence/QA-015` |
 | QA-016 | 13 | NOT STARTED | All required native mutations pass API, E2E, device and a11y tests | Queued; physical-device/provider portions remain externally blocked; evidence folder `evidence/QA-016` |
-| QA-017 | 5 | NOT STARTED | Web/native actions exactly match server allowed_actions for all states | Queued; evidence folder `evidence/QA-017` |
+| QA-017 | 5 | READY FOR RETEST | Web/native actions exactly match server allowed_actions for all states | Implementation `1df4fdc`; all-state API matrix and rendered web/native regressions passed; physical-device acceptance pending; evidence in `evidence/QA-017` |
 | QA-018 | 9 | NOT STARTED | Mobile menu passes touch/keyboard/ARIA at all collapsed widths | Queued; evidence folder `evidence/QA-018` |
 | QA-019 | 9 | NOT STARTED | Labels, skip link, focus, names and announcements pass manual/axe checks | Queued; physical screen-reader acceptance remains external; evidence folder `evidence/QA-019` |
 | QA-020 | 9 | NOT STARTED | Semantic text/control/focus tokens meet WCAG contrast thresholds | Queued; evidence folder `evidence/QA-020` |
@@ -65,7 +65,7 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 | QA-026 | 14 | NOT STARTED | Route chunks/requests meet recorded performance budget | Queued; evidence folder `evidence/QA-026` |
 | QA-027 | 8 | NOT STARTED | Approved Privacy/Terms/Accessibility pages linked and crawl-tested | Queued; owner/legal approval remains required; evidence folder `evidence/QA-027` |
 | QA-028 | 4 | BLOCKED | Booking attachment is scanned, private, owned, audited and accessible | Implementation `5fa3156`; local acceptance passed; approved production scanner/governance and independent responsive/device acceptance remain unavailable; evidence in `evidence/QA-028` |
-| QA-029 | 5 | NOT STARTED | Patient reschedule request approve/decline/conflict/audit/notify passes | Queued; evidence folder `evidence/QA-029` |
+| QA-029 | 5 | READY FOR RETEST | Patient reschedule request approve/decline/conflict/audit/notify passes | Implementation `1df4fdc`; web/mobile request and staff review lifecycle covered; physical-device/independent acceptance pending; evidence in `evidence/QA-029` |
 
 ## Step log
 
@@ -113,3 +113,14 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 - Runtime behavior: no-file booking remains valid; clean PDF/JPEG/PNG files use the shared quarantine/scan/release path and link to both patient and appointment; rejected or unavailable scans roll back the booking and retain no object; the request UUID makes same-request retries return the original reference without a duplicate appointment or document; verified owner and staff download while another patient receives 403.
 - Browser/UI evidence: the production booking build rendered in the in-app Chromium browser with the existing desktop layout intact. The web component journey exercises date/slot selection, fully associated labels, optional file help/accept rules, selected-file status, multipart request, idempotency key and announced success. Separate physical-device and independent responsive/browser-matrix acceptance is not available.
 - Remaining risk: production still deliberately fails closed until an approved scanner adapter, hosting/retention/privacy approval, monitoring and staging failure-mode evidence exist. The local basic scanner and simulated failure tests are not production malware-scanning evidence.
+
+### Step 5 — Unify patient cancellation and reschedule lifecycle
+
+- Status: IMPLEMENTED; QA-007, QA-008, QA-017 and QA-029 READY FOR RETEST.
+- Revision: `1df4fdc`.
+- Files: appointment workflow/policy/availability/notification/consultation services, cancellation and new reschedule request controllers/model/migration/routes, patient/staff APIs, shared mobile contract, web portal/staff inbox, native appointment screen, and backend/web/native regression tests.
+- Lifecycle: a declined cancellation can be reset to pending with a new reason; one appointment cannot hold contradictory pending cancellation/reschedule requests; patient reschedule requests use currently generated slots but do not reserve one; staff approval re-locks/revalidates availability transactionally; decline and approval are audited/notified; `rescheduled` is now an active visible state that blocks conflicts and remains eligible for reminders, online consultation, check-in, cancellation and later reschedule.
+- Contract: patient appointment payloads expose `allowed_actions`; both web and native render only those actions. Requested, pending-confirmation, confirmed and rescheduled states are covered, while checked-in, in-progress, completed, cancelled and no-show suppress patient change actions. A pending change suppresses both actions until staff review.
+- Tests: full backend 82 tests/499 assertions; dedicated lifecycle suite 5 tests/61 assertions; web TypeScript, 5 files/9 tests and production build passed; native TypeScript, 5 suites/7 tests and Expo public iOS/Android configuration passed. Latest migration rollback/re-migration passed.
+- Runtime: authenticated in-app Chromium loaded the staff inbox with separate, labelled cancellation and reschedule review queues and no rendering failure. Component tests exercised the patient web reschedule form and native server-derived-slot flow.
+- Remaining risk: independent patient/staff browser E2E with populated queues, physical iOS/Android interaction/accessibility, additional browser engines and production PostgreSQL concurrent approval evidence remain required before PASS.

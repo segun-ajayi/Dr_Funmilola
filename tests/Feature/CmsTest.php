@@ -160,15 +160,18 @@ class CmsTest extends TestCase
         $page = $this->page();
         $payload = [
             'type' => 'hero',
-            'content' => ['heading' => 'Options', 'primary_label' => 'Book', 'primary_url' => '/book', 'primary_style' => 'outline', 'primary_icon' => 'calendar', 'primary_visibility' => 'show'],
+            'content' => ['heading' => 'Options', 'heading_marks' => [['type' => 'bold', 'start' => 0, 'end' => 7]], 'primary_label' => 'Book', 'primary_url' => '/book', 'primary_style' => 'outline', 'primary_icon' => 'calendar', 'primary_visibility' => 'show'],
             'presentation' => ['background' => 'white', 'alignment' => 'center', 'width' => 'wide', 'spacing' => 'compact', 'font_family' => 'modern', 'font_size' => 'large', 'font_weight' => 'bold', 'emphasis' => 'italic_underline', 'text_color' => 'wine', 'line_height' => 'relaxed'],
             'is_visible' => true,
         ];
-        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertCreated()->assertJsonPath('data.content.primary_icon', 'calendar')->assertJsonPath('data.presentation.emphasis', 'italic_underline');
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertCreated()->assertJsonPath('data.content.primary_icon', 'calendar')->assertJsonPath('data.content.heading_marks.0.type', 'bold')->assertJsonPath('data.presentation.emphasis', 'italic_underline');
         $payload['content']['primary_style'] = 'javascript';
         $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
         $payload['content']['primary_style'] = 'primary';
         $payload['presentation']['font_family'] = 'url(evil)';
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
+        $payload['presentation']['font_family'] = 'site';
+        $payload['content']['heading_marks'] = [['type' => 'link', 'start' => 0, 'end' => 7, 'url' => 'javascript:alert(1)']];
         $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
     }
 

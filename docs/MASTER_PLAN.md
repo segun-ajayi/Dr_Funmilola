@@ -363,3 +363,19 @@ Acceptance criteria:
 Implementation note: the original Today, Appointments and Patients entries were inert placeholder anchors. They are now working destinations, and Power Admin receives direct navigation to website pages, publication review, education management and the sanitised audit log. A role-aware Edit site control appears on public pages only for an authenticated Power Admin and opens contextual publishing shortcuts.
 
 Verification boundary: role-aware rendering and destinations are covered by deterministic component tests. The refreshed authenticated browser session remains the final human visual check because entering privileged credentials through browser automation requires explicit action-time confirmation.
+
+## Current task: Core website pages into CMS
+
+Status: Complete — 58 backend tests with 302 assertions, 7 frontend tests, strict TypeScript checking, production build and public Home-route browser verification passed on 28 August 2026.
+
+Acceptance criteria:
+
+- Home, About, Services and Research exist as first-class CMS records and appear in the existing-page selector.
+- The migration is idempotent, preserves existing CMS records and seeds only missing core pages with safe structured content.
+- Existing public URLs remain `/`, `/about`, `/services` and `/research`; no visitor-facing `/p/...` redirect is introduced.
+- Published CMS snapshots drive the core public pages, with a safe legacy fallback during deployment or if a record is unavailable.
+- Draft edits remain private until explicitly previewed or published by a Power Admin.
+- Public rendering supports the structured core-page section types without permitting arbitrary HTML or scripts.
+- Automated tests cover seed idempotency, public visibility, route compatibility, editor selection and draft-versus-published behavior.
+
+Implementation note: the idempotent core-page seeder creates only missing Home, About, Services and Research records, publishes safe structured snapshots and leaves pre-existing slugs untouched. The original React implementations remain deployment-safe fallbacks, while the normal public URLs prefer CMS content. Editing a previously published page changes its working status to draft but visitors continue receiving the last published snapshot until Power Admin explicitly publishes again.

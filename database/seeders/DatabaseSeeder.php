@@ -70,5 +70,7 @@ class DatabaseSeeder extends Seeder
         ] as [$claim,$category,$sourceTitle,$sourceUrl,$targetType,$payload]) {
             ResearchClaim::updateOrCreate(['claim'=>$claim],['category'=>$category,'source_title'=>$sourceTitle,'source_url'=>$sourceUrl,'confidence'=>'high','status'=>'pending_review','target_type'=>$targetType,'target_payload'=>$payload]);
         }
+
+        $this->call(CoreCmsPageSeeder::class);
     }
 }

@@ -26,9 +26,10 @@ The runtime image contains PHP-FPM, PostgreSQL/Redis extensions, optimized Compo
 3. Set `APP_IMAGE`, `WEB_IMAGE`, `POSTGRES_DB`, `POSTGRES_USER` and `REDIS_PASSWORD` in the deployment environment.
 4. Start PostgreSQL and Redis; verify health.
 5. Run the migration as a one-off release task: `docker compose -f compose.production.yml run --rm app php artisan migrate --force`.
-6. Start app, worker, scheduler and web services.
-7. Run cache warmup: `php artisan config:cache`, `route:cache`, and `view:cache` inside the app release task.
-8. Validate `/api/ready`, homepage, queue processing, scheduler output and one controlled non-clinical notification.
+6. Seed any missing core CMS pages without changing existing editor content: `docker compose -f compose.production.yml run --rm app php artisan db:seed --class=CoreCmsPageSeeder --force`.
+7. Start app, worker, scheduler and web services.
+8. Run cache warmup: `php artisan config:cache`, `route:cache`, and `view:cache` inside the app release task.
+9. Validate `/api/ready`, homepage, queue processing, scheduler output and one controlled non-clinical notification.
 
 Do not run the demonstration seeder in production.
 
@@ -38,10 +39,11 @@ Do not run the demonstration seeder in production.
 2. Pull immutable app/web images.
 3. Enable maintenance mode, allowing only the readiness network if configured.
 4. Run backward-compatible migrations once.
-5. Warm caches and restart queue workers with `queue:restart`.
-6. Replace app/web/worker/scheduler containers.
-7. Confirm readiness and smoke tests, then disable maintenance mode.
-8. Monitor errors, latency, queue age and database load for at least 30 minutes.
+5. Run the idempotent `CoreCmsPageSeeder` to add only missing core pages.
+6. Warm caches and restart queue workers with `queue:restart`.
+7. Replace app/web/worker/scheduler containers.
+8. Confirm readiness and smoke tests, then disable maintenance mode.
+9. Monitor errors, latency, queue age and database load for at least 30 minutes.
 
 ## Rollback
 

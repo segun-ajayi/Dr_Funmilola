@@ -1,7 +1,7 @@
 # QA-012 evidence
 
 Status: BLOCKED ON CONTENT-OWNER / INSTITUTIONAL APPROVAL
-Implementation revision: pending Step 8 implementation commit
+Implementation revision: `ee80e16`
 
 - Services now render all active cards from the same authoritative service catalogue used by booking. A service link carries its slug into booking and preselects the matching active service.
 - Education cards are links to published article detail routes. Details show author, medical reviewer/date, safe plain-text content and the required medical disclaimer. Draft articles return 404 in both web and API journeys.

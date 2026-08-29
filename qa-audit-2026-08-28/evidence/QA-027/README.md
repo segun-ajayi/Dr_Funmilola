@@ -1,7 +1,7 @@
 # QA-027 evidence
 
 Status: BLOCKED ON OWNER / LEGAL APPROVAL
-Implementation revision: pending Step 8 implementation commit
+Implementation revision: `ee80e16`
 
 - Privacy, Terms and Accessibility now have real routes and real footer links, eliminating dead footer text.
 - Each route explicitly states that the document is not yet published because owner/legal approval is required. The site does not present model-written policy as approved governance.

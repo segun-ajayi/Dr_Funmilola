@@ -47,21 +47,21 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 | QA-008 | 5 | READY FOR RETEST | Reschedule lifecycle consistent in DB/API/UI/audit/notifications | Implementation `1df4fdc`; active `rescheduled` lifecycle and operational consumers covered; evidence in `evidence/QA-008` |
 | QA-009 | 10 | NOT STARTED | Day/week/month/agenda plus operations/filters/responsive/a11y pass | Queued; evidence folder `evidence/QA-009` |
 | QA-010 | 11 | BLOCKED | Approved live provider passes ownership/expiry/media/failure/device tests | Approved provider/privacy decision absent; independent shell work remains queued; evidence folder `evidence/QA-010` |
-| QA-011 | 8 | READY FOR RETEST | Contact route and true 404 pass direct/link/status tests | Step 8 implementation pending commit; real status and route regressions pass; evidence in `evidence/QA-011` |
+| QA-011 | 8 | READY FOR RETEST | Contact route and true 404 pass direct/link/status tests | Implementation `ee80e16`; real status and route regressions pass; evidence in `evidence/QA-011` |
 | QA-012 | 8 | BLOCKED | Complete verified public profile/service/education/publication journeys | Technical journeys implemented; content-owner/institutional approvals remain unavailable; evidence in `evidence/QA-012` |
 | QA-013 | 7 | READY FOR RETEST | Transactional state machine and retract/public-feed consistency tests | Implementation `a49c1a9`; lifecycle/feed/identity/audit regressions pass; PostgreSQL and independent browser retest remain; evidence in `evidence/QA-013` |
 | QA-014 | 7 | READY FOR RETEST | Fresh seed uses sourced queue only; duplicate migration verified | Implementation `a49c1a9`; fresh-seed and legacy-upgrade regressions pass; PostgreSQL and independent retest remain; evidence in `evidence/QA-014` |
 | QA-015 | 12 | NOT STARTED | Patient/account/role admin operations pass role/audit edge cases | Queued; evidence folder `evidence/QA-015` |
 | QA-016 | 13 | NOT STARTED | All required native mutations pass API, E2E, device and a11y tests | Queued; physical-device/provider portions remain externally blocked; evidence folder `evidence/QA-016` |
 | QA-017 | 5 | READY FOR RETEST | Web/native actions exactly match server allowed_actions for all states | Implementation `1df4fdc`; all-state API matrix and rendered web/native regressions passed; physical-device acceptance pending; evidence in `evidence/QA-017` |
-| QA-018 | 9 | NOT STARTED | Mobile menu passes touch/keyboard/ARIA at all collapsed widths | Queued; evidence folder `evidence/QA-018` |
-| QA-019 | 9 | NOT STARTED | Labels, skip link, focus, names and announcements pass manual/axe checks | Queued; physical screen-reader acceptance remains external; evidence folder `evidence/QA-019` |
-| QA-020 | 9 | NOT STARTED | Semantic text/control/focus tokens meet WCAG contrast thresholds | Queued; evidence folder `evidence/QA-020` |
+| QA-018 | 9 | IN PROGRESS | Mobile menu passes touch/keyboard/ARIA at all collapsed widths | Step 9 implementation started; evidence folder `evidence/QA-018` |
+| QA-019 | 9 | IN PROGRESS | Labels, skip link, focus, names and announcements pass manual/axe checks | Step 9 implementation started; physical screen-reader acceptance remains external; evidence folder `evidence/QA-019` |
+| QA-020 | 9 | IN PROGRESS | Semantic text/control/focus tokens meet WCAG contrast thresholds | Step 9 implementation started; evidence folder `evidence/QA-020` |
 | QA-021 | 12 | NOT STARTED | Password reset revokes other web sessions and mobile/API tokens | Queued; Redis session retest remains blocked; evidence folder `evidence/QA-021` |
 | QA-022 | 3 | BLOCKED | Approved scanner/quarantine passes clean/reject/timeout/privacy tests | Quarantine/fail-closed implementation `c306f15`; approved provider/privacy/runtime approval unavailable; evidence in `evidence/QA-022` |
 | QA-023 | 12 | NOT STARTED | Audit catalogue actions produce safe actor/resource/before-after records | Queued; evidence folder `evidence/QA-023` |
-| QA-024 | 9 | NOT STARTED | Every major mutation shows preserved, announced, recoverable failure | Queued; evidence folder `evidence/QA-024` |
-| QA-025 | 8 | READY FOR RETEST | Per-route title/description/canonical/OG plus sitemap/404 checks | Step 8 implementation pending commit; server/client metadata, sitemap and robots regressions pass; evidence in `evidence/QA-025` |
+| QA-024 | 9 | IN PROGRESS | Every major mutation shows preserved, announced, recoverable failure | Step 9 implementation started; evidence folder `evidence/QA-024` |
+| QA-025 | 8 | READY FOR RETEST | Per-route title/description/canonical/OG plus sitemap/404 checks | Implementation `ee80e16`; server/client metadata, sitemap and robots regressions pass; evidence in `evidence/QA-025` |
 | QA-026 | 14 | NOT STARTED | Route chunks/requests meet recorded performance budget | Queued; evidence folder `evidence/QA-026` |
 | QA-027 | 8 | BLOCKED | Approved Privacy/Terms/Accessibility pages linked and crawl-tested | Routes/link/noindex infrastructure implemented; approved legal documents/sign-off unavailable; evidence in `evidence/QA-027` |
 | QA-028 | 4 | BLOCKED | Booking attachment is scanned, private, owned, audited and accessible | Implementation `5fa3156`; local acceptance passed; approved production scanner/governance and independent responsive/device acceptance remain unavailable; evidence in `evidence/QA-028` |
@@ -153,7 +153,7 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 - Findings: QA-011, QA-012, QA-025 and QA-027.
 - Plan: (1) implement a real Contact journey and true status-preserving 404; (2) complete verified public profile, services, education and publication routes without inventing unapproved claims; (3) add route-specific title, description, canonical and Open Graph metadata plus sitemap/robots coverage; (4) add clearly labelled Privacy, Terms and Accessibility drafts with global links while retaining an explicit owner/legal-approval gate; (5) run direct-route, link, API, metadata, crawl, responsive and accessibility regressions.
 - Source constraints: published research remains limited to reviewed records; professional/contact/legal copy requiring owner approval will be marked draft or blocked rather than silently asserted.
-- Revision: pending Step 8 implementation commit.
+- Revision: `ee80e16`.
 - Routing/contact: known routes and published dynamic records return 200; arbitrary/unpublished destinations return a true 404 and dedicated recovery page. Contact safely connects booking and secure portal messaging without inventing public phone/email/address details.
 - Public journeys: active service cards use the booking catalogue and deep-link to the selected service; education and publication list/detail journeys include medical review, disclaimers, sort, pagination, DOI and authoritative-source links; career/achievement output is published-only.
 - Navigation/legal: Contact plus Academic/Education destinations are in approved navigation/footer. Privacy, Terms and Accessibility routes are live but explicitly approval-pending, noindex and excluded from sitemap.
@@ -161,3 +161,9 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 - Tests: dedicated public routing/content suite 6 tests/62 assertions; full backend 96 tests/693 assertions; web 7 files/21 tests; formatting, TypeScript and production build passed. JS 457.63 KB (137.61 KB gzip), CSS 284.49 KB (41.36 KB gzip). Latest migration rollback/reapply passed on SQLite.
 - Runtime: direct HTTP route sweep passed all expected 200 routes plus a real 404, and server HTML inspection confirmed Contact title/canonical and missing-page noindex/no-canonical behavior. The in-app browser control remained unavailable for localhost UI interaction, so independent visual acceptance is still required.
 - Remaining risk: approved current professional/contact/education content, approved legal documents/sign-off, independent browser/crawler/responsive/a11y acceptance and production-domain verification remain external blockers. No approval was fabricated.
+
+### Step 9 — Repair responsive navigation, accessibility and error recovery
+
+- Status: IN PROGRESS.
+- Findings: QA-018, QA-019, QA-020 and QA-024.
+- Plan: (1) add skip navigation, programmatic main focus and route-change menu/focus behavior; (2) complete mobile disclosure keyboard/Escape/focus handling and 44px targets; (3) audit labels, names, status/error announcements and field relationships across public/auth/booking/portal/staff/CMS; (4) replace weak semantic colours and add consistent focus-visible, reduced-motion, forced-colours and reflow rules; (5) standardize major mutation pending/success/error preservation and retry; (6) add automated accessibility/viewport/error regressions while recording physical screen-reader/device/browser blockers honestly.

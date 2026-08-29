@@ -1,7 +1,7 @@
 # QA-011 evidence
 
 Status: READY FOR RETEST
-Implementation revision: pending Step 8 implementation commit
+Implementation revision: `ee80e16`
 
 - `/contact` is a dedicated public route with two safe journeys: new patients go to appointment booking and existing patients go to authenticated secure portal messaging.
 - Contact copy publishes only the approved broad Ile-Ife location; it does not invent a phone, email or exact clinic address. It includes a prominent emergency-use warning.

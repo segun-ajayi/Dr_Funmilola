@@ -1,7 +1,7 @@
 # QA-025 evidence
 
 Status: READY FOR RETEST
-Implementation revision: pending Step 8 implementation commit
+Implementation revision: `ee80e16`
 
 - The server-rendered SPA shell emits route-specific title, description, robots, canonical, Open Graph title/description/type/url for static routes, CMS pages, education details and publication details.
 - Published CMS SEO fields populate both public snapshots and server metadata. A reviewed migration fills missing metadata on the four core pages without replacing existing custom values.

@@ -141,6 +141,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/verification-queue', [VerificationQueueController::class, 'index']);
         Route::patch('/verification-queue/{claim}', [VerificationQueueController::class, 'decide']);
         Route::post('/verification-queue/{claim}/publish', [VerificationQueueController::class, 'publish']);
+        Route::post('/verification-queue/{claim}/retract', [VerificationQueueController::class, 'retract']);
         Route::get('/education', [EducationArticleController::class, 'index']);
         Route::post('/education', [EducationArticleController::class, 'store']);
         Route::put('/education/{article}', [EducationArticleController::class, 'update']);

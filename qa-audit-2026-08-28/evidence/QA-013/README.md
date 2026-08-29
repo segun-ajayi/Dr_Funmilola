@@ -1,7 +1,7 @@
 # QA-013 evidence
 
 Status: READY FOR RETEST
-Implementation revision: pending Step 7 implementation commit
+Implementation revision: `a49c1a9`
 
 - The only generic review transitions are `pending_review -> verified` and `pending_review -> rejected`. A verified claim may be published, and a published claim may only leave public state through the dedicated reasoned retraction endpoint.
 - Review, publication and retraction lock the claim and update the claim/target record inside one database transaction. Publish records the target type and ID; retraction updates both records and captures actor, time, reason and a privacy-minimal audit entry.
@@ -12,4 +12,4 @@ Implementation revision: pending Step 7 implementation commit
 - Dedicated backend regression: 9 tests / 89 assertions covering public-feed parity, role denial, every supported/forbidden transition, publish/retract audit and visibility, short reasons, null identifiers, duplicate DOI and normalized title, protected fields, fresh seed and legacy upgrade.
 - Web regression: the retraction component tests cover successful reasoned retraction and accessible validation that prevents a short reason from being submitted.
 
-Full-suite totals and the final revision are recorded in `../../REMEDIATION_PROGRESS.md`. SQLite migration rollback/reapply passed. PostgreSQL transaction/unique-index runtime and independent authenticated browser acceptance remain required before PASS.
+Full suite: 90 backend tests / 631 assertions; 6 web files / 16 tests; formatting, TypeScript and production build passed. SQLite migration rollback/reapply passed. PostgreSQL transaction/unique-index runtime and independent authenticated browser acceptance remain required before PASS.

@@ -1,7 +1,7 @@
 # QA-014 evidence
 
 Status: READY FOR RETEST
-Implementation revision: pending Step 7 implementation commit
+Implementation revision: `a49c1a9`
 
 - `DatabaseSeeder` no longer inserts the six title-only `Publication` rows. It creates fully sourced `ResearchClaim` queue entries only, with source title, authoritative PubMed URL and complete target metadata.
 - Rerunning the seeder uses `firstOrCreate`, so it cannot reset a previously reviewed, rejected, published or retracted claim back to pending.
@@ -11,4 +11,4 @@ Implementation revision: pending Step 7 implementation commit
 - Upgrade regression rolls the lifecycle migration back, inserts duplicate legacy DOI rows plus the obsolete title-only shape, reapplies the migration, and proves one complete published record remains with the incomplete seed removed.
 - The live local database migration and rollback/reapply succeeded. After the updated seed, it holds six sourced publication claims: two existing reviewed/published records remain linked and four remain pending for Power Admin review.
 
-Full-suite totals and the final revision are recorded in `../../REMEDIATION_PROGRESS.md`. Owner/content approval of pending claims, PostgreSQL migration rehearsal and independent retest remain required before PASS.
+Full suite: 90 backend tests / 631 assertions; 6 web files / 16 tests; formatting, TypeScript and production build passed. Owner/content approval of pending claims, PostgreSQL migration rehearsal and independent retest remain required before PASS.

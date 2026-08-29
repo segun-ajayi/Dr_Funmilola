@@ -47,10 +47,10 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 | QA-008 | 5 | READY FOR RETEST | Reschedule lifecycle consistent in DB/API/UI/audit/notifications | Implementation `1df4fdc`; active `rescheduled` lifecycle and operational consumers covered; evidence in `evidence/QA-008` |
 | QA-009 | 10 | NOT STARTED | Day/week/month/agenda plus operations/filters/responsive/a11y pass | Queued; evidence folder `evidence/QA-009` |
 | QA-010 | 11 | BLOCKED | Approved live provider passes ownership/expiry/media/failure/device tests | Approved provider/privacy decision absent; independent shell work remains queued; evidence folder `evidence/QA-010` |
-| QA-011 | 8 | NOT STARTED | Contact route and true 404 pass direct/link/status tests | Queued; evidence folder `evidence/QA-011` |
-| QA-012 | 8 | NOT STARTED | Complete verified public profile/service/education/publication journeys | Queued; owner content approval remains required; evidence folder `evidence/QA-012` |
-| QA-013 | 7 | READY FOR RETEST | Transactional state machine and retract/public-feed consistency tests | Step 7 implementation pending commit; lifecycle/feed/identity/audit regressions pass; PostgreSQL and independent browser retest remain; evidence in `evidence/QA-013` |
-| QA-014 | 7 | READY FOR RETEST | Fresh seed uses sourced queue only; duplicate migration verified | Step 7 implementation pending commit; fresh-seed and legacy-upgrade regressions pass; PostgreSQL and independent retest remain; evidence in `evidence/QA-014` |
+| QA-011 | 8 | IN PROGRESS | Contact route and true 404 pass direct/link/status tests | Step 8 implementation started; evidence folder `evidence/QA-011` |
+| QA-012 | 8 | IN PROGRESS | Complete verified public profile/service/education/publication journeys | Step 8 implementation started; owner content approval remains required; evidence folder `evidence/QA-012` |
+| QA-013 | 7 | READY FOR RETEST | Transactional state machine and retract/public-feed consistency tests | Implementation `a49c1a9`; lifecycle/feed/identity/audit regressions pass; PostgreSQL and independent browser retest remain; evidence in `evidence/QA-013` |
+| QA-014 | 7 | READY FOR RETEST | Fresh seed uses sourced queue only; duplicate migration verified | Implementation `a49c1a9`; fresh-seed and legacy-upgrade regressions pass; PostgreSQL and independent retest remain; evidence in `evidence/QA-014` |
 | QA-015 | 12 | NOT STARTED | Patient/account/role admin operations pass role/audit edge cases | Queued; evidence folder `evidence/QA-015` |
 | QA-016 | 13 | NOT STARTED | All required native mutations pass API, E2E, device and a11y tests | Queued; physical-device/provider portions remain externally blocked; evidence folder `evidence/QA-016` |
 | QA-017 | 5 | READY FOR RETEST | Web/native actions exactly match server allowed_actions for all states | Implementation `1df4fdc`; all-state API matrix and rendered web/native regressions passed; physical-device acceptance pending; evidence in `evidence/QA-017` |
@@ -61,9 +61,9 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 | QA-022 | 3 | BLOCKED | Approved scanner/quarantine passes clean/reject/timeout/privacy tests | Quarantine/fail-closed implementation `c306f15`; approved provider/privacy/runtime approval unavailable; evidence in `evidence/QA-022` |
 | QA-023 | 12 | NOT STARTED | Audit catalogue actions produce safe actor/resource/before-after records | Queued; evidence folder `evidence/QA-023` |
 | QA-024 | 9 | NOT STARTED | Every major mutation shows preserved, announced, recoverable failure | Queued; evidence folder `evidence/QA-024` |
-| QA-025 | 8 | NOT STARTED | Per-route title/description/canonical/OG plus sitemap/404 checks | Queued; evidence folder `evidence/QA-025` |
+| QA-025 | 8 | IN PROGRESS | Per-route title/description/canonical/OG plus sitemap/404 checks | Step 8 implementation started; evidence folder `evidence/QA-025` |
 | QA-026 | 14 | NOT STARTED | Route chunks/requests meet recorded performance budget | Queued; evidence folder `evidence/QA-026` |
-| QA-027 | 8 | NOT STARTED | Approved Privacy/Terms/Accessibility pages linked and crawl-tested | Queued; owner/legal approval remains required; evidence folder `evidence/QA-027` |
+| QA-027 | 8 | IN PROGRESS | Approved Privacy/Terms/Accessibility pages linked and crawl-tested | Step 8 implementation started; owner/legal approval remains required; evidence folder `evidence/QA-027` |
 | QA-028 | 4 | BLOCKED | Booking attachment is scanned, private, owned, audited and accessible | Implementation `5fa3156`; local acceptance passed; approved production scanner/governance and independent responsive/device acceptance remain unavailable; evidence in `evidence/QA-028` |
 | QA-029 | 5 | READY FOR RETEST | Patient reschedule request approve/decline/conflict/audit/notify passes | Implementation `1df4fdc`; web/mobile request and staff review lifecycle covered; physical-device/independent acceptance pending; evidence in `evidence/QA-029` |
 
@@ -139,10 +139,17 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 ### Step 7 — Repair research and publication lifecycle
 
 - Status: IMPLEMENTED LOCALLY; QA-013 and QA-014 READY FOR RETEST.
-- Revision: pending Step 7 implementation commit.
+- Revision: `a49c1a9`.
 - Lifecycle: constrained pending review, verification/rejection, publication and reasoned retraction transitions are transactional and audited. A published claim cannot be silently rejected. Retraction removes its target from both public feeds.
 - Identity: DOI and PMID are normalized and unique; title hashing safely distinguishes publications without external identifiers. Sourced payloads are allowlisted and cannot set ownership, identity or publication-state fields.
 - Seeds/migration: six direct incomplete publication seeds were replaced by sourced PubMed queue claims. The reviewed migration removes obsolete title-only pending rows, merges legacy duplicates, preserves the strongest metadata/state, links published claims and installs uniqueness constraints.
-- Tests: dedicated backend 9 tests/89 assertions; web retraction workflow 2 tests. Full backend/web/typecheck/build totals will be recorded with the implementation revision. Latest migration and rollback/reapply passed on the local SQLite database.
+- Tests: dedicated backend 9 tests/89 assertions; full backend 90 tests/631 assertions; web 6 files/16 tests; formatting and TypeScript passed; production build JS 441.97 KB (134.30 KB gzip), CSS 281.91 KB (40.93 KB gzip). Latest migration and rollback/reapply passed on the local SQLite database.
 - Local data: after migration and updated seed, six sourced publication claims exist; two previously reviewed claims remain linked/published and four remain pending review. No review decision was fabricated for the four pending claims.
 - Remaining risk: PostgreSQL-specific migration/locking/constraint behavior, independent authenticated browser acceptance and owner approval for pending professional content remain required before PASS. The in-app runtime check could not be repeated because local URL navigation was blocked by the browser control policy; automated rendered-component coverage passed.
+
+### Step 8 — Complete public content, routing, legal pages and SEO
+
+- Status: IN PROGRESS.
+- Findings: QA-011, QA-012, QA-025 and QA-027.
+- Plan: (1) implement a real Contact journey and true status-preserving 404; (2) complete verified public profile, services, education and publication routes without inventing unapproved claims; (3) add route-specific title, description, canonical and Open Graph metadata plus sitemap/robots coverage; (4) add clearly labelled Privacy, Terms and Accessibility drafts with global links while retaining an explicit owner/legal-approval gate; (5) run direct-route, link, API, metadata, crawl, responsive and accessibility regressions.
+- Source constraints: published research remains limited to reviewed records; professional/contact/legal copy requiring owner approval will be marked draft or blocked rather than silently asserted.

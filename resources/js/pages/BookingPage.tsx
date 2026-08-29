@@ -6,9 +6,11 @@ type Form = { service_id: string; consultation_method: 'in_person'|'online'; dat
 const initial: Form = { service_id:'', consultation_method:'in_person', date:'', starts_at:'', name:'', email:'', phone:'', reason:'' };
 
 export default function BookingPage({services}:{services:Service[]}) {
+  const requestedService = new URLSearchParams(window.location.search).get('service');
   const [step,setStep]=useState(1), [form,setForm]=useState(initial), [slots,setSlots]=useState<Slot[]>([]), [attachment,setAttachment]=useState<File|null>(null), [loading,setLoading]=useState(false), [error,setError]=useState(''), [reference,setReference]=useState('');
   const requestId=useRef(globalThis.crypto?.randomUUID?.() ?? `00000000-0000-4000-8000-${Math.random().toString(16).slice(2).padEnd(12,'0').slice(0,12)}`);
   const chosen=services.find(s=>String(s.id)===form.service_id);
+  useEffect(()=>{const service=services.find(item=>item.slug===requestedService);if(service&&!form.service_id)setForm(value=>({...value,service_id:String(service.id)}));},[services,requestedService,form.service_id]);
   useEffect(()=>{ if(!form.date||!form.service_id)return; setLoading(true); setError(''); fetch(`/api/availability/${form.service_id}?date=${form.date}&method=${form.consultation_method}`).then(r=>r.json()).then(j=>setSlots(j.data??[])).catch(()=>setError('We could not load available times. Please try again.')).finally(()=>setLoading(false)); },[form.date,form.service_id,form.consultation_method]);
   const update=(key:keyof Form,value:string)=>setForm(v=>({...v,[key]:value}));
   const next=()=>{setError(''); if(step===1&&!form.service_id)return setError('Please choose a consultation service.'); if(step===2&&!form.starts_at)return setError('Please choose an available time.'); setStep(s=>s+1)};

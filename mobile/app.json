@@ -39,9 +39,12 @@
           "imageWidth": 180,
           "resizeMode": "contain",
           "backgroundColor": "#F7F4EC",
-          "dark": { "backgroundColor": "#162823" }
+          "dark": {
+            "backgroundColor": "#162823"
+          }
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true

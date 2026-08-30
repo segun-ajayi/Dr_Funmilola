@@ -6,15 +6,20 @@ export interface PaginatedEnvelope<T>{data:T[];meta:{current_page:number;per_pag
 export interface MobileCapabilities{api_version:ApiVersion;practice_timezone:'Africa/Lagos';features:{appointments:boolean;messages:boolean;documents:boolean;consultations:boolean;push_notifications:boolean;live_video:boolean};uploads:{max_bytes:number;mime_types:string[]}}
 export interface MobileUser{id:number;name:string;email:string;phone:string|null;profile:PatientProfile|null}
 export interface PatientProfile{date_of_birth:string|null;address:string|null;emergency_contact_name:string|null;emergency_contact_phone:string|null;preferred_communication:'email'|'phone'|'sms'}
+export interface ProfileUpdate extends PatientProfile,IdempotentMutation{name:string;phone:string|null}
 export type AppointmentStatus='requested'|'pending_confirmation'|'confirmed'|'checked_in'|'in_progress'|'completed'|'cancelled'|'rescheduled'|'no_show';
 export type AppointmentPatientAction='request_cancellation'|'request_reschedule';
 export interface AppointmentChangeRequest{id:number;status:'pending'|'approved'|'declined';requested_starts_at?:string}
 export interface AvailabilitySlot{starts_at:string;ends_at:string;label:string}
 export interface Appointment{id:number;public_id:string;starts_at:string;ends_at:string;timezone:string;status:AppointmentStatus;consultation_method:'online'|'in_person';location:string|null;reason:string;service:{id:number;name:string;slug:string};consultation?:{id:number;status:ConsultationStatus}|null;cancellation_request?:AppointmentChangeRequest|null;reschedule_request?:AppointmentChangeRequest|null;allowed_actions:AppointmentPatientAction[]}
 export type ConsultationStatus='scheduled'|'waiting'|'ready'|'in_progress'|'ended';
+export interface MobileConsultation{id:number;public_id:string;status:ConsultationStatus;has_consent:boolean;appointment:{starts_at:string;ends_at:string;service:{id:number;name:string}}}
+export interface ConsultationConnection{consultation_id:string;attendance_id:number;configuration:{provider:string;ready:boolean;display_name:string;participant_role:'patient';message?:string}}
 export interface PatientDocument{id:number;public_id:string;label:string;original_name:string;mime_type:string;size_bytes:number;created_at:string}
 export interface PracticeMessage{id:number;body:string;created_at:string;sender:{id:number;name:string;role:string}}
 export interface MessageThread{id:number;public_id:string;subject:string;status:'open'|'closed';last_message_at:string;messages:PracticeMessage[]}
 export interface MobileNotification{id:string;type:string;data:{title:string;message:string;kind:string};read_at:string|null;created_at:string}
+export interface NotificationPreference{id:number;in_app_reminders:boolean;email_reminders:boolean;push_reminders:boolean}
+export interface MobileDevice{id:number;name:string;abilities:string[];last_used_at:string|null;expires_at:string|null;created_at:string;current:boolean}
 export interface AuthTokenResponse{access_token:string;token_type:'Bearer';expires_at:string;user:Pick<MobileUser,'id'|'name'|'email'>}
 export interface IdempotentMutation{client_request_id:string}

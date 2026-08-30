@@ -11,12 +11,17 @@ class DeviceController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        return response()->json(['data' => $request->user()->tokens()->latest()->get(['id', 'name', 'abilities', 'last_used_at', 'expires_at', 'created_at'])]);
+        $currentId = $request->user()->currentAccessToken()?->id;
+        $tokens = $request->user()->tokens()->latest()->get(['id', 'name', 'abilities', 'last_used_at', 'expires_at', 'created_at'])
+            ->each(fn ($token) => $token->setAttribute('current', $token->id === $currentId));
+
+        return response()->json(['data' => $tokens]);
     }
 
     public function destroy(Request $request, int $token, AuditService $audit): JsonResponse
     {
         $record = $request->user()->tokens()->findOrFail($token);
+        abort_if($record->id === $request->user()->currentAccessToken()?->id, 422, 'Use sign out to revoke access for this device.');
         $name = $record->name;
         $record->delete();
         $audit->record($request->user(), 'identity.mobile_token_revoked', $request->user(), ['device_name' => $name], $request);

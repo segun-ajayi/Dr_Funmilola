@@ -8,9 +8,10 @@ export class ApiClientError extends Error {
 type RequestOptions = Omit<RequestInit,'body'> & { body?:unknown; token?:string|null };
 export async function apiRequest<T>(path:string, options:RequestOptions={}):Promise<T> {
   const { body, token, headers, ...rest } = options;
+  const isFormData=typeof FormData!=='undefined'&&body instanceof FormData;
   let response:Response;
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, { ...rest, body:body===undefined?undefined:JSON.stringify(body), headers:{ Accept:'application/json', ...(body===undefined?{}:{'Content-Type':'application/json'}), ...(token?{Authorization:`Bearer ${token}`}:{}) , ...headers } });
+    response = await fetch(`${API_BASE_URL}${path}`, { ...rest, body:body===undefined?undefined:isFormData?body:JSON.stringify(body), headers:{ Accept:'application/json', ...(body===undefined||isFormData?{}:{'Content-Type':'application/json'}), ...(token?{Authorization:`Bearer ${token}`}:{}) , ...headers } });
   } catch { throw new ApiClientError('network_unavailable','Unable to connect. Check your internet connection and try again.'); }
   if (response.status===204) return undefined as T;
   const payload = await response.json().catch(()=>null) as T|ApiError|null;

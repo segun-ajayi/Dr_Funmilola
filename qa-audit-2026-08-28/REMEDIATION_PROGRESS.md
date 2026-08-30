@@ -148,9 +148,9 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 - Release rule: VE-242 and VE-243 remain independent-QA gates. This implementation agent will not self-close QA-002 or QA-003.
 - S1 foundation revision: `0c1cd19`; evidence: `evidence/QA-002/S1_EDITOR_FOUNDATION_EVIDENCE.md`.
 - S1 result: actual-page persistent toolbar and command bridge, whole-document local history, atomic optimistic-lock draft save, immutable exact-current preview snapshot, transactional publish with previous-version retention, direct published rollback and expanded audit events. Full backend (110 tests / 854 assertions), full web (10 files / 31 tests), production build and migration rollback/reapply passed.
-- S2 text revision: `e3a0a54`; S2 rendered-button revision: `165223d`; evidence: `evidence/QA-002/S2_TEXT_BUTTON_EVIDENCE.md`.
-- S2 result to date: exact rendered-element caret editing, plain structured text persistence, complete live typography inspector, and rendered Hero/CTA button action/icon/appearance/spacing/visibility controls with strict server allow-lists. Full backend (110 tests / 860 assertions), full web (10 files / 32 tests) and production build pass.
-- Next active task: finish S2 with exact linked-text selection plus internal, external, email, telephone, target and remove-link controls. The uninterrupted refresh/preview/publish/logout journeys remain S7 evidence and QA-002/QA-003 remain REOPENED.
+- S2 revisions: text `e3a0a54`; rendered buttons `165223d`; linked text `f6e488a`; evidence: `evidence/QA-002/S2_TEXT_BUTTON_EVIDENCE.md`.
+- S2 result: exact rendered-element caret editing, plain structured text persistence, complete live typography inspector, rendered Hero/CTA button controls, and exact linked-text create/edit/remove controls for internal, external, email and telephone actions. Unsafe and mismatched action/destination pairs are rejected. Full backend (110 tests / 863 assertions), full web (10 files / 34 tests) and production build pass.
+- Next active slice: S3 expanded sections, 18-component catalogue, container hierarchy and responsive presentation. The uninterrupted refresh/preview/publish/logout journeys remain S7 evidence and QA-002/QA-003 remain REOPENED.
 
 ### Step 7 — Repair research and publication lifecycle
 

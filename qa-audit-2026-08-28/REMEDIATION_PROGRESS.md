@@ -146,6 +146,9 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 - Delivery order: S1 structured editor/document foundation; S2 inline text/buttons/links; S3 sections/components/hierarchy; S4 navigation/pages; S5 media/images; S6 resilience/accessibility; S7 continuous journeys and independent-QA handoff.
 - Current implementation assessment: the public-page toggle, private structured drafts, coarse selected sections, modal text editing, settings publication and dashboard lifecycle controls provide partial reusable foundations. They do not yet satisfy the reviewed exact-element, complete-toolbar, 18-component, persistent-media, exact-preview, direct-rollback or uninterrupted journey contract.
 - Release rule: VE-242 and VE-243 remain independent-QA gates. This implementation agent will not self-close QA-002 or QA-003.
+- S1 foundation revision: `0c1cd19`; evidence: `evidence/QA-002/S1_EDITOR_FOUNDATION_EVIDENCE.md`.
+- S1 result: actual-page persistent toolbar and command bridge, whole-document local history, atomic optimistic-lock draft save, immutable exact-current preview snapshot, transactional publish with previous-version retention, direct published rollback and expanded audit events. Full backend (110 tests / 854 assertions), full web (10 files / 31 tests), production build and migration rollback/reapply passed.
+- Next active slice: S2 true cursor-in-element text editing with live typography, buttons and links. The modal editor is explicitly not treated as closure evidence for VE-023–VE-047.
 
 ### Step 7 — Repair research and publication lifecycle
 

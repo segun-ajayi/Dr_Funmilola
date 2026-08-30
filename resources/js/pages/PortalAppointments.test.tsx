@@ -34,3 +34,16 @@ test('renders declined state and submits a server-derived reschedule option',asy
   await waitFor(()=>expect(post).toHaveBeenCalledWith('/me/appointments/41/reschedule-request',{starts_at:'2026-09-14T09:00:00+01:00',reason:''}));
   expect(await screen.findByRole('status')).toHaveTextContent('preferred time was sent');
 });
+
+test('message failure is announced and preserves the patient text for retry',async()=>{
+  post.mockRejectedValueOnce({response:{data:{message:'The practice inbox is temporarily unavailable.'}}});
+  render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><MemoryRouter><PortalPage/></MemoryRouter></QueryClientProvider>);
+  fireEvent.click(await screen.findByRole('button',{name:/Messages/}));
+  fireEvent.change(screen.getByLabelText('Subject'),{target:{value:'Follow-up question'}});
+  fireEvent.change(screen.getByLabelText('Message'),{target:{value:'Please call when convenient.'}});
+  fireEvent.click(screen.getByRole('button',{name:'Start conversation'}));
+  expect(await screen.findByRole('alert')).toHaveTextContent('temporarily unavailable');
+  expect(screen.getByLabelText('Subject')).toHaveValue('Follow-up question');
+  expect(screen.getByLabelText('Message')).toHaveValue('Please call when convenient.');
+  expect(screen.getByRole('button',{name:'Start conversation'})).toBeEnabled();
+});

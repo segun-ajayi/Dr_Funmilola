@@ -47,7 +47,7 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 | QA-006 | 2 | READY FOR RETEST | slot_minutes/buffer semantics documented and boundary-tested | Implementation `adf7156`; cadence contract/test in `evidence/QA-006` |
 | QA-007 | 5 | READY FOR RETEST | Declined cancellation can be resubmitted and displays accurately | Implementation `1df4fdc`; reset/reason/status/audit/API/web regression passed; evidence in `evidence/QA-007` |
 | QA-008 | 5 | READY FOR RETEST | Reschedule lifecycle consistent in DB/API/UI/audit/notifications | Implementation `1df4fdc`; active `rescheduled` lifecycle and operational consumers covered; evidence in `evidence/QA-008` |
-| QA-009 | 10 | NOT STARTED | Day/week/month/agenda plus operations/filters/responsive/a11y pass | Queued; evidence folder `evidence/QA-009` |
+| QA-009 | 10 | READY FOR RETEST | Day/week/month/agenda plus operations/filters/responsive/a11y pass | Implementation `7212b73`; four views, create/detail/edit/status/reschedule, combined filters, scheduling management, conflict recovery and automated regressions pass; independent responsive/device/screen-reader acceptance remains; evidence in `evidence/QA-009` |
 | QA-010 | 11 | BLOCKED | Approved live provider passes ownership/expiry/media/failure/device tests | Approved provider/privacy decision absent; independent shell work remains queued; evidence folder `evidence/QA-010` |
 | QA-011 | 8 | READY FOR RETEST | Contact route and true 404 pass direct/link/status tests | Implementation `ee80e16`; real status and route regressions pass; evidence in `evidence/QA-011` |
 | QA-012 | 8 | BLOCKED | Complete verified public profile/service/education/publication journeys | Technical journeys implemented; content-owner/institutional approvals remain unavailable; evidence in `evidence/QA-012` |
@@ -179,6 +179,20 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 
 ### Step 10 — Build the operational calendar
 
-- Status: IN PROGRESS.
+- Status: IMPLEMENTED LOCALLY; QA-009 READY FOR RETEST.
 - Finding: QA-009.
 - Plan: (1) inventory the existing calendar and scheduling APIs against the required Day, Week, Month and Agenda views; (2) add appointment create/detail/edit/reschedule with shared server-side scheduling truth; (3) provide keyboard-accessible movement with a non-drag equivalent and conflict rollback; (4) add patient, service/type and status filters; (5) expose recurring availability rules and exceptions; (6) keep Africa/Lagos display and UTC storage explicit; (7) verify responsive and accessible behavior at 320, 390, 768, 1024 and 1440 px; (8) record automated evidence and external device/screen-reader blockers honestly before committing and pushing the step.
+- Revision: `7212b73`.
+- Views and filtering: staff can switch among distinct Day, Week, Month and Agenda presentations, navigate dates and combine patient, status, service and consultation-method filters. Display timezone is explicitly Africa/Lagos.
+- Appointment operations: authorized staff can search an existing patient, create and confirm an appointment from server-derived slots, inspect details, edit operational notes/location, apply valid status transitions and reschedule. Staff-only reschedule options exclude the current appointment while retaining the shared scheduling truth.
+- Scheduling operations: the page exposes recurring availability rules, active/paused state and schedule exceptions. Appointment movement supports pointer drag and labelled non-drag previous/next-day controls; the UI refreshes only after server acceptance and announces conflicts without retaining an invalid optimistic move.
+- Tests: focused calendar UI 3 tests; full web 9 files/27 tests; full backend 97 tests/712 assertions; TypeScript and production build passed. Build output is JS 482.73 KB (143.34 KB gzip) and CSS 294.23 KB (43.13 KB gzip). `git diff --check` passed.
+- Remaining risk: independent 320, 390, 768, 1024 and 1440 px browser checks, physical pointer/touch interaction, screen-reader traversal and production PostgreSQL concurrency evidence are unavailable locally. QA-009 is therefore not self-declared PASS.
+
+### Step 11 — Activate real online consultations
+
+- Status: BLOCKED ON APPROVED PRIVACY/PROVIDER DECISION.
+- Finding: QA-010.
+- Plan: (1) record the approved video provider, hosting region, data-processing terms, retention and incident controls; (2) implement the provider adapter without exposing secrets or room locators; (3) connect patient consent/wait/join/leave and staff admit/start/end to short-lived owned authorization; (4) add outage, permission, interruption and rejoin recovery; (5) record privacy-minimal attendance/audit events; (6) integrate web and native clients after the shared contract passes; (7) verify ownership, expiry/replay, browser and physical iOS/Android media behavior.
+- Current position: the provider-independent consultation state machine, consent gate, ownership isolation, short-lived signed join authorization and attendance auditing already have backend coverage. A live provider integration cannot be selected or represented as production-ready without the external provider/privacy approvals recorded in the prerequisite.
+- Next action: preserve this blocker and proceed to Step 12, whose administration, audit and session-revocation work does not depend on a video-provider choice.

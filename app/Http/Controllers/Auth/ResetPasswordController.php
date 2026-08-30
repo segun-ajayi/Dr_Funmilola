@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\SessionRevocationService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,12 +17,13 @@ use Illuminate\Validation\ValidationException;
 
 class ResetPasswordController extends Controller
 {
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(Request $request, SessionRevocationService $sessions): JsonResponse
     {
         $data = $request->validate(['token' => ['required'], 'email' => ['required', 'email'], 'password' => ['required', 'confirmed', PasswordRule::min(10)->mixedCase()->numbers()->symbols()->uncompromised()]]);
-        $status = Password::reset($data, function (User $user, string $password) use ($request) {
-            $user->forceFill(['password' => Hash::make($password), 'remember_token' => Str::random(60)])->save();
+        $status = Password::reset($data, function (User $user, string $password) use ($request, $sessions) {
+            $user->forceFill(['password' => Hash::make($password), 'remember_token' => Str::random(60), 'account_claimed_at' => $user->account_claimed_at ?? now()])->save();
             $user->tokens()->delete();
+            $sessions->revokeAll($user);
             AuditLog::create(['actor_id' => $user->id, 'action' => 'identity.password_reset', 'subject_type' => User::class, 'subject_id' => $user->id, 'ip_address' => $request->ip()]);
             event(new PasswordReset($user));
         });

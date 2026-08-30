@@ -28,8 +28,8 @@ Route::get('/{path?}', function (?string $path = null) {
     ];
     $known = ['', 'about', 'services', 'research', 'academic', 'education', 'contact', 'book', 'portal',
         'portal/reminders', 'portal/consultations', 'sign-in', 'register', 'forgot-password',
-        'privacy', 'terms', 'accessibility', 'staff', 'staff/inbox', 'staff/calendar',
-        'staff/consultations', 'staff/cms', 'staff/research-review', 'staff/education', 'staff/audit'];
+        'privacy', 'terms', 'accessibility', 'security', 'staff', 'staff/inbox', 'staff/calendar',
+        'staff/consultations', 'staff/accounts', 'staff/cms', 'staff/research-review', 'staff/education', 'staff/audit'];
     $dynamic = false;
     $seo = ['title' => $metadata[$path][0] ?? 'Dr. Funmilola Olanike Wuraola', 'description' => $metadata[$path][1] ?? 'Specialist breast oncology care, academic work and patient education.'];
     if (preg_match('#^education/([a-z0-9]+(?:-[a-z0-9]+)*)$#', $path, $matches)) {
@@ -65,7 +65,7 @@ Route::get('/{path?}', function (?string $path = null) {
     }
 
     $status = in_array($path, $known, true) || $dynamic ? 200 : 404;
-    $private = preg_match('#^(staff|portal|sign-in|register|forgot-password)(/|$)#', $path) === 1
+    $private = preg_match('#^(staff|portal|security|sign-in|register|forgot-password)(/|$)#', $path) === 1
         || in_array($path, ['privacy', 'terms', 'accessibility'], true);
     $seo['noindex'] = ($seo['noindex'] ?? false) || $private || $status === 404;
     $seo['canonical'] = $seo['noindex'] ? null : url($path === '' ? '/' : '/'.$path);

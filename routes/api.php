@@ -30,6 +30,7 @@ use App\Http\Controllers\PublicCmsController;
 use App\Http\Controllers\PublicContentController;
 use App\Http\Controllers\ReadinessController;
 use App\Http\Controllers\RescheduleRequestController;
+use App\Http\Controllers\Staff\AccountController;
 use App\Http\Controllers\Staff\AppointmentController as StaffAppointmentController;
 use App\Http\Controllers\Staff\AvailabilityExceptionController;
 use App\Http\Controllers\Staff\AvailabilityRuleController;
@@ -68,6 +69,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('/auth/logout', LogoutController::class);
     Route::get('/me/devices', [DeviceController::class, 'index']);
     Route::delete('/me/devices/{token}', [DeviceController::class, 'destroy'])->middleware('throttle:20,1');
+    Route::get('/me/sessions', [DeviceController::class, 'sessions']);
+    Route::delete('/me/sessions/{reference}', [DeviceController::class, 'destroySession'])->middleware('throttle:20,1');
     Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->middleware('signed')->name('verification.verify');
     Route::post('/email/verification-notification', [VerificationController::class, 'resend'])->middleware('throttle:3,1');
     Route::middleware('verified')->group(function () {
@@ -122,6 +125,11 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/consultations', [StaffConsultationController::class, 'index']);
         Route::post('/appointments/{appointment}/consultation', [StaffConsultationController::class, 'store']);
         Route::patch('/consultations/{consultation}/status', [StaffConsultationController::class, 'transition']);
+        Route::middleware(['verified', 'role:admin,power_admin'])->group(function () {
+            Route::get('/accounts', [AccountController::class, 'index']);
+            Route::post('/accounts', [AccountController::class, 'store'])->middleware('throttle:10,1');
+            Route::patch('/accounts/{account}', [AccountController::class, 'update'])->middleware('throttle:20,1');
+        });
     });
     Route::prefix('cms')->middleware(['verified', 'role:power_admin'])->group(function () {
         Route::get('/pages', [CmsPageController::class, 'index']);

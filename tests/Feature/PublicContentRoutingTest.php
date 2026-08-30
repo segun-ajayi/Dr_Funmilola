@@ -19,7 +19,7 @@ class PublicContentRoutingTest extends TestCase
 
     public function test_contact_and_known_routes_are_real_while_missing_paths_return_http_404(): void
     {
-        foreach (['/', '/about', '/services', '/research', '/academic', '/education', '/contact', '/book', '/privacy', '/terms', '/accessibility'] as $path) {
+        foreach (['/', '/about', '/services', '/research', '/academic', '/education', '/contact', '/book', '/privacy', '/terms', '/accessibility', '/security', '/staff/accounts'] as $path) {
             $this->get($path)->assertOk();
         }
 

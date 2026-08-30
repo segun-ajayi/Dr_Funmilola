@@ -19,6 +19,8 @@ import AcademicPortfolioPage from './pages/AcademicPortfolioPage';
 import EducationPage from './pages/EducationPage';
 import EducationManagerPage from './pages/EducationManagerPage';
 import AuditLogPage from './pages/AuditLogPage';
+import StaffAccountsPage from './pages/StaffAccountsPage';
+import AccountSecurityPage from './pages/AccountSecurityPage';
 import { api } from './api';
 import { CmsEditContext } from './CmsEditContext';
 import Seo from './Seo';
@@ -70,7 +72,7 @@ export default function App(){
  const {data}=useQuery({queryKey:['public'],queryFn:getPublic});
  return <><DefaultRouteSeo/><Routes>
   <Route path="/sign-in" element={<SignInPage/>}/><Route path="/register" element={<RegisterPage/>}/><Route path="/forgot-password" element={<ForgotPasswordPage/>}/><Route path="/reset-password" element={<ResetPasswordPage/>}/>
-  <Route path="/staff" element={<StaffDashboardPage/>}/><Route path="/staff/inbox" element={<StaffInboxPage/>}/><Route path="/staff/calendar" element={<StaffCalendarPage/>}/><Route path="/staff/consultations" element={<StaffConsultationsPage/>}/><Route path="/staff/cms" element={<CmsEditorPage/>}/><Route path="/staff/research-review" element={<VerificationQueuePage/>}/><Route path="/staff/education" element={<EducationManagerPage/>}/><Route path="/staff/audit" element={<AuditLogPage/>}/><Route path="/preview/:token" element={<CmsPublicPage preview/>}/>
+  <Route path="/staff" element={<StaffDashboardPage/>}/><Route path="/staff/inbox" element={<StaffInboxPage/>}/><Route path="/staff/calendar" element={<StaffCalendarPage/>}/><Route path="/staff/consultations" element={<StaffConsultationsPage/>}/><Route path="/staff/accounts" element={<StaffAccountsPage/>}/><Route path="/staff/cms" element={<CmsEditorPage/>}/><Route path="/staff/research-review" element={<VerificationQueuePage/>}/><Route path="/staff/education" element={<EducationManagerPage/>}/><Route path="/staff/audit" element={<AuditLogPage/>}/><Route path="/security" element={<AccountSecurityPage/>}/><Route path="/preview/:token" element={<CmsPublicPage preview/>}/>
   <Route path="*" element={<Layout><Routes><Route path="/" element={<CmsPublicPage slug="home" fallback={<Home data={data}/>}/>}/><Route path="/about" element={<CmsPublicPage slug="about" fallback={<About/>} supplement={<VerifiedProfile/>}/>}/><Route path="/services" element={<CmsPublicPage slug="services" fallback={<Services data={data}/>} supplement={<ServicesDirectory data={data}/>}/>}/><Route path="/research" element={<CmsPublicPage slug="research" fallback={<Research data={data}/>}/>}/><Route path="/academic" element={<AcademicPortfolioPage/>}/><Route path="/academic/publications/:publicationId" element={<PublicationDetailPage/>}/><Route path="/education" element={<EducationPage/>}/><Route path="/education/:slug" element={<EducationArticlePage/>}/><Route path="/contact" element={<ContactPage/>}/><Route path="/privacy" element={<LegalStatusPage type="privacy"/>}/><Route path="/terms" element={<LegalStatusPage type="terms"/>}/><Route path="/accessibility" element={<LegalStatusPage type="accessibility"/>}/><Route path="/book" element={<BookingPage services={data?.services??[]}/>}/><Route path="/portal" element={<PortalPage/>}/><Route path="/portal/reminders" element={<ReminderPreferencesPage/>}/><Route path="/portal/consultations" element={<ConsultationsPage/>}/><Route path="/p/:slug" element={<CmsPublicPage/>}/><Route path="*" element={<NotFoundPage/>}/></Routes></Layout>}/>
  </Routes></>;
 }

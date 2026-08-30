@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
@@ -75,12 +76,14 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
         $user->createToken('Old phone');
+        DB::table('sessions')->insert(['id' => 'old-browser', 'user_id' => $user->id, 'ip_address' => '127.0.0.1', 'user_agent' => 'Test browser', 'payload' => 'test', 'last_activity' => now()->timestamp]);
         $token = Password::createToken($user);
 
         $this->postJson('/api/auth/reset-password', ['email' => $user->email, 'token' => $token, 'password' => 'NewStrong!Pass123', 'password_confirmation' => 'NewStrong!Pass123'])->assertOk();
 
         $this->assertTrue(Hash::check('NewStrong!Pass123', $user->fresh()->password));
         $this->assertSame(0, $user->tokens()->count());
+        $this->assertDatabaseMissing('sessions', ['id' => 'old-browser']);
         $this->assertDatabaseHas('audit_logs', ['actor_id' => $user->id, 'action' => 'identity.password_reset']);
     }
 

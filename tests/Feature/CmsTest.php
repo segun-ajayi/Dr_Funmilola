@@ -258,6 +258,10 @@ class CmsTest extends TestCase
         $payload['presentation']['text_styles']['heading']['position'] = 'fixed';
         $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
         unset($payload['presentation']['text_styles']['heading']['position']);
+        $payload['content']['heading_marks'] = [['type' => 'link', 'start' => 0, 'end' => 7, 'url' => 'mailto:care@example.org', 'target' => '_self', 'action' => 'email']];
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertCreated()->assertJsonPath('data.content.heading_marks.0.action', 'email');
+        $payload['content']['heading_marks'][0]['action'] = 'internal';
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
         $payload['content']['heading_marks'] = [['type' => 'link', 'start' => 0, 'end' => 7, 'url' => 'javascript:alert(1)']];
         $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
     }

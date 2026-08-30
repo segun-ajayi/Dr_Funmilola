@@ -9,9 +9,9 @@ Run every gate from the repository root. A release candidate fails if any comman
 3. `npm run build` — TypeScript/Vite production compilation and asset generation.
 4. `npm run typecheck` — strict web and shared mobile-contract TypeScript validation.
 5. `git diff --check` — whitespace/conflict-marker check.
-5. `php artisan route:list` — inspect middleware and route naming for unexpected public mutations.
-6. `php artisan schedule:list` — confirm reminder schedule registration.
-7. `php artisan practice:prune-expired` — dry-run retention report only.
+6. `php artisan route:list` — inspect middleware and route naming for unexpected public mutations.
+7. `php artisan schedule:list` — confirm reminder schedule registration.
+8. `php artisan practice:prune-expired` — dry-run retention report only.
 
 ## Browser journeys
 

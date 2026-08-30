@@ -3,7 +3,7 @@
 Started: 28 August 2026  
 Audit baseline revision: `2424cb1f68232f3b10d2e6f43be4536e7091d5df`  
 Implementation owner: Codex implementation agent  
-Authoritative inputs: the original 13 audit reports in this directory. Those reports are preserved unchanged.
+Authoritative inputs: the original audit reports plus `TRUE_IN_PLACE_VISUAL_EDITOR_ACCEPTANCE_CHECKLIST.md` in this directory. The original reports are preserved unchanged.
 
 ## Operating rules
 
@@ -12,6 +12,8 @@ Authoritative inputs: the original 13 audit reports in this directory. Those rep
 - `PASS` requires the original reproduction case, automated regression coverage, runtime evidence where applicable, and a linked revision.
 - External-provider, physical-device, browser-matrix, PostgreSQL, Redis, and independent-QA evidence is never inferred from local mocks or SQLite tests.
 - Every remediation step is committed and pushed independently.
+- QA-002 and QA-003 cannot be closed until every VE-001 through VE-243 row has fresh evidence and the mandatory continuous journeys pass on the actual rendered website.
+- A dashboard manager, form editor, separate editing route, or substitute canvas does not satisfy the true in-place editor addendum.
 
 ## Step 0 baseline
 
@@ -38,8 +40,8 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 | Finding | Step | Status | Minimum closure evidence | Revision / files / tests / runtime evidence / remaining risk |
 | --- | ---: | --- | --- | --- |
 | QA-001 | 1 | READY FOR RETEST | Numeric protected page 200, public slug works, role denials and real editor E2E | Implementation `cf396fd`; route/editor integration and public-browser evidence in `evidence/QA-001`; independent authenticated browser retest pending |
-| QA-002 | 6 | BLOCKED | Every visual CMS control in REQ-065–084 passes E2E/accessibility | Implementations `b8bbdeb`, `bec0619`, `d905416`; live edit, safe rich text/link ranges, typography, button, menu, page, section and version controls pass locally. Approved scanned public-media upload/library and independent device/a11y acceptance remain unavailable; evidence in `evidence/QA-002` |
-| QA-003 | 6 | READY FOR RETEST | Published nav/theme visibly changes public renderer; draft does not | Implementation `b8bbdeb`, expanded menu `bec0619`; API draft isolation and rendered public settings regressions pass; evidence in `evidence/QA-003` |
+| QA-002 | 6 | REOPENED | Every VE-001–VE-243 gate and REQ-065–084 row passes with exact in-place E2E/accessibility evidence | Earlier implementations `b8bbdeb`, `bec0619`, `d905416` were assessed against the prior, looser definition. The release-critical true in-place addendum now requires a fresh row-by-row gap review and exact VE-232–VE-236 runtime journeys; prior local evidence may be linked only where it directly proves the stricter row. |
+| QA-003 | 6 | REOPENED | Draft isolation, rendered nav/theme, preview, publish, version retention and rollback pass the linked VE gates | Earlier implementation `b8bbdeb` and expanded menu `bec0619` require fresh validation against the actual-page editor, private draft, exact preview, previous-version retention, rollback and logged-out renderer gates in the VE checklist. |
 | QA-004 | 2 | READY FOR RETEST | Off-rule/closed/method-invalid POSTs fail; generated slot succeeds | Implementation `adf7156`; shared availability decision and regression evidence in `evidence/QA-004` |
 | QA-005 | 2 | BLOCKED | Repeated PostgreSQL concurrent test commits exactly one overlap | PostgreSQL advisory-lock implementation `adf7156`; true concurrent PostgreSQL runtime unavailable; evidence in `evidence/QA-005` |
 | QA-006 | 2 | READY FOR RETEST | slot_minutes/buffer semantics documented and boundary-tested | Implementation `adf7156`; cadence contract/test in `evidence/QA-006` |
@@ -54,13 +56,13 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 | QA-015 | 12 | NOT STARTED | Patient/account/role admin operations pass role/audit edge cases | Queued; evidence folder `evidence/QA-015` |
 | QA-016 | 13 | NOT STARTED | All required native mutations pass API, E2E, device and a11y tests | Queued; physical-device/provider portions remain externally blocked; evidence folder `evidence/QA-016` |
 | QA-017 | 5 | READY FOR RETEST | Web/native actions exactly match server allowed_actions for all states | Implementation `1df4fdc`; all-state API matrix and rendered web/native regressions passed; physical-device acceptance pending; evidence in `evidence/QA-017` |
-| QA-018 | 9 | IN PROGRESS | Mobile menu passes touch/keyboard/ARIA at all collapsed widths | Step 9 implementation started; evidence folder `evidence/QA-018` |
-| QA-019 | 9 | IN PROGRESS | Labels, skip link, focus, names and announcements pass manual/axe checks | Step 9 implementation started; physical screen-reader acceptance remains external; evidence folder `evidence/QA-019` |
-| QA-020 | 9 | IN PROGRESS | Semantic text/control/focus tokens meet WCAG contrast thresholds | Step 9 implementation started; evidence folder `evidence/QA-020` |
+| QA-018 | 9 | READY FOR RETEST | Mobile menu passes touch/keyboard/ARIA at all collapsed widths | Implementation `d90a2af`; disclosure, Escape/focus-return, close-on-route and target-size regressions pass; physical-device matrix remains independent acceptance; evidence in `evidence/QA-018` |
+| QA-019 | 9 | READY FOR RETEST | Labels, skip link, focus, names and announcements pass manual/axe checks | Implementation `d90a2af`; shared skip/route focus, accessible names, labels and live error/status regressions pass; physical screen-reader/axe acceptance remains external; evidence in `evidence/QA-019` |
+| QA-020 | 9 | READY FOR RETEST | Semantic text/control/focus tokens meet WCAG contrast thresholds | Implementation `d90a2af`; semantic colour contrast regression, focus-visible, reduced-motion and forced-colour rules pass locally; independent visual matrix remains; evidence in `evidence/QA-020` |
 | QA-021 | 12 | NOT STARTED | Password reset revokes other web sessions and mobile/API tokens | Queued; Redis session retest remains blocked; evidence folder `evidence/QA-021` |
 | QA-022 | 3 | BLOCKED | Approved scanner/quarantine passes clean/reject/timeout/privacy tests | Quarantine/fail-closed implementation `c306f15`; approved provider/privacy/runtime approval unavailable; evidence in `evidence/QA-022` |
 | QA-023 | 12 | NOT STARTED | Audit catalogue actions produce safe actor/resource/before-after records | Queued; evidence folder `evidence/QA-023` |
-| QA-024 | 9 | IN PROGRESS | Every major mutation shows preserved, announced, recoverable failure | Step 9 implementation started; evidence folder `evidence/QA-024` |
+| QA-024 | 9 | READY FOR RETEST | Every major mutation shows preserved, announced, recoverable failure | Implementation `d90a2af`; auth, booking, portal, staff scheduling/search/decisions, education and consultation actions now expose pending/error/retry state; preserved-message regression passes; exhaustive independent forced-error matrix remains; evidence in `evidence/QA-024` |
 | QA-025 | 8 | READY FOR RETEST | Per-route title/description/canonical/OG plus sitemap/404 checks | Implementation `ee80e16`; server/client metadata, sitemap and robots regressions pass; evidence in `evidence/QA-025` |
 | QA-026 | 14 | NOT STARTED | Route chunks/requests meet recorded performance budget | Queued; evidence folder `evidence/QA-026` |
 | QA-027 | 8 | BLOCKED | Approved Privacy/Terms/Accessibility pages linked and crawl-tested | Routes/link/noindex infrastructure implemented; approved legal documents/sign-off unavailable; evidence in `evidence/QA-027` |
@@ -164,6 +166,19 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 
 ### Step 9 — Repair responsive navigation, accessibility and error recovery
 
-- Status: IN PROGRESS.
+- Status: IMPLEMENTED LOCALLY; QA-018, QA-019, QA-020 and QA-024 READY FOR RETEST.
 - Findings: QA-018, QA-019, QA-020 and QA-024.
 - Plan: (1) add skip navigation, programmatic main focus and route-change menu/focus behavior; (2) complete mobile disclosure keyboard/Escape/focus handling and 44px targets; (3) audit labels, names, status/error announcements and field relationships across public/auth/booking/portal/staff/CMS; (4) replace weak semantic colours and add consistent focus-visible, reduced-motion, forced-colours and reflow rules; (5) standardize major mutation pending/success/error preservation and retry; (6) add automated accessibility/viewport/error regressions while recording physical screen-reader/device/browser blockers honestly.
+- Revision: `d90a2af`.
+- Navigation/focus: the public shell provides a visible-on-focus skip link, programmatic main focus after route changes, mobile disclosure state, close-on-route, Escape close and focus return. CMS submenus expose controls/expanded state and the same Escape behavior.
+- Forms/announcements: auth, booking, portal, staff calendar/dashboard, education and consultation controls have programmatic labels or names. Loading, success and error states use appropriate live status/alert semantics.
+- Recovery: major patient and staff mutations expose pending state, preserve entered values after failure, provide a specific retryable message and re-enable the action. This includes portal messages/documents/profile, reminder settings, schedule exceptions, appointment decisions/search, education drafts/publish and patient/staff consultation transitions.
+- Presentation: the low-contrast rose token was replaced with a 5.28:1-on-white semantic value; shared focus-visible, 44 px coarse/mobile targets, reduced-motion, forced-colour, wrapping and horizontal-reflow safeguards were added.
+- Tests: focused navigation/portal failure regressions plus semantic contrast checks pass; full web 8 files/24 tests, TypeScript and production build pass. Build output is JS 466.77 KB (139.39 KB gzip) and CSS 286.66 KB (41.99 KB gzip). Full backend remains 96 tests/693 assertions. `git diff --check` passes.
+- Remaining risk: independent axe/browser/320–1440 px matrix, keyboard walkthrough, Windows High Contrast, VoiceOver/TalkBack/NVDA and physical touch-device acceptance are unavailable locally. The exhaustive forced 422/403/404/409/429/500/network matrix remains an independent retest gate, so no finding is marked PASS.
+
+### Step 10 — Build the operational calendar
+
+- Status: IN PROGRESS.
+- Finding: QA-009.
+- Plan: (1) inventory the existing calendar and scheduling APIs against the required Day, Week, Month and Agenda views; (2) add appointment create/detail/edit/reschedule with shared server-side scheduling truth; (3) provide keyboard-accessible movement with a non-drag equivalent and conflict rollback; (4) add patient, service/type and status filters; (5) expose recurring availability rules and exceptions; (6) keep Africa/Lagos display and UTC storage explicit; (7) verify responsive and accessible behavior at 320, 390, 768, 1024 and 1440 px; (8) record automated evidence and external device/screen-reader blockers honestly before committing and pushing the step.

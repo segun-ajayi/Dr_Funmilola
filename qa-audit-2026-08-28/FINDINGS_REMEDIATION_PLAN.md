@@ -3,6 +3,7 @@
 Prepared: 28 August 2026  
 Purpose: give an implementation agent a dependency-ordered, evidence-driven path to close every audit finding without silently skipping any item.  
 Canonical finding inventory: QA_FINDINGS.csv and QA_FINDINGS.md in this folder.  
+Mandatory visual-editor gate: TRUE_IN_PLACE_VISUAL_EDITOR_ACCEPTANCE_CHECKLIST.md.
 Starting release position: DO NOT RELEASE.
 
 ## Non-negotiable completion rule
@@ -230,33 +231,49 @@ Exit gate:
 Findings: QA-002, QA-003  
 Prerequisite: Step 1.
 
+Critical interpretation rule:
+
+- The editor must operate on the actual rendered public website. A dashboard page manager, side-panel form editor, redirect to a separate editor route, or substitute canvas is not acceptable even when its save and publish APIs work.
+- TRUE_IN_PLACE_VISUAL_EDITOR_ACCEPTANCE_CHECKLIST.md is the atomic source of truth for this step. Do not mark QA-002 or QA-003 PASS by batch-assuming that a related control covers unchecked checklist rows.
+
 Implementation work:
 
-1. Define versioned, validated schemas for editable components and presentation fields.
-2. Provide persistent Edit Mode while navigating public pages.
-3. Add element selection and double-click inline paragraph editing.
-4. Implement font family, size, weight, bold, italic, underline, alignment, color, line height, spacing and link editing.
-5. Add managed media upload/library/replace, required alt/decorative choice, crop, dimensions, alignment, border radius and link.
-6. Add button text, URL/internal route, style, icon and visibility.
-7. Add menu rename/add/delete/reorder/submenu/destination/hide/show.
-8. Add page create/rename/slug/SEO/publish/unpublish/duplicate.
-9. Add section add/remove/duplicate/reorder/hide/background/spacing.
-10. Expose version history and rollback.
-11. Make published navigation/theme settings drive the public renderer while drafts remain private.
-12. Sanitize/validate every structured content path and preserve safe links/media.
+1. Implement a Power-Admin-only View/Edit toggle on the actual public page, persistent Edit Mode across public navigation, and a toolbar containing Select, Add Section, Undo, Redo, Preview, Save Draft, Publish and Exit Edit Mode.
+2. Implement hierarchical page/section/component/element selection with subtle hover outlines, correct parent/child targeting and a visible selection breadcrumb.
+3. Implement true double-click inline editing for headings, paragraphs, subtitles, labels, cards, buttons, footer text and CTAs, with live font family, size, weight, bold, italic, underline, color, alignment, line height, letter spacing and decoration controls.
+4. Implement in-place image selection, upload/library replacement, alt text, caption, crop, dimensions, alignment, object fit, radius, link, overlay and opacity, with every change visible at the rendered image.
+5. Implement in-place button text, action/destination, internal route, external URL, icon, position, size, typography, colors, border, radius, spacing and visibility controls.
+6. Implement in-place link text, internal/external/email/telephone destinations, target behavior and safe link removal.
+7. Implement section background color/gradient/image/pattern/breast-contour treatment/overlay; spacing, sizing, layout, columns, alignment, gap, border, radius, shadow and visibility; and independent desktop/tablet/mobile values.
+8. Provide the complete Add Section library: Hero, Rich Text, Image, Text + Image, Cards, Services, CTA, Publications, Career Timeline, Achievements, FAQ, Gallery, Statistics, Contact, Appointment Widget, Video, Divider and Spacer.
+9. Implement section move up/down, drag reorder, duplicate, hide, delete and edit actions directly on the rendered page.
+10. Implement visual navigation rename, destinations, hide/show, delete, reorder, add and submenu operations on the rendered navigation.
+11. Implement page name/slug creation from blank or template, then open the new page on the real site for visual edit, preview, publish and menu linking.
+12. Define versioned, validated Page, Section, Component, Element, Props, Styles, Responsive Styles, Draft and Published schemas; do not use arbitrary whole-page HTML as the primary model.
+13. Keep drafts private; support continue, manual save, safe discard, exact preview and desktop/tablet/mobile preview modes.
+14. Implement publish with previous-version retention and rollback, plus session undo/redo and conflict protection for concurrent Power Admin edits.
+15. Implement autosave or equivalent loss protection, an unsaved indicator, explicit saving/saved/failed states, retry/manual save, and never report a failed save as successful.
+16. Provide a persistent searchable and reusable media library with metadata, alt/decorative state, authorization, validation, malware scanning and failure handling.
+17. Make published navigation, content, components and presentation drive the logged-out renderer while drafts remain private.
+18. Sanitize and validate every structured text, style, URL, component and media path; preserve accessibility, keyboard operation, responsive usability and audit evidence.
 
 Required tests:
 
-- One E2E test for every numbered capability above.
-- Draft is not public; preview is token-protected/expiring; publish changes public output; rollback restores it.
-- Concurrent Power Admin edit/version conflict handling.
-- Patient/Moderator/Admin direct API and frontend route denial.
-- XSS, unsafe link, invalid media and schema-version migration tests.
-- Keyboard, screen-reader and responsive editor tests.
+- Record a separate result and evidence location for every ID VE-001 through VE-243. No row may be inferred from another.
+- Run VE-232 as one uninterrupted text/font/save/refresh/preview/publish/logout/public E2E journey.
+- Run VE-233 as one uninterrupted image/alt/save/refresh/preview/publish/logout/public E2E journey.
+- Run VE-234 as one uninterrupted add/edit/drag/save/refresh/preview/publish/logout/public section E2E journey.
+- Run VE-235 rollback and VE-236 cross-role UI/direct-API authorization journeys.
+- Test draft privacy, protected preview, publish, previous-version retention, rollback, undo/redo, autosave/failure recovery and concurrent-edit conflict handling.
+- Test XSS, unsafe links and style values, invalid/unscanned media, invalid schemas and schema-version migrations.
+- Test keyboard, screen reader, visible focus and responsive editor behavior at desktop, tablet and mobile sizes.
 
 Exit gate:
 
-- QA-002 and QA-003 PASS.
+- Every VE-001 through VE-243 row has fresh evidence and PASS status.
+- The three mandatory continuous journeys VE-232, VE-233 and VE-234 pass exactly as written; rollback and authorization journeys also pass.
+- Independent QA confirms the actual-site editor is not a conventional dashboard manager or substitute canvas.
+- QA-002 and QA-003 PASS only after the preceding gates.
 - Every REQ-065 through REQ-085 row is independently retested, not batch-assumed.
 
 ## Step 7 — Repair research and publication lifecycle
@@ -524,8 +541,8 @@ Status values: NOT STARTED, IN PROGRESS, BLOCKED, READY FOR RETEST, PASS, REOPEN
 | Finding | Step | Initial status | Minimum closure evidence | Revision / evidence link |
 | --- | ---: | --- | --- | --- |
 | QA-001 | 1 | NOT STARTED | Numeric protected page 200, public slug works, role denials and real editor E2E | — |
-| QA-002 | 6 | NOT STARTED | Every visual CMS control in REQ-065–084 passes E2E/accessibility | — |
-| QA-003 | 6 | NOT STARTED | Published nav/theme visibly changes public renderer; draft does not | — |
+| QA-002 | 6 | NOT STARTED | Every VE-001–VE-243 gate and REQ-065–084 row passes with exact in-place E2E/accessibility evidence | — |
+| QA-003 | 6 | NOT STARTED | Draft isolation, rendered nav/theme, preview, publish, version retention and rollback pass the linked VE gates | — |
 | QA-004 | 2 | NOT STARTED | Off-rule/closed/method-invalid POSTs fail; generated slot succeeds | — |
 | QA-005 | 2 | NOT STARTED | Repeated PostgreSQL concurrent test commits exactly one overlap | — |
 | QA-006 | 2 | NOT STARTED | slot_minutes/buffer semantics documented and boundary-tested | — |
@@ -560,6 +577,9 @@ Before final sign-off, compare the canonical IDs in QA_FINDINGS.csv with the clo
 Manual final checklist:
 
 - [ ] QA-001 through QA-029 each appear exactly once in the closure ledger.
+- [ ] VE-001 through VE-243 each appear exactly once in the visual-editor acceptance evidence and all PASS.
+- [ ] VE-232, VE-233 and VE-234 pass as continuous logged-in-to-logged-out browser journeys.
+- [ ] Independent QA confirms the CMS edits the actual rendered website in place.
 - [ ] Every ledger status is PASS or an explicitly approved non-blocking residual risk.
 - [ ] Every PASS row contains a revision and evidence link.
 - [ ] All 150 requirements were re-evaluated individually.

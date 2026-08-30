@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Routes, Route, Link, NavLink, useLocation } from 'react-router-dom';
-import { ArrowRight, CalendarDays, HeartPulse, Menu, Microscope, ShieldCheck, Stethoscope, Video, BookOpen, MapPin, Pencil, X } from 'lucide-react';
+import { ArrowRight, CalendarDays, HeartPulse, Menu, Microscope, ShieldCheck, Stethoscope, Video, BookOpen, MapPin, Pencil, X, MousePointer2, Plus, Undo2, Redo2, Eye, Save, Send } from 'lucide-react';
 import type { PublicData } from './types';
 import BookingPage from './pages/BookingPage';
 import { ForgotPasswordPage, RegisterPage, ResetPasswordPage, SignInPage } from './pages/AuthPage';
@@ -22,14 +22,14 @@ import AuditLogPage from './pages/AuditLogPage';
 import StaffAccountsPage from './pages/StaffAccountsPage';
 import AccountSecurityPage from './pages/AccountSecurityPage';
 import { api } from './api';
-import { CmsEditContext } from './CmsEditContext';
+import { CmsEditContext, type CmsEditorBridge } from './CmsEditContext';
 import Seo from './Seo';
 import { ContactPage, EducationArticlePage, LegalStatusPage, NotFoundPage, PublicationDetailPage, ServicesDirectory, VerifiedProfile } from './pages/PublicPages';
 
 const getPublic = async (): Promise<PublicData> => { const r = await fetch('/api/public'); if (!r.ok) throw new Error('Unable to load practice information'); return r.json(); };
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const location=useLocation(),[editing,setEditing]=useState(false),[menuOpen,setMenuOpen]=useState(false);
+  const location=useLocation(),[editing,setEditing]=useState(false),[menuOpen,setMenuOpen]=useState(false),[editor,setEditor]=useState<CmsEditorBridge|null>(null);
   const menuToggle=useRef<HTMLButtonElement>(null),main=useRef<HTMLElement>(null),previousPath=useRef(location.pathname);
   const me=useQuery({queryKey:['me'],queryFn:async()=>(await api.get('/me')).data.user,retry:false});
   const publicSettings=useQuery({queryKey:['cms-public-settings'],queryFn:async()=>(await api.get('/cms/public-settings')).data.data,retry:false,staleTime:60_000});
@@ -41,12 +41,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const contextual=location.pathname.startsWith('/academic')?'/staff/research-review':location.pathname.startsWith('/education')?'/staff/education':coreSlug?`/staff/cms?slug=${encodeURIComponent(coreSlug)}`:'/staff/cms';
   useEffect(()=>{setMenuOpen(false);if(previousPath.current!==location.pathname){previousPath.current=location.pathname;main.current?.focus({preventScroll:true})}},[location.pathname]);
   useEffect(()=>{if(!menuOpen)return;const close=(event:KeyboardEvent)=>{if(event.key==='Escape'){setMenuOpen(false);menuToggle.current?.focus()}};document.addEventListener('keydown',close);return()=>document.removeEventListener('keydown',close)},[menuOpen]);
-  return <div className={`site-shell theme-${theme.palette||'wine'} density-${theme.density||'comfortable'} headings-${theme.heading_style||'editorial'}`}><a className="skip-link" href="#main-content">Skip to main content</a><header className="site-header"><nav className="navbar navbar-expand-lg" aria-label="Main navigation"><div className="container">
+  useEffect(()=>{if(!power)setEditing(false)},[power]);
+  const exitEditing=()=>{if(editor?.saveState==='unsaved'||editor?.saveState==='failed'){if(!window.confirm('You have unsaved website changes. Exit Edit Mode and keep them only in this browser session?'))return}setEditing(false)};
+  return <CmsEditContext.Provider value={{editing:Boolean(power&&editing),setEditing,editor,registerEditor:setEditor}}><div className={`site-shell theme-${theme.palette||'wine'} density-${theme.density||'comfortable'} headings-${theme.heading_style||'editorial'} ${editing?'site-editing':''}`}><a className="skip-link" href="#main-content">Skip to main content</a><header className="site-header"><nav className="navbar navbar-expand-lg" aria-label="Main navigation"><div className="container">
     <Link className="brand" to="/"><span className="brand-mark" aria-hidden="true"><HeartPulse size={22}/></span><span><b>Dr. Funmilola Wuraola</b><small>Breast Oncology Practice</small></span></Link>
     <button ref={menuToggle} type="button" className="navbar-toggler" aria-controls="main-navigation-links" aria-expanded={menuOpen} aria-label={menuOpen?'Close navigation':'Open navigation'} onClick={()=>setMenuOpen(open=>!open)}>{menuOpen?<X/>:<Menu/>}</button>
     <div id="main-navigation-links" className={`collapse navbar-collapse justify-content-end ${menuOpen?'show':''}`}><div className="navbar-nav align-items-lg-center gap-lg-2">
       {navigation.filter((item:any)=>item.is_visible!==false).map((item:any)=><CmsNavItem item={item} key={`${item.path}-${item.label}`}/>)}
-    </div></div></div></nav></header>{power&&<div className={`power-edit-tools ${editing?'open':''}`}><button aria-expanded={editing} onClick={()=>setEditing(!editing)}>{editing?<X/>:<Pencil/>}{editing?'Close editing':'Edit site'}</button>{editing&&<nav aria-label="Power Admin editing tools"><Link to={contextual}><Pencil/> Edit this area — full controls</Link><Link to="/staff/cms">Website pages</Link><Link to="/staff/research-review">Publications</Link><Link to="/staff/education">Education</Link><Link to="/staff">Admin dashboard</Link></nav>}</div>}<CmsEditContext.Provider value={{editing:power&&editing}}><main ref={main} id="main-content" tabIndex={-1}>{children}</main></CmsEditContext.Provider><Footer/></div>;
+    </div></div></div></nav></header>{power&&!editing&&<button type="button" className="power-edit-entry" onClick={()=>setEditing(true)}><Pencil/> Edit site</button>}{power&&editing&&<div className="visual-editor-toolbar" role="toolbar" aria-label="Website editor"><div className="visual-editor-identity"><b>Edit Mode</b><span>{editor?.pageTitle||'This public page'}{editor?.selection?` · ${editor.selection}`:''}</span></div><button type="button" onClick={editor?.select} disabled={!editor}><MousePointer2/> Select</button><button type="button" onClick={editor?.addSection} disabled={!editor}><Plus/> Add Section</button><span className="visual-toolbar-separator"/><button type="button" onClick={editor?.undo} disabled={!editor?.canUndo}><Undo2/> Undo</button><button type="button" onClick={editor?.redo} disabled={!editor?.canRedo}><Redo2/> Redo</button><button type="button" onClick={editor?.preview} disabled={!editor}><Eye/> Preview</button><button type="button" onClick={editor?.save} disabled={!editor||editor.saveState==='saving'}><Save/> Save Draft</button><button type="button" className="publish" onClick={editor?.publish} disabled={!editor||editor.saveState==='saving'}><Send/> Publish</button><button type="button" onClick={exitEditing}><X/> Exit Edit Mode</button><span className={`visual-save-state ${editor?.saveState||'clean'}`} role="status" aria-live="polite">{!editor?'This page is not editable':editor.saveState==='unsaved'?'Unsaved changes':editor.saveState==='saving'?'Saving…':editor.saveState==='saved'?'Draft saved':editor.saveState==='failed'?'Save failed — changes retained':'All changes saved'}</span><Link className="visual-editor-more" to={contextual}>Page settings</Link></div>}<main ref={main} id="main-content" tabIndex={-1}>{children}</main><Footer/></div></CmsEditContext.Provider>;
 }
 
 function CmsNavItem({item}:{item:any}){const location=useLocation(),[open,setOpen]=useState(false),button=useRef<HTMLButtonElement>(null),submenuId=`submenu-${useId().replaceAll(':','')}`,children=Array.isArray(item.children)?item.children.filter((child:any)=>child.is_visible!==false):[];useEffect(()=>setOpen(false),[location.pathname]);if(!children.length)return item.path==='/book'?<Link className="btn btn-primary ms-lg-3" to={item.path}>{item.label}</Link>:<NavLink className="nav-link" to={item.path}>{item.label}</NavLink>;return <div className={`cms-nav-parent ${open?'open':''}`} onKeyDown={event=>{if(event.key==='Escape'&&open){event.preventDefault();setOpen(false);button.current?.focus()}}}><NavLink className="nav-link" to={item.path}>{item.label}</NavLink><button ref={button} type="button" aria-label={`Toggle ${item.label} submenu`} aria-controls={submenuId} aria-expanded={open} onClick={()=>setOpen(value=>!value)}>⌄</button><div id={submenuId} className="cms-submenu" hidden={!open}>{children.map((child:any)=><NavLink to={child.path} key={`${child.path}-${child.label}`}>{child.label}</NavLink>)}</div></div>}

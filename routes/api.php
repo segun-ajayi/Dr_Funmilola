@@ -136,12 +136,14 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('/pages', [CmsPageController::class, 'store']);
         Route::get('/pages/{page}', [CmsPageController::class, 'show'])->whereNumber('page');
         Route::put('/pages/{page}', [CmsPageController::class, 'update'])->whereNumber('page');
+        Route::put('/pages/{page}/visual-draft', [CmsPageController::class, 'saveDraft'])->whereNumber('page');
         Route::post('/pages/{page}/preview', [CmsPageController::class, 'preview'])->whereNumber('page');
         Route::post('/pages/{page}/publish', [CmsPageController::class, 'publish'])->whereNumber('page');
         Route::post('/pages/{page}/unpublish', [CmsPageController::class, 'unpublish'])->whereNumber('page');
         Route::post('/pages/{page}/duplicate', [CmsPageController::class, 'duplicate'])->whereNumber('page');
         Route::get('/pages/{page}/versions', [CmsPageController::class, 'versions'])->whereNumber('page');
         Route::post('/pages/{page}/versions/{version}/restore', [CmsPageController::class, 'restore'])->whereNumber('page')->whereNumber('version');
+        Route::post('/pages/{page}/versions/{version}/rollback', [CmsPageController::class, 'rollback'])->whereNumber('page')->whereNumber('version');
         Route::post('/pages/{page}/sections', [CmsSectionController::class, 'store'])->whereNumber('page');
         Route::put('/pages/{page}/sections/{section}', [CmsSectionController::class, 'update'])->whereNumber('page')->whereNumber('section');
         Route::delete('/pages/{page}/sections/{section}', [CmsSectionController::class, 'destroy'])->whereNumber('page')->whereNumber('section');

@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Models\CmsPage;
 use App\Models\CmsPreviewToken;
 use App\Models\CmsSection;
+use App\Models\CmsVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -77,6 +78,83 @@ class CmsTest extends TestCase
         $this->getJson('/api/cms/preview/'.$token)->assertNotFound();
         $this->postJson("/api/cms/pages/{$page->id}/publish")->assertOk();
         $this->getJson('/api/content/pages/'.$page->slug)->assertOk()->assertJsonPath('data.sections.0.content.heading', 'Original heading');
+    }
+
+    public function test_visual_document_save_is_atomic_versioned_and_conflict_protected(): void
+    {
+        $page = $this->page();
+        $section = $this->section($page, 'Original');
+        $document = $this->getJson("/api/cms/pages/{$page->id}")->assertOk()->json('data');
+        $document['sections'][0]['content']['heading'] = 'Atomic draft';
+        $document['sections'][] = [
+            'section_key' => (string) \Illuminate\Support\Str::uuid(),
+            'type' => 'text',
+            'sort_order' => 99,
+            'is_visible' => true,
+            'content' => ['heading' => 'Second section', 'body' => 'Stored as one document.'],
+            'presentation' => ['background' => 'white'],
+        ];
+
+        $saved = $this->putJson("/api/cms/pages/{$page->id}/visual-draft", [
+            'lock_version' => $document['lock_version'],
+            'sections' => $document['sections'],
+        ])->assertOk()->assertJsonPath('data.schema_version', 3)->assertJsonPath('data.sections.0.content.heading', 'Atomic draft')->assertJsonCount(2, 'data.sections')->json('data');
+
+        $this->assertGreaterThan($document['lock_version'], $saved['lock_version']);
+        $this->getJson('/api/content/pages/'.$page->slug)->assertNotFound();
+        $this->putJson("/api/cms/pages/{$page->id}/visual-draft", [
+            'lock_version' => $document['lock_version'],
+            'sections' => [$document['sections'][0]],
+        ])->assertConflict();
+        $this->assertSame('Atomic draft', $section->fresh()->content['heading']);
+        $this->assertCount(2, $page->fresh()->sections);
+    }
+
+    public function test_exact_unsaved_preview_publish_previous_version_and_direct_rollback_share_one_snapshot(): void
+    {
+        $page = $this->page();
+        $this->section($page, 'Published first');
+        $this->postJson("/api/cms/pages/{$page->id}/publish")->assertOk();
+        $document = $this->getJson("/api/cms/pages/{$page->id}")->assertOk()->json('data');
+        $document['sections'][0]['content']['heading'] = 'Current unsaved visual edit';
+
+        $previewUrl = $this->postJson("/api/cms/pages/{$page->id}/preview", [
+            'lock_version' => $document['lock_version'],
+            'sections' => $document['sections'],
+        ])->assertOk()->json('preview_url');
+        $this->getJson('/api/cms/preview/'.basename(parse_url($previewUrl, PHP_URL_PATH)))->assertOk()->assertJsonPath('data.sections.0.content.heading', 'Current unsaved visual edit');
+        $this->getJson('/api/content/pages/'.$page->slug)->assertJsonPath('data.sections.0.content.heading', 'Published first');
+
+        $published = $this->postJson("/api/cms/pages/{$page->id}/publish", [
+            'lock_version' => $document['lock_version'],
+            'sections' => $document['sections'],
+        ])->assertOk()->assertJsonPath('data.sections.0.content.heading', 'Current unsaved visual edit')->json('data');
+        $previous = CmsVersion::where('cms_page_id', $page->id)->where('reason', 'Previous published version')->latest('version')->firstOrFail();
+        $this->assertSame('Published first', $previous->snapshot['sections'][0]['content']['heading']);
+
+        $this->postJson("/api/cms/pages/{$page->id}/versions/{$previous->id}/rollback", ['lock_version' => $published['lock_version']])
+            ->assertOk()->assertJsonPath('data.sections.0.content.heading', 'Published first');
+        $this->getJson('/api/content/pages/'.$page->slug)->assertOk()->assertJsonPath('data.sections.0.content.heading', 'Published first');
+    }
+
+    public function test_visual_document_preview_publish_and_rollback_are_power_admin_only(): void
+    {
+        $page = $this->page();
+        $this->section($page, 'Authorization proof');
+        $document = $this->getJson("/api/cms/pages/{$page->id}")->assertOk()->json('data');
+        $this->postJson("/api/cms/pages/{$page->id}/publish")->assertOk();
+        $version = CmsVersion::where('cms_page_id', $page->id)->latest('version')->firstOrFail();
+
+        foreach ([UserRole::Patient, UserRole::Moderator, UserRole::Admin] as $role) {
+            Sanctum::actingAs(User::factory()->create(['role' => $role]));
+            $payload = ['lock_version' => $page->fresh()->lock_version, 'sections' => $document['sections']];
+            $this->putJson("/api/cms/pages/{$page->id}/visual-draft", $payload)->assertForbidden();
+            $this->postJson("/api/cms/pages/{$page->id}/preview", $payload)->assertForbidden();
+            $this->postJson("/api/cms/pages/{$page->id}/publish", $payload)->assertForbidden();
+            $this->postJson("/api/cms/pages/{$page->id}/versions/{$version->id}/rollback", ['lock_version' => $payload['lock_version']])->assertForbidden();
+        }
+
+        $this->assertSame('Authorization proof', $page->fresh()->sections()->firstOrFail()->content['heading']);
     }
 
     public function test_version_restore_creates_new_draft_without_changing_published_snapshot(): void

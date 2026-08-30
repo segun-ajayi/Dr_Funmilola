@@ -5,6 +5,7 @@ use App\Models\CmsPage;
 use App\Models\CmsVersion;
 use App\Models\User;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class CmsService
@@ -17,7 +18,24 @@ class CmsService
   if(empty($content['heading']))throw ValidationException::withMessages(['content.heading'=>'A heading is required.']);return $content;
  }
  public function validatePresentation(array $data):array{$allowed=['background'=>['ivory','white','wine','blush'],'alignment'=>['left','center'],'width'=>['normal','narrow','wide'],'spacing'=>['compact','normal','generous'],'font_family'=>['site','editorial','modern'],'font_size'=>['small','normal','large'],'font_weight'=>['regular','medium','bold'],'emphasis'=>['none','italic','underline','italic_underline'],'text_color'=>['default','wine','muted','white'],'line_height'=>['snug','normal','relaxed'],'image_width'=>['small','medium','large','full'],'image_alignment'=>['left','right'],'image_radius'=>['none','soft','round'],'image_fit'=>['cover','contain'],'crop_position'=>['top','center','bottom']];if(array_diff(array_keys($data),array_keys($allowed)))throw ValidationException::withMessages(['presentation'=>'Unsupported presentation setting.']);foreach($data as $key=>$value)if(!in_array($value,$allowed[$key],true))throw ValidationException::withMessages(["presentation.{$key}"=>'Choose a supported option.']);return $data;}
- public function snapshot(CmsPage $page):array{return['schema_version'=>2,'title'=>$page->title,'slug'=>$page->slug,'template'=>$page->template,'seo'=>['title'=>$page->seo_title,'description'=>$page->seo_description],'sections'=>$page->sections()->get()->map(fn($s)=>$s->only(['id','section_key','type','sort_order','is_visible','content','presentation']))->all()];}
+ public function snapshot(CmsPage $page):array{return['schema_version'=>3,'title'=>$page->title,'slug'=>$page->slug,'template'=>$page->template,'seo'=>['title'=>$page->seo_title,'description'=>$page->seo_description],'sections'=>$page->sections()->get()->map(fn($s)=>$s->only(['id','section_key','type','sort_order','is_visible','content','presentation']))->all()];}
+ public function validateDocumentSections(CmsPage $page,array $sections):array{
+  if(count($sections)>100)throw ValidationException::withMessages(['sections'=>'A page may contain no more than 100 sections.']);
+  $ids=[];$keys=[];$known=$page->sections()->pluck('id')->map(fn($id)=>(int)$id)->all();$validated=[];
+  foreach(array_values($sections) as$order=>$section){
+   if(!is_array($section)||array_diff(array_keys($section),['id','section_key','type','sort_order','is_visible','content','presentation']))throw ValidationException::withMessages(["sections.{$order}"=>'This section has an invalid structured schema.']);
+   $id=isset($section['id'])?(int)$section['id']:null;if($id&&(!in_array($id,$known,true)||in_array($id,$ids,true)))throw ValidationException::withMessages(["sections.{$order}.id"=>'This section does not belong to the page or appears more than once.']);if($id)$ids[]=$id;
+   $key=(string)($section['section_key']??'');if($key===''&&!$id)$key=(string)Str::uuid();if(!Str::isUuid($key)||in_array($key,$keys,true))throw ValidationException::withMessages(["sections.{$order}.section_key"=>'Each section needs one unique structured identifier.']);$keys[]=$key;
+   $type=(string)($section['type']??'');$content=$section['content']??null;$presentation=$section['presentation']??[];
+   if(!is_array($content)||!is_array($presentation)||!is_bool($section['is_visible']??null))throw ValidationException::withMessages(["sections.{$order}"=>'Section content, presentation and visibility are required.']);
+   $validated[]=['id'=>$id,'section_key'=>$key,'type'=>$type,'sort_order'=>$order,'is_visible'=>$section['is_visible'],'content'=>$this->validateContent($type,$content),'presentation'=>$this->validatePresentation($presentation)];
+  }
+  return$validated;
+ }
+ public function applyDocumentSections(CmsPage $page,array $sections):void{
+  $kept=[];foreach($sections as$section){$id=$section['id'];$attributes=Arr::except($section,'id');if($id){$page->sections()->whereKey($id)->update($attributes);$kept[]=$id;}elseif($existing=$page->sections()->where('section_key',$section['section_key'])->first()){$existing->update($attributes);$kept[]=$existing->id;}else{$kept[]=$page->sections()->create($attributes)->id;}}
+  $page->sections()->whereNotIn('id',$kept)->delete();
+ }
  public function version(CmsPage $page,User $actor,string $reason):CmsVersion{$next=((int)$page->versions()->max('version'))+1;$version=$page->versions()->create(['version'=>$next,'reason'=>$reason,'snapshot'=>$this->snapshot($page),'created_by'=>$actor->id]);$this->audit($actor,'cms.version_created',$page,['version'=>$next,'reason'=>$reason]);return $version;}
  public function audit(User $actor,string $action,CmsPage $page,array $metadata=[]):void{AuditLog::create(['actor_id'=>$actor->id,'action'=>$action,'subject_type'=>CmsPage::class,'subject_id'=>$page->id,'metadata'=>$metadata]);}
  private function plain(string $value,int $max):void{if(mb_strlen($value)>$max||$value!==strip_tags($value))throw ValidationException::withMessages(['content'=>'Content must be plain text within the allowed length.']);}

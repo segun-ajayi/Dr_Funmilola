@@ -151,6 +151,7 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 - S2 revisions: text `e3a0a54`; rendered buttons `165223d`; linked text `f6e488a`; evidence: `evidence/QA-002/S2_TEXT_BUTTON_EVIDENCE.md`.
 - S2 result: exact rendered-element caret editing, plain structured text persistence, complete live typography inspector, rendered Hero/CTA button controls, and exact linked-text create/edit/remove controls for internal, external, email and telephone actions. Unsafe and mismatched action/destination pairs are rejected. Full backend (110 tests / 863 assertions), full web (10 files / 34 tests) and production build pass.
 - Next active slice: S3 expanded sections, 18-component catalogue, container hierarchy and responsive presentation. The uninterrupted refresh/preview/publish/logout journeys remain S7 evidence and QA-002/QA-003 remain REOPENED.
+- S3 source of truth: `evidence/QA-002/S3_SECTIONS_COMPONENTS_PLAN.md`. Active task S3.1 is the actual-page section inspector, responsive presentation model and move/drag/duplicate/hide/delete lifecycle.
 
 ### Step 7 — Repair research and publication lifecycle
 

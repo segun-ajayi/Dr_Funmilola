@@ -138,6 +138,15 @@ Status: **COMPLETE WITH EXTERNAL INFRASTRUCTURE BLOCKER**
 - Runtime: authenticated in-app Chromium rendered the full page editor and settings manager, then exercised public About Edit Mode, section outlines and the inline text dialog; Cancel left content unchanged.
 - Remaining risk: managed upload/library/replacement still requires the approved QA-022 scanner and public-media hosting/retention/transformation governance. Physical device, screen-reader, responsive matrix, additional browser and independent QA evidence are unavailable, so QA-002 is not claimed READY or PASS.
 
+#### Step 6R — Reviewed true in-place editor rebuild
+
+- Status: **IN PROGRESS**. QA-002 and QA-003 remain **REOPENED**; no earlier PASS or READY claim is carried forward.
+- Source of truth: `evidence/QA-002/TRUE_EDITOR_IMPLEMENTATION_PLAN.md`.
+- Atomic gap inventory: `evidence/QA-002/TRUE_EDITOR_GAP_MATRIX.md`, containing exactly one current-assessment row for VE-001 through VE-243.
+- Delivery order: S1 structured editor/document foundation; S2 inline text/buttons/links; S3 sections/components/hierarchy; S4 navigation/pages; S5 media/images; S6 resilience/accessibility; S7 continuous journeys and independent-QA handoff.
+- Current implementation assessment: the public-page toggle, private structured drafts, coarse selected sections, modal text editing, settings publication and dashboard lifecycle controls provide partial reusable foundations. They do not yet satisfy the reviewed exact-element, complete-toolbar, 18-component, persistent-media, exact-preview, direct-rollback or uninterrupted journey contract.
+- Release rule: VE-242 and VE-243 remain independent-QA gates. This implementation agent will not self-close QA-002 or QA-003.
+
 ### Step 7 — Repair research and publication lifecycle
 
 - Status: IMPLEMENTED LOCALLY; QA-013 and QA-014 READY FOR RETEST.

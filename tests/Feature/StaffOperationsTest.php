@@ -75,6 +75,31 @@ class StaffOperationsTest extends TestCase
         $this->getJson('/api/staff/calendar?from=2026-01-01&to=2026-04-01')->assertUnprocessable()->assertJsonValidationErrors('to');
     }
 
+    public function test_staff_calendar_can_create_view_edit_and_safely_move_an_appointment(): void
+    {
+        $patient = User::factory()->create(['role' => UserRole::Patient]);
+        $start = now('Africa/Lagos')->addWeeks(2)->startOfWeek()->setTime(9, 0);
+        AvailabilityRule::create(['weekday' => $start->dayOfWeekIso, 'start_time' => '09:00', 'end_time' => '13:00', 'slot_minutes' => 45, 'buffer_minutes' => 15, 'consultation_method' => 'both', 'is_active' => true]);
+        Sanctum::actingAs($this->moderator);
+
+        $created = $this->postJson('/api/staff/appointments', [
+            'patient_id' => $patient->id, 'service_id' => $this->service->id, 'starts_at' => $start->toIso8601String(),
+            'consultation_method' => 'in_person', 'reason' => 'Staff arranged follow-up', 'administrative_notes' => 'Bring prior imaging.',
+        ])->assertCreated()->assertJsonPath('data.status', 'confirmed');
+        $id = $created->json('data.id');
+
+        $this->getJson("/api/staff/appointments/{$id}")->assertOk()->assertJsonPath('data.patient.id', $patient->id)->assertJsonPath('data.allowed_statuses.0', 'checked_in');
+        $this->getJson("/api/staff/appointments/{$id}/reschedule-options?date=".$start->toDateString())->assertOk()->assertJsonPath('timezone', 'Africa/Lagos')->assertJsonPath('data.0.label', '9:00 AM');
+        $this->patchJson("/api/staff/appointments/{$id}", ['administrative_notes' => 'Imaging received.', 'location' => 'Clinic room 2'])->assertOk()->assertJsonPath('data.administrative_notes', 'Imaging received.');
+        $this->getJson('/api/staff/calendar?from='.$start->toDateString().'&to='.$start->toDateString())->assertOk()
+            ->assertJsonPath('data.0.service.id', $this->service->id)->assertJsonPath('data.0.allowed_statuses.0', 'checked_in')->assertJsonPath('filters.services.0.id', $this->service->id);
+
+        $occupied = $this->appointment('confirmed', $start->addWeek());
+        $this->patchJson("/api/staff/appointments/{$id}/reschedule", ['starts_at' => $occupied->starts_at->toIso8601String()])->assertUnprocessable()->assertJsonValidationErrors('starts_at');
+        $this->assertDatabaseHas('audit_logs', ['action' => 'appointment.created_by_staff', 'subject_id' => $id]);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'appointment.details_updated', 'subject_id' => $id]);
+    }
+
     private function appointment(string $status, $start = null): Appointment
     {
         $patient = User::factory()->create();

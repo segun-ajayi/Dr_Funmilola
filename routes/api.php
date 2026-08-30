@@ -101,6 +101,10 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/dashboard', DashboardController::class);
         Route::get('/patients/search', PatientSearchController::class)->middleware('throttle:60,1');
         Route::get('/appointments', [StaffAppointmentController::class, 'index']);
+        Route::post('/appointments', [StaffAppointmentController::class, 'store']);
+        Route::get('/appointments/{appointment}', [StaffAppointmentController::class, 'show']);
+        Route::get('/appointments/{appointment}/reschedule-options', [StaffAppointmentController::class, 'rescheduleOptions']);
+        Route::patch('/appointments/{appointment}', [StaffAppointmentController::class, 'update']);
         Route::patch('/appointments/{appointment}/status', [StaffAppointmentController::class, 'updateStatus']);
         Route::patch('/appointments/{appointment}/reschedule', [StaffAppointmentController::class, 'reschedule']);
         Route::get('/calendar', CalendarController::class);

@@ -29,6 +29,11 @@ class AppointmentWorkflowService
 
     private const PATIENT_REQUEST_STATUSES = ['requested', 'pending_confirmation', 'confirmed', 'rescheduled'];
 
+    public function allowedStaffTransitions(Appointment $appointment): array
+    {
+        return self::TRANSITIONS[$appointment->status->value] ?? [];
+    }
+
     public function allowedPatientActions(Appointment $appointment): array
     {
         $appointment->loadMissing(['cancellationRequest:id,appointment_id,status', 'rescheduleRequest:id,appointment_id,status']);

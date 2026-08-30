@@ -238,14 +238,20 @@ class CmsTest extends TestCase
         $page = $this->page();
         $payload = [
             'type' => 'hero',
-            'content' => ['heading' => 'Options', 'heading_marks' => [['type' => 'bold', 'start' => 0, 'end' => 7]], 'primary_label' => 'Book', 'primary_url' => '/book', 'primary_style' => 'outline', 'primary_icon' => 'calendar', 'primary_visibility' => 'show'],
-            'presentation' => ['background' => 'white', 'alignment' => 'center', 'width' => 'wide', 'spacing' => 'compact', 'font_family' => 'modern', 'font_size' => 'large', 'font_weight' => 'bold', 'emphasis' => 'italic_underline', 'text_color' => 'wine', 'line_height' => 'relaxed', 'text_styles' => ['heading' => ['font_family' => 'editorial', 'font_size' => '4xl', 'font_weight' => '700', 'bold' => true, 'italic' => false, 'underline' => false, 'color' => 'wine', 'alignment' => 'center', 'line_height' => '1.2', 'letter_spacing' => '-0.02em', 'text_decoration' => 'none']]],
+            'content' => ['heading' => 'Options', 'heading_marks' => [['type' => 'bold', 'start' => 0, 'end' => 7]], 'primary_label' => 'Book', 'primary_url' => '/book', 'primary_action' => 'internal', 'primary_style' => 'outline', 'primary_icon' => 'calendar', 'primary_icon_position' => 'left', 'primary_target' => '_self', 'primary_visibility' => 'show'],
+            'presentation' => ['background' => 'white', 'alignment' => 'center', 'width' => 'wide', 'spacing' => 'compact', 'font_family' => 'modern', 'font_size' => 'large', 'font_weight' => 'bold', 'emphasis' => 'italic_underline', 'text_color' => 'wine', 'line_height' => 'relaxed', 'text_styles' => ['heading' => ['font_family' => 'editorial', 'font_size' => '4xl', 'font_weight' => '700', 'bold' => true, 'italic' => false, 'underline' => false, 'color' => 'wine', 'alignment' => 'center', 'line_height' => '1.2', 'letter_spacing' => '-0.02em', 'text_decoration' => 'none']], 'button_styles' => ['primary' => ['alignment' => 'center', 'size' => 'large', 'font_family' => 'modern', 'font_size' => 'lg', 'font_weight' => '800', 'background_color' => 'wine', 'text_color' => 'white', 'border_style' => 'solid', 'border_width' => '2', 'border_color' => 'wine', 'border_radius' => '24', 'padding_x' => '24', 'padding_y' => '12', 'margin' => '8']]],
             'is_visible' => true,
         ];
-        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertCreated()->assertJsonPath('data.content.primary_icon', 'calendar')->assertJsonPath('data.content.heading_marks.0.type', 'bold')->assertJsonPath('data.presentation.emphasis', 'italic_underline')->assertJsonPath('data.presentation.text_styles.heading.font_size', '4xl');
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertCreated()->assertJsonPath('data.content.primary_icon', 'calendar')->assertJsonPath('data.content.primary_icon_position', 'left')->assertJsonPath('data.content.heading_marks.0.type', 'bold')->assertJsonPath('data.presentation.emphasis', 'italic_underline')->assertJsonPath('data.presentation.text_styles.heading.font_size', '4xl')->assertJsonPath('data.presentation.button_styles.primary.border_radius', '24');
         $payload['content']['primary_style'] = 'javascript';
         $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
         $payload['content']['primary_style'] = 'primary';
+        $payload['content']['primary_action'] = 'script';
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
+        $payload['content']['primary_action'] = 'internal';
+        $payload['presentation']['button_styles']['primary']['position'] = 'fixed';
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
+        unset($payload['presentation']['button_styles']['primary']['position']);
         $payload['presentation']['font_family'] = 'url(evil)';
         $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
         $payload['presentation']['font_family'] = 'site';

@@ -242,7 +242,9 @@ class CmsTest extends TestCase
             'presentation' => ['background' => 'white', 'alignment' => 'center', 'width' => 'wide', 'spacing' => 'compact', 'font_family' => 'modern', 'font_size' => 'large', 'font_weight' => 'bold', 'emphasis' => 'italic_underline', 'text_color' => 'wine', 'line_height' => 'relaxed', 'text_styles' => ['heading' => ['font_family' => 'editorial', 'font_size' => '4xl', 'font_weight' => '700', 'bold' => true, 'italic' => false, 'underline' => false, 'color' => 'wine', 'alignment' => 'center', 'line_height' => '1.2', 'letter_spacing' => '-0.02em', 'text_decoration' => 'none']], 'button_styles' => ['primary' => ['alignment' => 'center', 'size' => 'large', 'font_family' => 'modern', 'font_size' => 'lg', 'font_weight' => '800', 'background_color' => 'wine', 'text_color' => 'white', 'border_style' => 'solid', 'border_width' => '2', 'border_color' => 'wine', 'border_radius' => '24', 'padding_x' => '24', 'padding_y' => '12', 'margin' => '8']]],
             'is_visible' => true,
         ];
-        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertCreated()->assertJsonPath('data.content.primary_icon', 'calendar')->assertJsonPath('data.content.primary_icon_position', 'left')->assertJsonPath('data.content.heading_marks.0.type', 'bold')->assertJsonPath('data.presentation.emphasis', 'italic_underline')->assertJsonPath('data.presentation.text_styles.heading.font_size', '4xl')->assertJsonPath('data.presentation.button_styles.primary.border_radius', '24');
+        $payload['presentation']['background_image'] = '/media/approved-hero.jpg';
+        $payload['presentation']['responsive'] = ['desktop' => ['layout' => 'grid', 'columns' => '2', 'background_gradient' => 'rose_glow'], 'tablet' => ['columns' => '1', 'spacing' => 'compact'], 'mobile' => ['background' => 'wine', 'width' => 'full', 'min_height' => 'short', 'border_style' => 'solid', 'border_width' => '2', 'border_color' => 'rose', 'radius' => 'soft', 'shadow' => 'strong']];
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertCreated()->assertJsonPath('data.content.primary_icon', 'calendar')->assertJsonPath('data.content.primary_icon_position', 'left')->assertJsonPath('data.content.heading_marks.0.type', 'bold')->assertJsonPath('data.presentation.emphasis', 'italic_underline')->assertJsonPath('data.presentation.text_styles.heading.font_size', '4xl')->assertJsonPath('data.presentation.button_styles.primary.border_radius', '24')->assertJsonPath('data.presentation.responsive.mobile.background', 'wine')->assertJsonPath('data.presentation.responsive.desktop.columns', '2');
         $payload['content']['primary_style'] = 'javascript';
         $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
         $payload['content']['primary_style'] = 'primary';
@@ -258,6 +260,12 @@ class CmsTest extends TestCase
         $payload['presentation']['text_styles']['heading']['position'] = 'fixed';
         $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
         unset($payload['presentation']['text_styles']['heading']['position']);
+        $payload['presentation']['responsive']['mobile']['position'] = 'fixed';
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
+        unset($payload['presentation']['responsive']['mobile']['position']);
+        $payload['presentation']['background_image'] = '/image.jpg\");position:fixed';
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
+        $payload['presentation']['background_image'] = '/media/approved-hero.jpg';
         $payload['content']['heading_marks'] = [['type' => 'link', 'start' => 0, 'end' => 7, 'url' => 'mailto:care@example.org', 'target' => '_self', 'action' => 'email']];
         $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertCreated()->assertJsonPath('data.content.heading_marks.0.action', 'email');
         $payload['content']['heading_marks'][0]['action'] = 'internal';

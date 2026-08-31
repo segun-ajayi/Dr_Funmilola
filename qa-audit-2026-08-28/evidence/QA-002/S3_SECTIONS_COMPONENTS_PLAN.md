@@ -1,7 +1,7 @@
 # S3 — Sections, Components and Hierarchy Build Plan
 
 Recorded: 30 August 2026
-Status: active source of truth
+Status: active source of truth; S3.1 complete, S3.2 active
 Acceptance scope: VE-093 through VE-157, with persistence foundations shared with VE-191 through VE-225
 
 ## Objective
@@ -103,3 +103,14 @@ Every S3 task must pass:
 ## Completion rule
 
 S3 implementation is complete only when all 18 components can be inserted on the actual page and representative simple/nested sections can be selected, styled responsively, reordered, duplicated, hidden, deleted, saved, reloaded, previewed and published through the shared document contract. VE-148, VE-127 and all release-level rows remain pending until their uninterrupted S3.4/S7 journeys are recorded; VE-242 and VE-243 remain independent-QA gates.
+
+## Implementation ledger
+
+### S3.1 — Complete
+
+- Revision: `a894ed9`.
+- Delivered: actual-page whole-section selection and toolbar; desktop/tablet/mobile preview framing; independent responsive background, gradient, safe image reference, pattern, contour, overlay, spacing, width/height, layout/columns, alignment/gap, border/radius/shadow controls; move up/down; dedicated-handle HTML drag reorder; duplicate; hide/show; confirmed delete with Undo.
+- Data safety: finite base/responsive server allow-lists, bounded viewport keys, strict safe background URL validation and unknown/CSS-like property rejection.
+- Automated evidence contributed: VE-093–VE-127, VE-149–VE-150 and VE-156 foundations. VE-127 remains release-journey pending rather than self-declared PASS.
+- Fresh gate: backend 110 tests / 867 assertions; web 10 files / 35 tests; production build PASS; `git diff --check` PASS. An initial web run under simultaneous backend/build load timed out in an unrelated calendar test; the required isolated full rerun passed all 35 tests.
+- Next task: S3.2 actual-page Add Section component library and safe renderers/default factories for all 18 required component types.

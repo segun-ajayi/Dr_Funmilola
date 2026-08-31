@@ -1,7 +1,7 @@
 # S3 — Sections, Components and Hierarchy Build Plan
 
 Recorded: 30 August 2026
-Status: active source of truth; S3.1 complete, S3.2 active
+Status: active source of truth; S3.1 and S3.2 complete, S3.3 active
 Acceptance scope: VE-093 through VE-157, with persistence foundations shared with VE-191 through VE-225
 
 ## Objective
@@ -114,3 +114,12 @@ S3 implementation is complete only when all 18 components can be inserted on the
 - Automated evidence contributed: VE-093–VE-127, VE-149–VE-150 and VE-156 foundations. VE-127 remains release-journey pending rather than self-declared PASS.
 - Fresh gate: backend 110 tests / 867 assertions; web 10 files / 35 tests; production build PASS; `git diff --check` PASS. An initial web run under simultaneous backend/build load timed out in an unrelated calendar test; the required isolated full rerun passed all 35 tests.
 - Next task: S3.2 actual-page Add Section component library and safe renderers/default factories for all 18 required component types.
+
+### S3.2 — Complete
+
+- Revision: `189d4bb`.
+- Delivered: searchable actual-page Add Section library; explicit start, end or after-section insertion location; immediate selection and Undo availability; safe default factories and public/editor renderer branches for Hero, Rich Text, Image, Text + Image, Cards, Services, CTA, Publications, Career Timeline, Achievements, FAQ, Gallery, Statistics, Contact, Appointment Widget, Video, Divider and Spacer.
+- Data safety: the server type allow-list contains exactly the 18 required components; every type has a finite top-level schema; the eight repeatable components use bounded structured item arrays with optional UUID keys, per-item allow-lists, safe URL checks and visibility booleans. Unknown component types, nested fields, HTML, CSS-like properties and unsafe URLs are rejected. Default Contact content does not invent a public telephone number, email address or exact clinic address.
+- Automated evidence contributed: VE-128–VE-148 foundations, including catalogue visibility, insertion location, immediate actual-page rendering, stable ordering and atomic-save coverage. Nested-item manipulation and hierarchy remain S3.3; managed media selection remains S5; VE-148 remains release-journey pending rather than self-declared PASS.
+- Fresh gate: backend 110 tests / 910 assertions; web 10 files / 36 tests; production build PASS; `git diff --check` PASS. The component interaction regression inserts and renders all 18 types in one actual-page draft and verifies the ordered atomic payload.
+- Next task: S3.3 bounded nested repeater editing and visible Page › Section › Component › Element hierarchy.

@@ -1,7 +1,7 @@
 # S3 — Sections, Components and Hierarchy Build Plan
 
 Recorded: 30 August 2026
-Status: active source of truth; S3.1 and S3.2 complete, S3.3 active
+Status: active source of truth; S3.1 through S3.3 complete, S3.4 active
 Acceptance scope: VE-093 through VE-157, with persistence foundations shared with VE-191 through VE-225
 
 ## Objective
@@ -123,3 +123,12 @@ S3 implementation is complete only when all 18 components can be inserted on the
 - Automated evidence contributed: VE-128–VE-148 foundations, including catalogue visibility, insertion location, immediate actual-page rendering, stable ordering and atomic-save coverage. Nested-item manipulation and hierarchy remain S3.3; managed media selection remains S5; VE-148 remains release-journey pending rather than self-declared PASS.
 - Fresh gate: backend 110 tests / 910 assertions; web 10 files / 36 tests; production build PASS; `git diff --check` PASS. The component interaction regression inserts and renders all 18 types in one actual-page draft and verifies the ordered atomic payload.
 - Next task: S3.3 bounded nested repeater editing and visible Page › Section › Component › Element hierarchy.
+
+### S3.3 — Complete
+
+- Revision: `442f98e`.
+- Delivered: actual-page selection and live field editing for nested Cards, Services, Publications, Career Timeline, Achievements, FAQ, Gallery and Statistics items; safe add, move earlier/later, duplicate, hide/show and confirmed delete with Undo; stable UUID keys for newly added and legacy draft items; visible Page › Section › Component › Element hierarchy in the toolbar and contextual inspector.
+- Boundaries and accessibility: nested arrays are capped at twelve in both UI and server validation; duplicate keys, invalid visibility values, unsafe URLs and unsupported nested properties are rejected; rendered nested items expose keyboard selection, accessible names, visible focus/selection/hidden states and labelled lifecycle controls.
+- Automated evidence contributed: VE-149–VE-157 foundations. The frontend regression selects all eight repeater schemas, changes a rendered Card live, exercises add/reorder/duplicate/hide/delete/Undo and verifies the structured atomic payload. VE-156 and VE-157 remain uninterrupted-journey/independent-accessibility pending rather than self-declared PASS.
+- Fresh gate: backend 110 tests / 913 assertions; web 10 files / 37 tests; production build PASS; `git diff --check` PASS.
+- Next task: S3.4 persistence and evidence gate across save/reload, exact preview, logged-out publish and previous-version rollback.

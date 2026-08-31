@@ -150,6 +150,53 @@ class CmsTest extends TestCase
         $this->getJson('/api/content/pages/'.$page->slug)->assertOk()->assertJsonPath('data.sections.0.content.heading', 'Published first');
     }
 
+    public function test_simple_responsive_and_nested_components_persist_through_reload_preview_publish_and_rollback(): void
+    {
+        $page = $this->page();
+        $this->section($page, 'Original simple section');
+        $this->postJson("/api/cms/pages/{$page->id}/publish")->assertOk();
+        $document = $this->getJson("/api/cms/pages/{$page->id}")->assertOk()->json('data');
+        $document['sections'][0]['content']['heading'] = 'Persisted simple section';
+        $document['sections'][0]['presentation']['responsive'] = [
+            'desktop' => ['columns' => '2', 'layout' => 'grid'],
+            'mobile' => ['columns' => '1', 'background' => 'wine', 'spacing' => 'compact'],
+        ];
+        $document['sections'][] = [
+            'id' => null,
+            'section_key' => (string) \Illuminate\Support\Str::uuid(),
+            'type' => 'cards',
+            'sort_order' => 1,
+            'is_visible' => true,
+            'content' => [
+                'heading' => 'Persisted cards',
+                'text' => 'Nested component proof',
+                'items' => [[
+                    'key' => (string) \Illuminate\Support\Str::uuid(),
+                    'heading' => 'Patient guide',
+                    'text' => 'A safe nested card',
+                    'url' => '/services',
+                    'is_visible' => true,
+                ]],
+            ],
+            'presentation' => ['background' => 'white', 'width' => 'wide'],
+        ];
+
+        $saved = $this->putJson("/api/cms/pages/{$page->id}/visual-draft", [
+            'lock_version' => $document['lock_version'],
+            'sections' => $document['sections'],
+        ])->assertOk()->assertJsonPath('data.sections.0.presentation.responsive.mobile.background', 'wine')->assertJsonPath('data.sections.1.content.items.0.heading', 'Patient guide')->json('data');
+
+        $this->getJson("/api/cms/pages/{$page->id}")->assertOk()->assertJsonPath('data.sections.0.content.heading', 'Persisted simple section')->assertJsonPath('data.sections.1.content.items.0.url', '/services');
+        $previewUrl = $this->postJson("/api/cms/pages/{$page->id}/preview")->assertOk()->json('preview_url');
+        $this->getJson('/api/cms/preview/'.basename(parse_url($previewUrl, PHP_URL_PATH)))->assertOk()->assertJsonPath('data.sections.0.presentation.responsive.mobile.spacing', 'compact')->assertJsonPath('data.sections.1.content.items.0.text', 'A safe nested card');
+        $published = $this->postJson("/api/cms/pages/{$page->id}/publish", ['lock_version' => $saved['lock_version'], 'sections' => $saved['sections']])->assertOk()->json('data');
+        $this->getJson('/api/content/pages/'.$page->slug)->assertOk()->assertJsonCount(2, 'data.sections')->assertJsonPath('data.sections.0.content.heading', 'Persisted simple section')->assertJsonPath('data.sections.1.type', 'cards');
+
+        $previous = CmsVersion::where('cms_page_id', $page->id)->where('reason', 'Previous published version')->latest('version')->firstOrFail();
+        $this->postJson("/api/cms/pages/{$page->id}/versions/{$previous->id}/rollback", ['lock_version' => $published['lock_version']])->assertOk()->assertJsonCount(1, 'data.sections')->assertJsonPath('data.sections.0.content.heading', 'Original simple section');
+        $this->getJson('/api/content/pages/'.$page->slug)->assertOk()->assertJsonCount(1, 'data.sections')->assertJsonPath('data.sections.0.content.heading', 'Original simple section');
+    }
+
     public function test_visual_document_preview_publish_and_rollback_are_power_admin_only(): void
     {
         $page = $this->page();

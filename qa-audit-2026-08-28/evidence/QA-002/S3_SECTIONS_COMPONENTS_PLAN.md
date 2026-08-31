@@ -1,7 +1,7 @@
 # S3 — Sections, Components and Hierarchy Build Plan
 
 Recorded: 30 August 2026
-Status: active source of truth; S3.1 through S3.3 complete, S3.4 active
+Status: complete; S3.1 through S3.4 delivered, S4 active
 Acceptance scope: VE-093 through VE-157, with persistence foundations shared with VE-191 through VE-225
 
 ## Objective
@@ -132,3 +132,12 @@ S3 implementation is complete only when all 18 components can be inserted on the
 - Automated evidence contributed: VE-149–VE-157 foundations. The frontend regression selects all eight repeater schemas, changes a rendered Card live, exercises add/reorder/duplicate/hide/delete/Undo and verifies the structured atomic payload. VE-156 and VE-157 remain uninterrupted-journey/independent-accessibility pending rather than self-declared PASS.
 - Fresh gate: backend 110 tests / 913 assertions; web 10 files / 37 tests; production build PASS; `git diff --check` PASS.
 - Next task: S3.4 persistence and evidence gate across save/reload, exact preview, logged-out publish and previous-version rollback.
+
+### S3.4 — Complete
+
+- Revision: `f284f6e`.
+- Delivered: one representative continuity journey covering a simple component, independent desktop/mobile section presentation and a nested Cards component with stable UUID identity through private draft save, reload, exact preview, publication, logged-out/public rendering and direct previous-published-version rollback.
+- Persistence result: the private draft retained the exact two-section structured snapshot after reload; preview and publication used that same snapshot; the public contract exposed it without editor state; rollback restored the original one-section published snapshot without copying a newer draft over it.
+- Fresh gate: backend 111 tests / 937 assertions; web 10 files / 37 tests; production build PASS; `git diff --check` PASS. S3.4 changed regression coverage only, so no migration rollback/reapply was required.
+- Acceptance boundary: the automated journey contributes implementation evidence but does not self-declare VE-242, VE-243, QA-002 or QA-003 complete. Independent QA and the uninterrupted S7 release journeys remain mandatory.
+- Next task: S4 actual-page navigation editing and page lifecycle, under its own committed source-of-truth plan.

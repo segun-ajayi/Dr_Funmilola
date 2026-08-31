@@ -70,6 +70,13 @@ class CmsTest extends TestCase
         $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
         $payload['content']['items'][0] = ['heading' => 'Card', 'text' => 'Safe text', 'url' => 'javascript:alert(1)'];
         $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
+        $payload['content']['items'] = array_fill(0, 13, ['heading' => 'Card', 'text' => 'Safe text']);
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
+        $key = (string) \Illuminate\Support\Str::uuid();
+        $payload['content']['items'] = [['key' => $key, 'heading' => 'One', 'text' => 'Safe', 'is_visible' => true], ['key' => $key, 'heading' => 'Two', 'text' => 'Safe', 'is_visible' => true]];
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
+        $payload['content']['items'] = [['key' => (string) \Illuminate\Support\Str::uuid(), 'heading' => 'One', 'text' => 'Safe', 'is_visible' => 'yes']];
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
     }
 
     public function test_draft_is_private_preview_is_time_bounded_and_publish_is_explicit(): void

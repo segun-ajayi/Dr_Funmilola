@@ -143,3 +143,49 @@ test('Add Section library exposes and inserts every required component in the ac
  expect(payload.sections.map((section:any)=>section.type)).toEqual(expect.arrayContaining(choices.map(([,type])=>type)));
  expect(payload.sections.every((section:any,index:number)=>section.sort_order===index)).toBe(true);
 },30000);
+
+test('nested components are selected, edited, reordered, duplicated, hidden, deleted, and saved from the page hierarchy',async()=>{
+ const item=(key:string,fields:any)=>({key,is_visible:true,...fields}),sections=[
+  {id:1,section_key:'cards-section',type:'cards',sort_order:0,is_visible:true,content:{heading:'Cards section',items:[item('00000000-0000-4000-8000-000000000001',{heading:'Card one',text:'Card text',url:''})]},presentation:{}},
+  {id:2,section_key:'services-section',type:'services',sort_order:1,is_visible:true,content:{heading:'Services section',items:[item('00000000-0000-4000-8000-000000000002',{heading:'Service one',text:'Service text',url:''})]},presentation:{}},
+  {id:3,section_key:'publications-section',type:'publications',sort_order:2,is_visible:true,content:{heading:'Publications section',items:[item('00000000-0000-4000-8000-000000000003',{title:'Paper one',meta:'Journal · 2026',url:''})]},presentation:{}},
+  {id:4,section_key:'career-section',type:'career_timeline',sort_order:3,is_visible:true,content:{heading:'Career section',items:[item('00000000-0000-4000-8000-000000000004',{year:'2020',heading:'Milestone one',text:'Milestone text'})]},presentation:{}},
+  {id:5,section_key:'achievements-section',type:'achievements',sort_order:4,is_visible:true,content:{heading:'Achievements section',items:[item('00000000-0000-4000-8000-000000000005',{value:'10+',heading:'Achievement one',text:'Achievement text'})]},presentation:{}},
+  {id:6,section_key:'faq-section',type:'faq',sort_order:5,is_visible:true,content:{heading:'FAQ section',items:[item('00000000-0000-4000-8000-000000000006',{question:'Question one?',answer:'Answer one.'})]},presentation:{}},
+  {id:7,section_key:'gallery-section',type:'gallery',sort_order:6,is_visible:true,content:{heading:'Gallery section',items:[item('00000000-0000-4000-8000-000000000007',{image_url:'',image_alt:'Gallery image',caption:'Gallery one'})]},presentation:{}},
+  {id:8,section_key:'stats-section',type:'stats',sort_order:7,is_visible:true,content:{heading:'Statistics section',items:[item('00000000-0000-4000-8000-000000000008',{value:'1',label:'Stat one'})]},presentation:{}},
+ ],draft={id:1,title:'Home',slug:'home',lock_version:30,sections};
+ get.mockImplementation(async(url:string)=>url==='/me'?{data:{user:{role:'power_admin'}}} as any:url==='/cms/public-settings'?{data:{data:{}}} as any:url==='/content/pages/home'?{data:{data:{title:'Home',sections}}} as any:url==='/cms/pages'?{data:{data:[{id:1,slug:'home'}]}} as any:url==='/cms/pages/1'?{data:{data:draft}} as any:{data:{data:[]}} as any);
+ put.mockImplementation(async(_url:string,payload:any)=>({data:{data:{...draft,lock_version:31,sections:payload.sections}}}) as any);
+ const rendered=view(<Layout><CmsPublicPage slug="home"/></Layout>,'/');
+ fireEvent.click(await screen.findByRole('button',{name:'Edit site'}));
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Save Draft'})).toBeEnabled());
+ const schemas:[string,string][]=[['Select Card one component','Card heading'],['Select Service one component','Service heading'],['Select Paper one component','Publication title'],['Select 2020: Milestone one component','Year or period'],['Select Achievement one component','Achievement value'],['Select Question one? component','Question'],['Select Gallery one component','Image URL'],['Select 1 Stat one component','Statistic value']];
+ for(const [control,field] of schemas){fireEvent.click(screen.getByRole('button',{name:control}));expect(screen.getByLabelText(field)).toBeInTheDocument()}
+ fireEvent.click(screen.getByRole('button',{name:'Select Card one component'}));
+ fireEvent.focus(screen.getByLabelText('Card heading'));
+ await waitFor(()=>expect(screen.getByRole('toolbar',{name:'Website editor'})).toHaveTextContent('Page > Cards > Card one > Card heading'));
+ fireEvent.change(screen.getByLabelText('Card heading'),{target:{value:'Updated card'}});
+ expect(rendered.container.querySelector('.cms-cards .cms-card-grid h3')).toHaveTextContent('Updated card');
+ fireEvent.click(screen.getByRole('button',{name:'Done'}));
+ fireEvent.click(screen.getByRole('button',{name:'Add Cards item'}));
+ expect(rendered.container.querySelectorAll('.cms-cards .cms-card-grid .cms-editable-component')).toHaveLength(2);
+ fireEvent.click(screen.getByRole('button',{name:'Move earlier'}));
+ expect(rendered.container.querySelector('.cms-cards .cms-card-grid h3')).toHaveTextContent('New card');
+ fireEvent.click(screen.getByRole('button',{name:'Duplicate'}));
+ expect(rendered.container.querySelectorAll('.cms-cards .cms-card-grid .cms-editable-component')).toHaveLength(3);
+ fireEvent.click(screen.getByRole('button',{name:'Hide'}));
+ expect(rendered.container.querySelectorAll('.cms-component-hidden')).toHaveLength(1);
+ const confirm=vi.spyOn(window,'confirm').mockReturnValue(false);
+ fireEvent.click(screen.getByRole('button',{name:'Delete component'}));
+ expect(rendered.container.querySelectorAll('.cms-cards .cms-card-grid .cms-editable-component')).toHaveLength(3);
+ confirm.mockReturnValue(true);fireEvent.click(screen.getByRole('button',{name:'Delete component'}));
+ expect(rendered.container.querySelectorAll('.cms-cards .cms-card-grid .cms-editable-component')).toHaveLength(2);
+ fireEvent.click(screen.getByRole('button',{name:'Undo'}));
+ expect(rendered.container.querySelectorAll('.cms-cards .cms-card-grid .cms-editable-component')).toHaveLength(3);
+ confirm.mockRestore();
+ fireEvent.click(screen.getByRole('button',{name:'Save Draft'}));
+ await waitFor(()=>expect(put).toHaveBeenCalledTimes(1));
+ const payload=put.mock.calls[0][1] as any,cardItems=payload.sections.find((section:any)=>section.type==='cards').content.items;
+ expect(cardItems).toHaveLength(3);expect(cardItems.some((entry:any)=>entry.heading==='Updated card')).toBe(true);expect(cardItems.some((entry:any)=>entry.is_visible===false)).toBe(true);expect(new Set(cardItems.map((entry:any)=>entry.key)).size).toBe(3);
+},30000);

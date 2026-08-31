@@ -351,21 +351,56 @@ class CmsTest extends TestCase
     public function test_navigation_supports_visibility_reordering_and_one_safe_submenu_level(): void
     {
         $this->power();
+        $careKey = (string) \Illuminate\Support\Str::uuid();
+        $secondOpinionKey = (string) \Illuminate\Support\Str::uuid();
+        $externalKey = (string) \Illuminate\Support\Str::uuid();
         $navigation = [
-            ['label' => 'Care', 'path' => '/services', 'is_visible' => true, 'children' => [
-                ['label' => 'Second opinion', 'path' => '/book', 'is_visible' => true],
+            ['key' => $careKey, 'label' => 'Care', 'type' => 'internal', 'path' => '/services', 'target' => '_self', 'is_visible' => true, 'children' => [
+                ['key' => $secondOpinionKey, 'label' => 'Second opinion', 'type' => 'internal', 'path' => '/book', 'target' => '_self', 'is_visible' => true],
                 ['label' => 'Hidden guide', 'path' => '/p/guide', 'is_visible' => false],
             ]],
-            ['label' => 'Private', 'path' => '/p/private', 'is_visible' => false],
+            ['key' => $externalKey, 'label' => 'Partner hospital', 'type' => 'external', 'path' => 'https://example.org/care', 'target' => '_blank', 'is_visible' => false],
         ];
         $this->putJson('/api/cms/settings/navigation', ['value' => $navigation])->assertOk()
+            ->assertJsonPath('data.draft_value.0.key', $careKey)
             ->assertJsonPath('data.draft_value.0.children.0.label', 'Second opinion')
+            ->assertJsonPath('data.draft_value.1.type', 'external')
+            ->assertJsonPath('data.draft_value.1.target', '_blank')
             ->assertJsonPath('data.draft_value.1.is_visible', false);
         $this->postJson('/api/cms/settings/navigation/publish')->assertOk();
         $this->getJson('/api/cms/public-settings')->assertJsonPath('data.navigation.0.children.1.is_visible', false);
 
         $navigation[0]['children'][0]['children'] = [['label' => 'Too deep', 'path' => '/about']];
         $this->putJson('/api/cms/settings/navigation', ['value' => $navigation])->assertUnprocessable();
+        unset($navigation[0]['children'][0]['children']);
+        $navigation[1]['type'] = 'internal';
+        $this->putJson('/api/cms/settings/navigation', ['value' => $navigation])->assertUnprocessable();
+        $navigation[1]['type'] = 'external';
+        $navigation[1]['path'] = 'https://user:secret@example.org/care';
+        $this->putJson('/api/cms/settings/navigation', ['value' => $navigation])->assertUnprocessable();
+        $navigation[1]['path'] = 'https://example.org/care';
+        $navigation[1]['key'] = $careKey;
+        $this->putJson('/api/cms/settings/navigation', ['value' => $navigation])->assertUnprocessable();
+        $navigation[1]['key'] = $externalKey;
+        $navigation[1]['onclick'] = 'alert(1)';
+        $this->putJson('/api/cms/settings/navigation', ['value' => $navigation])->assertUnprocessable();
+        unset($navigation[1]['onclick']);
+        $navigation[1]['is_visible'] = 'yes';
+        $this->putJson('/api/cms/settings/navigation', ['value' => $navigation])->assertUnprocessable();
+        $tooMany = array_fill(0, 9, ['label' => 'Link', 'path' => '/about']);
+        $this->putJson('/api/cms/settings/navigation', ['value' => $tooMany])->assertUnprocessable();
+    }
+
+    public function test_navigation_draft_mutation_and_publication_are_power_admin_only(): void
+    {
+        $navigation = [['label' => 'Private care', 'path' => '/services']];
+        foreach ([UserRole::Patient, UserRole::Moderator, UserRole::Admin] as $role) {
+            Sanctum::actingAs(User::factory()->create(['role' => $role, 'email_verified_at' => now()]));
+            $this->putJson('/api/cms/settings/navigation', ['value' => $navigation])->assertForbidden();
+            $this->postJson('/api/cms/settings/navigation/publish')->assertForbidden();
+        }
+
+        $this->assertDatabaseMissing('cms_settings', ['key' => 'navigation']);
     }
 
     private function power(): User

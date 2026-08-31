@@ -1,7 +1,7 @@
 # S4 — Visual Navigation and New Pages Build Plan
 
 Recorded: 31 August 2026
-Status: active source of truth; S4.1 ready to implement
+Status: active source of truth; S4.1 complete, S4.2 active
 Acceptance scope: VE-158 through VE-178, with draft/publication continuity shared with VE-179 through VE-200 and authorization evidence shared with VE-236
 
 ## Objective
@@ -104,7 +104,13 @@ S4 implementation is complete only when the rendered header can be selected and 
 
 ## Implementation ledger
 
-### S4.1 — Active
+### S4.1 — Complete
 
-- Planned delivery: rendered-header selection, safe structured navigation schema, root/submenu lifecycle, private save and explicit publication.
-- First gate: focused backend allow-list/isolation tests and frontend actual-header interaction coverage before a full phase run.
+- Revision: `d907c7c`.
+- Delivered: the real public header becomes an outlined, selectable editing surface in Power Admin Edit Mode; protected draft items render in their actual positions; hidden items have an editor-only visual treatment; link selection prevents accidental navigation while editing.
+- Lifecycle: root and child items support live label, internal/external destination, same/new-tab target and visibility editing; root items support dedicated-handle drag reorder; root/child siblings support move earlier/later; root items can add one submenu level; deletion is confirmed; the inspector provides explicit private save and publication actions with retained local changes after failure.
+- Data safety: every saved item receives a stable UUID key; root items are capped at eight and children at six; only one child level is accepted; unknown fields, duplicate/invalid keys, non-boolean visibility, invalid type/target values, mismatched internal/external paths, unsafe schemes, URL credentials and excessive nesting/counts are rejected.
+- Privacy and authorization: the public header continues to use only `published_value`; the protected editor loads `draft_value`; failed/private saves do not alter public settings; Patient, Moderator and Admin direct mutation/publication requests are denied without creating a setting.
+- Fresh gate: backend 112 tests / 953 assertions; web 10 files / 38 tests; production build PASS; `git diff --check` PASS. The build retains the known non-blocking bundle-size warning. No database schema changed, so migration rollback/reapply was not required.
+- Automated evidence contributed: VE-158 through VE-169 foundations. The frontend regression exercises rendered selection, rename, external destination/target, hide/show, submenu creation/editing, reorder, confirmed deletion, private save and explicit publication; the logged-out renderer regression verifies safe external targets and hidden-item omission. The complete save/reload/logout publication continuity remains S4.3 and independent QA remains required.
+- Next task: S4.2 actual-site blank/template new-page workflow with exact slug safety and direct Edit Mode navigation.

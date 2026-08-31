@@ -64,6 +64,12 @@ class CmsTest extends TestCase
         $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
         $payload['content'] = ['heading' => 'Safe', 'raw_html' => '<b>no</b>'];
         $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
+        $payload = ['type' => 'script', 'content' => ['heading' => 'Unsafe component'], 'presentation' => [], 'is_visible' => true];
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
+        $payload = ['type' => 'cards', 'content' => ['heading' => 'Cards', 'items' => [['heading' => 'Card', 'text' => 'Safe text', 'style' => 'position:fixed']]], 'presentation' => [], 'is_visible' => true];
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
+        $payload['content']['items'][0] = ['heading' => 'Card', 'text' => 'Safe text', 'url' => 'javascript:alert(1)'];
+        $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
     }
 
     public function test_draft_is_private_preview_is_time_bounded_and_publish_is_explicit(): void
@@ -189,12 +195,26 @@ class CmsTest extends TestCase
     public function test_every_structured_section_and_presentation_control_round_trips(): void
     {
         $page = $this->page();
+        $itemKey = fn () => (string) \Illuminate\Support\Str::uuid();
         $sections = [
             'hero' => ['eyebrow' => 'Care', 'heading' => 'Hero', 'text' => 'Intro', 'primary_label' => 'Book', 'primary_url' => '/book', 'secondary_label' => 'Learn', 'secondary_url' => 'https://example.test/learn'],
             'text' => ['eyebrow' => 'Profile', 'heading' => 'Text', 'body' => "First paragraph\nSecond paragraph"],
+            'image' => ['heading' => 'Image', 'image_url' => '/media/photo.jpg', 'image_alt' => 'Clinician speaking with a patient', 'caption' => 'Patient-centred care', 'image_link' => '/about'],
+            'image_text' => ['eyebrow' => 'Team', 'heading' => 'Image and text', 'text' => 'Approved photograph', 'image_url' => 'https://example.test/photo.jpg', 'image_alt' => 'Clinician speaking with a patient'],
+            'cards' => ['eyebrow' => 'Explore', 'heading' => 'Cards', 'text' => 'Resources', 'items' => [['key' => $itemKey(), 'heading' => 'Guide', 'text' => 'Helpful guide', 'url' => '/guide', 'is_visible' => true]]],
+            'services' => ['eyebrow' => 'Care', 'heading' => 'Services', 'text' => 'Care options', 'items' => [['key' => $itemKey(), 'heading' => 'Consultation', 'text' => 'Specialist review', 'url' => '/book', 'is_visible' => true]]],
             'cta' => ['eyebrow' => 'Next', 'heading' => 'CTA', 'text' => 'Act now', 'button_label' => 'Contact', 'button_url' => '/contact'],
-            'stats' => ['eyebrow' => 'Impact', 'heading' => 'Stats', 'text' => 'Selected measures', 'items' => [['value' => '25+', 'label' => 'Years']]],
-            'image_text' => ['eyebrow' => 'Team', 'heading' => 'Image', 'text' => 'Approved photograph', 'image_url' => 'https://example.test/photo.jpg', 'image_alt' => 'Clinician speaking with a patient'],
+            'publications' => ['eyebrow' => 'Research', 'heading' => 'Publications', 'text' => 'Selected work', 'items' => [['key' => $itemKey(), 'title' => 'Paper title', 'meta' => 'Journal · 2026', 'url' => 'https://example.test/paper', 'is_visible' => true]]],
+            'career_timeline' => ['eyebrow' => 'Career', 'heading' => 'Timeline', 'text' => 'Professional journey', 'items' => [['key' => $itemKey(), 'year' => '2026', 'heading' => 'Professor', 'text' => 'Career milestone', 'is_visible' => true]]],
+            'achievements' => ['eyebrow' => 'Impact', 'heading' => 'Achievements', 'text' => 'Selected impact', 'items' => [['key' => $itemKey(), 'value' => '25+', 'heading' => 'Years', 'text' => 'Specialist service', 'is_visible' => true]]],
+            'faq' => ['eyebrow' => 'Questions', 'heading' => 'FAQ', 'text' => 'Common questions', 'items' => [['key' => $itemKey(), 'question' => 'What happens next?', 'answer' => 'The team will guide you.', 'is_visible' => true]]],
+            'gallery' => ['eyebrow' => 'Gallery', 'heading' => 'Gallery', 'text' => 'Approved images', 'items' => [['key' => $itemKey(), 'image_url' => '/media/gallery.jpg', 'image_alt' => 'Clinical team', 'caption' => 'The care team', 'is_visible' => true]]],
+            'stats' => ['eyebrow' => 'Impact', 'heading' => 'Stats', 'text' => 'Selected measures', 'items' => [['key' => $itemKey(), 'value' => '25+', 'label' => 'Years', 'is_visible' => true]]],
+            'contact' => ['eyebrow' => 'Contact', 'heading' => 'Contact us', 'text' => 'Choose a channel', 'email' => 'care@example.org', 'telephone' => '+234 800 000 0000', 'address' => 'Ile-Ife, Nigeria'],
+            'appointment' => ['eyebrow' => 'Appointments', 'heading' => 'Book care', 'text' => 'Choose a time', 'button_label' => 'Book', 'button_url' => '/book', 'button_action' => 'internal'],
+            'video' => ['eyebrow' => 'Watch', 'heading' => 'Video', 'text' => 'Introduction', 'video_url' => 'https://example.test/video.mp4', 'poster_url' => '/media/poster.jpg', 'caption' => 'Patient education video'],
+            'divider' => ['heading' => 'Divider', 'label' => 'Continue'],
+            'spacer' => ['heading' => 'Spacer'],
         ];
         foreach ($sections as $type => $content) {
             $this->postJson("/api/cms/pages/{$page->id}/sections", [
@@ -203,7 +223,7 @@ class CmsTest extends TestCase
                 'is_visible' => false,
             ])->assertCreated()->assertJsonPath('data.presentation.width', 'wide')->assertJsonPath('data.is_visible', false);
         }
-        $this->getJson("/api/cms/pages/{$page->id}")->assertOk()->assertJsonCount(5, 'data.sections')->assertJsonPath('data.sections.3.content.items.0.label', 'Years');
+        $this->getJson("/api/cms/pages/{$page->id}")->assertOk()->assertJsonCount(18, 'data.sections')->assertJsonPath('data.sections.12.content.items.0.label', 'Years')->assertJsonPath('data.sections.17.type', 'spacer');
     }
 
     public function test_page_and_section_lifecycle_supports_duplicate_unpublish_seo_and_conflict_detection(): void

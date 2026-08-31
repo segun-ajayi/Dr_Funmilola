@@ -115,3 +115,31 @@ test('selected sections support responsive styling, lifecycle controls, drag reo
  await waitFor(()=>expect(put).toHaveBeenCalledWith('/cms/pages/1/visual-draft',expect.objectContaining({lock_version:12,sections:expect.arrayContaining([expect.objectContaining({section_key:'hero-one',presentation:expect.objectContaining({responsive:expect.objectContaining({mobile:expect.objectContaining({background:'wine',layout:'grid',columns:'2'})})})}),expect.objectContaining({is_visible:false})])})));
  const confirm=vi.spyOn(window,'confirm').mockReturnValue(false);fireEvent.click(screen.getByRole('button',{name:'Delete'}));expect(rendered.container.querySelectorAll('.cms-section')).toHaveLength(3);confirm.mockReturnValue(true);fireEvent.click(screen.getByRole('button',{name:'Delete'}));expect(rendered.container.querySelectorAll('.cms-section')).toHaveLength(2);fireEvent.click(screen.getByRole('button',{name:'Undo'}));expect(rendered.container.querySelectorAll('.cms-section')).toHaveLength(3);confirm.mockRestore();
 });
+
+test('Add Section library exposes and inserts every required component in the actual page',async()=>{
+ const anchor={id:10,section_key:'anchor',type:'text',sort_order:0,is_visible:true,content:{heading:'Existing page section',body:'Existing copy'},presentation:{}},draft={id:1,title:'Home',slug:'home',lock_version:20,sections:[anchor]};
+ get.mockImplementation(async(url:string)=>url==='/me'?{data:{user:{role:'power_admin'}}} as any:url==='/cms/public-settings'?{data:{data:{}}} as any:url==='/content/pages/home'?{data:{data:{title:'Home',sections:[anchor]}}} as any:url==='/cms/pages'?{data:{data:[{id:1,slug:'home'}]}} as any:url==='/cms/pages/1'?{data:{data:draft}} as any:{data:{data:[]}} as any);
+ put.mockImplementation(async(_url:string,payload:any)=>({data:{data:{...draft,lock_version:21,sections:payload.sections}}}) as any);
+ const rendered=view(<Layout><CmsPublicPage slug="home"/></Layout>,'/');
+ fireEvent.click(await screen.findByRole('button',{name:'Edit site'}));
+ const add=await screen.findByRole('button',{name:'Add Section'}),choices:[string,string][]=[['Hero','hero'],['Rich Text','text'],['Image','image'],['Text + Image','image_text'],['Cards','cards'],['Services','services'],['CTA','cta'],['Publications','publications'],['Career Timeline','career_timeline'],['Achievements','achievements'],['FAQ','faq'],['Gallery','gallery'],['Statistics','stats'],['Contact','contact'],['Appointment Widget','appointment'],['Video','video'],['Divider','divider'],['Spacer','spacer']];
+ await waitFor(()=>expect(add).toBeEnabled());
+ fireEvent.click(add);
+ expect(screen.getByRole('heading',{name:'Choose a page component'})).toBeInTheDocument();
+ choices.forEach(([label])=>expect(screen.getByRole('button',{name:`Add ${label} section`})).toBeInTheDocument());
+ fireEvent.change(screen.getByLabelText('Search components'),{target:{value:'career'}});
+ expect(screen.getByRole('button',{name:'Add Career Timeline section'})).toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:'Add Hero section'})).not.toBeInTheDocument();
+ fireEvent.change(screen.getByLabelText('Search components'),{target:{value:''}});
+ fireEvent.change(screen.getByLabelText('Insert location'),{target:{value:'start'}});
+ fireEvent.click(screen.getByRole('button',{name:'Add Hero section'}));
+ expect(rendered.container.querySelector('.cms-section')).toHaveClass('cms-hero');
+ for(const [label,type] of choices.slice(1)){fireEvent.click(add);fireEvent.click(screen.getByRole('button',{name:`Add ${label} section`}));expect(rendered.container.querySelector(`.cms-${type}`)).toBeInTheDocument()}
+ expect(rendered.container.querySelectorAll('.cms-section')).toHaveLength(19);
+ fireEvent.click(screen.getByRole('button',{name:'Save Draft'}));
+ await waitFor(()=>expect(put).toHaveBeenCalledTimes(1));
+ const payload=put.mock.calls[0][1] as any;
+ expect(payload.lock_version).toBe(20);
+ expect(payload.sections.map((section:any)=>section.type)).toEqual(expect.arrayContaining(choices.map(([,type])=>type)));
+ expect(payload.sections.every((section:any,index:number)=>section.sort_order===index)).toBe(true);
+},30000);

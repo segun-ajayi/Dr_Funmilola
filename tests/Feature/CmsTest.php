@@ -39,6 +39,42 @@ class CmsTest extends TestCase
         $this->getJson('/api/content/pages/missing-page')->assertNotFound();
     }
 
+    public function test_blank_and_template_pages_use_safe_slugs_and_open_on_their_canonical_site_paths(): void
+    {
+        $this->power();
+        $blank = $this->postJson('/api/cms/pages', [
+            'title' => 'Patient Support Guide', 'start_mode' => 'blank',
+        ])->assertCreated()->assertJsonPath('data.slug', 'patient-support-guide')->assertJsonPath('data.public_path', '/p/patient-support-guide')->assertJsonCount(0, 'data.sections')->json('data');
+        $this->getJson('/api/content/pages/patient-support-guide')->assertNotFound();
+        $this->get('/p/patient-support-guide')->assertNotFound()->assertSee('id="app"', false);
+
+        $template = $this->postJson('/api/cms/pages', [
+            'title' => 'Care Journey', 'slug' => 'care-journey', 'start_mode' => 'template', 'template' => 'landing',
+        ])->assertCreated()->assertJsonPath('data.template', 'landing')->assertJsonPath('data.public_path', '/p/care-journey')->assertJsonCount(2, 'data.sections')->assertJsonPath('data.sections.0.type', 'hero')->assertJsonPath('data.sections.1.type', 'cards')->json('data');
+        $previewUrl = $this->postJson("/api/cms/pages/{$template['id']}/preview")->assertOk()->json('preview_url');
+        $this->getJson('/api/cms/preview/'.basename(parse_url($previewUrl, PHP_URL_PATH)))->assertOk()->assertJsonPath('data.sections.0.content.heading', 'Care Journey');
+        $this->postJson("/api/cms/pages/{$template['id']}/publish")->assertOk();
+        $this->get('/p/care-journey')->assertOk();
+        $this->getJson('/api/content/pages/care-journey')->assertOk()->assertJsonCount(2, 'data.sections');
+
+        $this->postJson('/api/cms/pages', ['title' => 'Patient Support Guide', 'start_mode' => 'blank'])->assertUnprocessable()->assertJsonValidationErrors('slug');
+        foreach (['Care_Guide', 'Care-Guide', '-care-guide', 'care--guide', 'contact', 'academic', 'staff'] as $slug) {
+            $this->postJson('/api/cms/pages', ['title' => 'Unsafe page', 'slug' => $slug, 'start_mode' => 'blank'])->assertUnprocessable()->assertJsonValidationErrors('slug');
+        }
+        $this->postJson('/api/cms/pages', ['title' => '<b>Unsafe title</b>', 'slug' => 'unsafe-title', 'start_mode' => 'blank'])->assertUnprocessable()->assertJsonValidationErrors('title');
+        $this->assertDatabaseHas('cms_pages', ['id' => $blank['id'], 'slug' => 'patient-support-guide', 'status' => 'draft']);
+    }
+
+    public function test_new_page_creation_is_power_admin_only(): void
+    {
+        foreach ([UserRole::Patient, UserRole::Moderator, UserRole::Admin] as $role) {
+            Sanctum::actingAs(User::factory()->create(['role' => $role, 'email_verified_at' => now()]));
+            $this->postJson('/api/cms/pages', ['title' => 'Unauthorized page', 'slug' => 'unauthorized-page', 'start_mode' => 'blank'])->assertForbidden();
+        }
+
+        $this->assertDatabaseMissing('cms_pages', ['slug' => 'unauthorized-page']);
+    }
+
     public function test_real_backend_editor_journey_selects_edits_previews_publishes_and_reads_public_page(): void
     {
         $this->power();

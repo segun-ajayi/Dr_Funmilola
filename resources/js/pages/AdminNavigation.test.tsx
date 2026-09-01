@@ -1,6 +1,6 @@
 import { QueryClient,QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent,render,screen,waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter,Route,Routes } from 'react-router-dom';
 import { beforeEach,expect,test,vi } from 'vitest';
 import { Layout } from '../App';import StaffDashboardPage from './StaffDashboardPage';import CmsEditorPage from './CmsEditorPage';import CmsPublicPage from './CmsPublicPage';import { api } from '../api';
 vi.mock('../api',()=>({api:{get:vi.fn(),post:vi.fn(),put:vi.fn(),patch:vi.fn(),delete:vi.fn()}}));
@@ -48,6 +48,27 @@ test('rendered header navigation is edited as a private draft and explicitly pub
  await waitFor(()=>expect(post).toHaveBeenCalledWith('/cms/settings/navigation/publish'));
  expect(screen.getByText(/Navigation published/)).toBeInTheDocument();
  confirm.mockRestore();
+});
+test('Edit Mode creates a safe template page and opens its actual private URL',async()=>{
+ const section={id:10,section_key:'new-hero',type:'hero',sort_order:0,is_visible:true,content:{eyebrow:'New page',heading:'Patient support guide',text:'Editable introduction'},presentation:{}};
+ get.mockImplementation(async(url:string)=>{if(url==='/me')return{data:{user:{role:'power_admin'}}} as any;if(url==='/cms/public-settings')return{data:{data:{}}} as any;if(url==='/cms/settings')return{data:{data:{}}} as any;if(url==='/cms/pages')return{data:{data:[{id:7,slug:'patient-support-guide'}]}} as any;if(url==='/cms/pages/7')return{data:{data:{id:7,title:'Patient support guide',slug:'patient-support-guide',lock_version:0,sections:[section]}}} as any;if(url==='/content/pages/patient-support-guide')throw {response:{status:404}};return{data:{data:{}}} as any});
+ post.mockRejectedValueOnce({response:{data:{errors:{slug:['That page address is already in use.']}}}}).mockResolvedValueOnce({data:{data:{id:7,slug:'patient-support-guide',public_path:'/p/patient-support-guide'}}} as any);
+ view(<Layout><Routes><Route path="/about" element={<h1>About</h1>}/><Route path="/p/:slug" element={<CmsPublicPage/>}/></Routes></Layout>,'/about');
+ fireEvent.click(await screen.findByRole('button',{name:'Edit site'}));
+ fireEvent.click(screen.getByRole('button',{name:'New Page'}));
+ fireEvent.change(screen.getByLabelText('Page name'),{target:{value:'Patient support guide'}});
+ expect(screen.getByRole('textbox',{name:/Page address/})).toHaveValue('patient-support-guide');
+ fireEvent.click(screen.getByRole('radio',{name:/Starter template/}));
+ fireEvent.change(screen.getByLabelText('Starter template'),{target:{value:'landing'}});
+ fireEvent.click(screen.getByRole('button',{name:'Create and open page'}));
+ expect(await screen.findByRole('alert')).toHaveTextContent('already in use');
+ expect(screen.getByLabelText('Page name')).toHaveValue('Patient support guide');
+ fireEvent.change(screen.getByRole('textbox',{name:/Page address/}),{target:{value:'patient-support-guide'}});
+ fireEvent.click(screen.getByRole('button',{name:'Create and open page'}));
+ await waitFor(()=>expect(post).toHaveBeenLastCalledWith('/cms/pages',{title:'Patient support guide',slug:'patient-support-guide',start_mode:'template',template:'landing'}));
+ expect(await screen.findByText('Editable introduction')).toBeInTheDocument();
+ expect(screen.getByText(/Edit Mode is on/)).toBeInTheDocument();
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Preview'})).toBeEnabled());
 });
 test('website editor offers an explicit existing-page dropdown',async()=>{get.mockImplementation(async(url:string)=>url==='/cms/pages'?{data:{data:[{id:1,title:'About the practice',slug:'about-practice',status:'draft'},{id:2,title:'Patient guide',slug:'patient-guide',status:'published'}]}} as any:{data:{data:{id:1,title:'About the practice',slug:'about-practice',sections:[]}}} as any);view(<CmsEditorPage/>,'/staff/cms');const picker=await screen.findByRole('combobox',{name:'Choose an existing page'});await waitFor(()=>expect(picker).toHaveValue('1'));expect(screen.getByRole('option',{name:'Patient guide — /patient-guide (published)'})).toBeInTheDocument();fireEvent.change(picker,{target:{value:'2'}});expect(picker).toHaveValue('2');});
 test('website editor exposes structured content presentation visibility and version controls',async()=>{get.mockImplementation(async(url:string)=>{if(url==='/cms/pages')return{data:{data:[{id:1,title:'Home',slug:'home',status:'published'}]}} as any;if(url==='/cms/pages/1')return{data:{data:{id:1,title:'Home',slug:'home',template:'landing',status:'published',sections:[{id:10,section_key:'hero-one',type:'hero',is_visible:true,content:{eyebrow:'Care',heading:'Whole-person care',text:'Introduction',primary_label:'Book',primary_url:'/book'},presentation:{background:'ivory',alignment:'left',width:'normal',spacing:'normal'}}]}}} as any;if(url==='/cms/pages/1/versions')return{data:{data:[{id:4,version:2,reason:'Section updated',created_at:'2026-08-28T10:00:00Z'}]}} as any;return{data:{data:{}}} as any});view(<CmsEditorPage/>,'/staff/cms?slug=home');expect(await screen.findByDisplayValue('Whole-person care')).toBeInTheDocument();expect(screen.getByLabelText('Primary button label')).toHaveValue('Book');expect(screen.getByLabelText('Background')).toHaveValue('ivory');expect(screen.getByLabelText(/Show this section/)).toBeChecked();fireEvent.click(screen.getByText('Version history'));expect(screen.getByRole('button',{name:/Restore as draft/})).toBeInTheDocument();});

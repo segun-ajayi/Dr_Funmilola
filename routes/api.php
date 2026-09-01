@@ -13,6 +13,7 @@ use App\Http\Controllers\AvailabilityController;
 use App\Http\Controllers\CancellationRequestController;
 use App\Http\Controllers\Cms\AuditLogController;
 use App\Http\Controllers\Cms\EducationArticleController;
+use App\Http\Controllers\Cms\MediaController as CmsMediaController;
 use App\Http\Controllers\Cms\PageController as CmsPageController;
 use App\Http\Controllers\Cms\SectionController as CmsSectionController;
 use App\Http\Controllers\Cms\SettingController as CmsSettingController;
@@ -132,6 +133,10 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         });
     });
     Route::prefix('cms')->middleware(['verified', 'role:power_admin'])->group(function () {
+        Route::get('/media', [CmsMediaController::class, 'index']);
+        Route::post('/media', [CmsMediaController::class, 'store'])->middleware('throttle:10,1');
+        Route::put('/media/{mediaAsset}', [CmsMediaController::class, 'update']);
+        Route::delete('/media/{mediaAsset}', [CmsMediaController::class, 'destroy']);
         Route::get('/pages', [CmsPageController::class, 'index']);
         Route::post('/pages', [CmsPageController::class, 'store']);
         Route::get('/pages/{page}', [CmsPageController::class, 'show'])->whereNumber('page');

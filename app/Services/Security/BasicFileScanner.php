@@ -29,6 +29,7 @@ class BasicFileScanner implements FileScannerInterface
             'pdf' => str_starts_with($sample, '%PDF-'),
             'jpg', 'jpeg' => str_starts_with($sample, "\xFF\xD8\xFF"),
             'png' => str_starts_with($sample, "\x89PNG\r\n\x1A\n"),
+            'webp' => strlen($sample) >= 12 && str_starts_with($sample, 'RIFF') && substr($sample, 8, 4) === 'WEBP',
             default => false,
         };
         if (! $validContainer) {

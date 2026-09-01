@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Cms\MediaController as CmsMediaController;
 use App\Http\Controllers\SitemapController;
 use App\Models\CmsPage;
 use App\Models\CmsPreviewToken;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Schema;
 Route::view('/reset-password', 'app', ['seo' => ['title' => 'Reset password', 'description' => 'Reset secure account access.', 'noindex' => true]])->name('password.reset');
 Route::get('/sitemap.xml', SitemapController::class);
 Route::get('/robots.txt', fn () => response("User-agent: *\nDisallow:\nSitemap: ".url('/sitemap.xml')."\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']));
+Route::get('/media/{mediaAsset}', [CmsMediaController::class, 'content']);
 Route::get('/{path?}', function (?string $path = null) {
     $path = trim((string) $path, '/');
     $metadata = [

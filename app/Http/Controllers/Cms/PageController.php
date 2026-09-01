@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Http\Controllers\Cms;
+
 use App\Http\Controllers\Controller;
 use App\Models\CmsPage;
 use App\Models\CmsPreviewToken;
@@ -7,45 +9,239 @@ use App\Models\CmsVersion;
 use App\Services\CmsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class PageController extends Controller
 {
- private const PROTECTED=['home','about','services','research','academic','education','contact','book','portal','privacy','terms','accessibility','security','preview','sign-in','register','forgot-password','reset-password','staff','api','sanctum','up'];
- public function index():JsonResponse{return response()->json(['data'=>CmsPage::withCount('sections')->latest()->get()]);}
- public function show(CmsPage $page,CmsService $cms):JsonResponse{return response()->json(['data'=>$cms->snapshot($page)+['id'=>$page->id,'status'=>$page->status,'published_at'=>$page->published_at,'lock_version'=>$page->lock_version]]);}
- public function store(Request $request,CmsService $cms):JsonResponse
- {
-  $data=$request->validate(['title'=>['required','string','max:150'],'slug'=>['nullable','string','max:100'],'start_mode'=>['nullable',Rule::in(['blank','template'])],'template'=>['nullable',Rule::in(['standard','landing','resource'])]]);
-  $title=trim($data['title']);if($title===''||$title!==strip_tags($title))throw ValidationException::withMessages(['title'=>'Enter a plain-text page name.']);
-  $slug=trim((string)($data['slug']??''))?:Str::slug($title);$this->assertSafeSlug($slug);
-  if(CmsPage::where('slug',$slug)->exists())throw ValidationException::withMessages(['slug'=>'That page address is already in use.']);
-  $mode=$data['start_mode']??'blank';$template=$mode==='template'?($data['template']??'standard'):'standard';
-  $page=DB::transaction(function()use($title,$slug,$mode,$template,$request,$cms){$page=CmsPage::create(['title'=>$title,'slug'=>$slug,'template'=>$template,'created_by'=>$request->user()->id]);if($mode==='template'){$sections=$cms->validateDocumentSections($page,$this->starterSections($template,$title));$cms->applyDocumentSections($page,$sections);}$cms->version($page,$request->user(),$mode==='template'?'Page created from '.$template.' template':'Blank page created');$cms->audit($request->user(),'cms.page_created',$page,['start_mode'=>$mode,'template'=>$template]);return$page->fresh();});
-  return response()->json(['data'=>$cms->snapshot($page)+['id'=>$page->id,'status'=>$page->status,'published_at'=>$page->published_at,'lock_version'=>$page->lock_version,'public_path'=>'/p/'.$page->slug]],201);
- }
- public function update(Request $request,CmsPage $page,CmsService $cms):JsonResponse{$this->assertVersion($request,$page);$data=$request->validate(['title'=>['required','string','max:150'],'slug'=>['required','string','max:100',Rule::unique('cms_pages')->ignore($page)],'template'=>['required',Rule::in(['standard','landing','resource'])],'seo_title'=>['nullable','string','max:70'],'seo_description'=>['nullable','string','max:170'],'lock_version'=>['nullable','integer','min:0']]);$this->assertSafeSlug($data['slug'],$page);if($data['title']!==strip_tags($data['title']))throw ValidationException::withMessages(['title'=>'Enter a plain-text page name.']);unset($data['lock_version']);$page->update($data+['status'=>'draft','lock_version'=>$page->lock_version+1]);$cms->version($page,$request->user(),'Page details updated');return response()->json(['data'=>$page]);}
- public function saveDraft(Request $request,CmsPage $page,CmsService $cms):JsonResponse{$data=$request->validate(['lock_version'=>['required','integer','min:0'],'sections'=>['required','array']]);$result=DB::transaction(function()use($data,$page,$request,$cms){$locked=CmsPage::query()->lockForUpdate()->findOrFail($page->id);$this->assertVersionValue((int)$data['lock_version'],$locked);$sections=$cms->validateDocumentSections($locked,$data['sections']);$before=$cms->snapshot($locked);$cms->applyDocumentSections($locked,$sections);$locked->update(['status'=>'draft','lock_version'=>$locked->lock_version+1]);$cms->version($locked,$request->user(),'Visual draft saved');$cms->audit($request->user(),'cms.visual_draft_saved',$locked,['before_schema'=>$before['schema_version'],'after_schema'=>3,'lock_version'=>$locked->lock_version]);return$locked->fresh();});return response()->json(['data'=>$cms->snapshot($result)+['id'=>$result->id,'status'=>$result->status,'published_at'=>$result->published_at,'lock_version'=>$result->lock_version]]);}
- public function preview(Request $request,CmsPage $page,CmsService $cms):JsonResponse{$data=$request->validate(['lock_version'=>['nullable','integer','min:0'],'sections'=>['nullable','array']]);$snapshot=$cms->snapshot($page);if(array_key_exists('sections',$data)){$this->assertVersionValue((int)($data['lock_version']??-1),$page);$snapshot['sections']=$cms->validateDocumentSections($page,$data['sections']);}$snapshot['sections']=array_map(fn($section)=>Arr::except($section,'id'),$snapshot['sections']);$token=Str::random(64);$expires=now()->addHour();CmsPreviewToken::create(['cms_page_id'=>$page->id,'token_hash'=>hash('sha256',$token),'snapshot'=>$snapshot,'expires_at'=>$expires,'created_by'=>$request->user()->id]);$cms->audit($request->user(),'cms.preview_created',$page,['schema_version'=>$snapshot['schema_version']]);return response()->json(['preview_url'=>url('/preview/'.$token),'expires_at'=>$expires->toIso8601String()]);}
- public function publish(Request $request,CmsPage $page,CmsService $cms):JsonResponse{$data=$request->validate(['lock_version'=>['nullable','integer','min:0'],'sections'=>['nullable','array']]);$published=DB::transaction(function()use($data,$page,$request,$cms){$locked=CmsPage::query()->lockForUpdate()->findOrFail($page->id);if(array_key_exists('sections',$data)){$this->assertVersionValue((int)($data['lock_version']??-1),$locked);$sections=$cms->validateDocumentSections($locked,$data['sections']);$cms->applyDocumentSections($locked,$sections);$locked->update(['lock_version'=>$locked->lock_version+1]);}if($locked->published_snapshot){$previous=$locked->published_snapshot;$next=((int)$locked->versions()->max('version'))+1;$locked->versions()->create(['version'=>$next,'reason'=>'Previous published version','snapshot'=>$previous,'created_by'=>$request->user()->id]);}$cms->version($locked,$request->user(),'Published version');$snapshot=$cms->snapshot($locked);$locked->update(['published_snapshot'=>$snapshot,'status'=>'published','published_at'=>now(),'published_by'=>$request->user()->id]);$cms->audit($request->user(),'cms.page_published',$locked,['schema_version'=>$snapshot['schema_version'],'lock_version'=>$locked->lock_version]);return$locked->fresh();});return response()->json(['data'=>$cms->snapshot($published)+['id'=>$published->id,'status'=>$published->status,'published_at'=>$published->published_at,'lock_version'=>$published->lock_version]]);}
- public function unpublish(Request $request,CmsPage $page,CmsService $cms):JsonResponse{$cms->version($page,$request->user(),'Before unpublish');$page->update(['published_snapshot'=>null,'status'=>'draft','published_at'=>null,'published_by'=>null,'lock_version'=>$page->lock_version+1]);$cms->audit($request->user(),'cms.page_unpublished',$page);return response()->json(['data'=>$page]);}
- public function duplicate(Request $request,CmsPage $page,CmsService $cms):JsonResponse{$data=$request->validate(['title'=>['required','string','max:150'],'slug'=>['required','string','max:100','unique:cms_pages,slug']]);$this->assertSafeSlug($data['slug']);if($data['title']!==strip_tags($data['title']))throw ValidationException::withMessages(['title'=>'Enter a plain-text page name.']);$copy=DB::transaction(function()use($data,$page,$request,$cms){$copy=CmsPage::create($data+['template'=>$page->template,'seo_title'=>$page->seo_title,'seo_description'=>$page->seo_description,'status'=>'draft','created_by'=>$request->user()->id]);foreach($page->sections as$section)$copy->sections()->create(['section_key'=>(string)Str::uuid(),'type'=>$section->type,'sort_order'=>$section->sort_order,'is_visible'=>$section->is_visible,'content'=>$section->content,'presentation'=>$section->presentation]);$cms->version($copy,$request->user(),'Page duplicated from '.$page->id);$cms->audit($request->user(),'cms.page_duplicated',$copy,['source_page_id'=>$page->id]);return$copy;});return response()->json(['data'=>$copy],201);}
- public function versions(CmsPage $page):JsonResponse{return response()->json(['data'=>$page->versions()->get(['id','version','reason','created_by','created_at'])]);}
- public function restore(Request $request,CmsPage $page,CmsVersion $version,CmsService $cms):JsonResponse{abort_unless($version->cms_page_id===$page->id,404);$cms->version($page,$request->user(),'Before restore');$snapshot=$version->snapshot;DB::transaction(function()use($page,$snapshot){$page->update(['title'=>$snapshot['title'],'slug'=>$snapshot['slug'],'template'=>$snapshot['template'],'seo_title'=>$snapshot['seo']['title']??null,'seo_description'=>$snapshot['seo']['description']??null,'status'=>'draft','lock_version'=>$page->lock_version+1]);$page->sections()->delete();foreach($snapshot['sections'] as $section)$page->sections()->create(\Illuminate\Support\Arr::except($section,'id'));});$cms->version($page,$request->user(),'Restored version '.$version->version);return response()->json(['data'=>$cms->snapshot($page)]);}
- public function rollback(Request $request,CmsPage $page,CmsVersion $version,CmsService $cms):JsonResponse{abort_unless($version->cms_page_id===$page->id,404);$data=$request->validate(['lock_version'=>['required','integer','min:0']]);$rolled=DB::transaction(function()use($data,$page,$version,$request,$cms){$locked=CmsPage::query()->lockForUpdate()->findOrFail($page->id);$this->assertVersionValue((int)$data['lock_version'],$locked);$snapshot=$version->snapshot;$sections=$cms->validateDocumentSections($locked,array_map(fn($section)=>Arr::except($section,'id'),$snapshot['sections']??[]));if($locked->published_snapshot){$next=((int)$locked->versions()->max('version'))+1;$locked->versions()->create(['version'=>$next,'reason'=>'Before published rollback','snapshot'=>$locked->published_snapshot,'created_by'=>$request->user()->id]);}$locked->update(['title'=>$snapshot['title'],'slug'=>$snapshot['slug'],'template'=>$snapshot['template'],'seo_title'=>$snapshot['seo']['title']??null,'seo_description'=>$snapshot['seo']['description']??null]);$cms->applyDocumentSections($locked,$sections);$locked->update(['published_snapshot'=>$cms->snapshot($locked),'status'=>'published','published_at'=>now(),'published_by'=>$request->user()->id,'lock_version'=>$locked->lock_version+1]);$cms->audit($request->user(),'cms.page_rolled_back',$locked,['version'=>$version->version,'lock_version'=>$locked->lock_version]);return$locked->fresh();});return response()->json(['data'=>$cms->snapshot($rolled)+['id'=>$rolled->id,'status'=>$rolled->status,'published_at'=>$rolled->published_at,'lock_version'=>$rolled->lock_version]]);}
- private function assertVersion(Request $request,CmsPage $page):void{if($request->has('lock_version')&&(int)$request->input('lock_version')!==$page->lock_version)abort(409,'This page changed in another editing session. Reload it before saving.');}
- private function assertVersionValue(int $version,CmsPage $page):void{if($version!==$page->lock_version)abort(409,'This page changed in another editing session. Reload it before saving.');}
- private function assertSafeSlug(string $slug,?CmsPage $page=null):void{if(preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/',$slug)!==1)throw ValidationException::withMessages(['slug'=>'Use lowercase letters and numbers separated by single hyphens.']);if(in_array($slug,self::PROTECTED,true)&&$page?->slug!==$slug)throw ValidationException::withMessages(['slug'=>'That address is reserved by the website.']);}
- private function starterSections(string $template,string $title):array
- {
-  $hero=['id'=>null,'section_key'=>(string)Str::uuid(),'type'=>'hero','sort_order'=>0,'is_visible'=>true,'content'=>['eyebrow'=>'New page','heading'=>$title,'text'=>'Replace this introduction with clear, approved information for visitors.','primary_label'=>'Contact the practice','primary_url'=>'/contact','primary_action'=>'internal','primary_target'=>'_self','primary_visibility'=>'show'],'presentation'=>['background'=>'ivory','alignment'=>'left','width'=>'normal','spacing'=>'generous']];
-  $text=['id'=>null,'section_key'=>(string)Str::uuid(),'type'=>'text','sort_order'=>1,'is_visible'=>true,'content'=>['eyebrow'=>'Overview','heading'=>'Add a clear section heading','body'=>'Double-click this text in Edit Mode to add the approved page content.'],'presentation'=>['background'=>'white','alignment'=>'left','width'=>'narrow','spacing'=>'normal']];
-  if($template==='landing')return[$hero,['id'=>null,'section_key'=>(string)Str::uuid(),'type'=>'cards','sort_order'=>1,'is_visible'=>true,'content'=>['eyebrow'=>'Explore','heading'=>'Helpful next steps','text'=>'Add the most useful destinations for visitors.','items'=>[['key'=>(string)Str::uuid(),'heading'=>'Learn more','text'=>'Describe this destination clearly.','url'=>'/about','is_visible'=>true],['key'=>(string)Str::uuid(),'heading'=>'Request an appointment','text'=>'Guide visitors to the appropriate care journey.','url'=>'/book','is_visible'=>true]]],'presentation'=>['background'=>'white','alignment'=>'left','width'=>'wide','spacing'=>'normal','columns'=>'2','gap'=>'normal']]];
-  if($template==='resource')return[$hero,$text,['id'=>null,'section_key'=>(string)Str::uuid(),'type'=>'cta','sort_order'=>2,'is_visible'=>true,'content'=>['eyebrow'=>'Next step','heading'=>'Need individual guidance?','text'=>'Website information does not replace an individual medical consultation.','button_label'=>'Book an appointment','button_url'=>'/book','button_action'=>'internal','button_target'=>'_self','button_visibility'=>'show'],'presentation'=>['background'=>'blush','alignment'=>'center','width'=>'normal','spacing'=>'normal']]];
-  return[$hero,$text];
- }
+    private const PROTECTED = ['home', 'about', 'services', 'research', 'academic', 'education', 'contact', 'book', 'portal', 'privacy', 'terms', 'accessibility', 'security', 'preview', 'sign-in', 'register', 'forgot-password', 'reset-password', 'staff', 'api', 'sanctum', 'up'];
+
+    public function index(): JsonResponse
+    {
+        return response()->json(['data' => CmsPage::withCount('sections')->latest()->get()]);
+    }
+
+    public function show(CmsPage $page, CmsService $cms): JsonResponse
+    {
+        return response()->json(['data' => $cms->snapshot($page) + ['id' => $page->id, 'status' => $page->status, 'published_at' => $page->published_at, 'lock_version' => $page->lock_version]]);
+    }
+
+    public function store(Request $request, CmsService $cms): JsonResponse
+    {
+        $data = $request->validate(['title' => ['required', 'string', 'max:150'], 'slug' => ['nullable', 'string', 'max:100'], 'start_mode' => ['nullable', Rule::in(['blank', 'template'])], 'template' => ['nullable', Rule::in(['standard', 'landing', 'resource'])]]);
+        $title = trim($data['title']);
+        if ($title === '' || $title !== strip_tags($title)) {
+            throw ValidationException::withMessages(['title' => 'Enter a plain-text page name.']);
+        }
+        $slug = trim((string) ($data['slug'] ?? '')) ?: Str::slug($title);
+        $this->assertSafeSlug($slug);
+        if (CmsPage::where('slug', $slug)->exists()) {
+            throw ValidationException::withMessages(['slug' => 'That page address is already in use.']);
+        }
+        $mode = $data['start_mode'] ?? 'blank';
+        $template = $mode === 'template' ? ($data['template'] ?? 'standard') : 'standard';
+        $page = DB::transaction(function () use ($title, $slug, $mode, $template, $request, $cms) {
+            $page = CmsPage::create(['title' => $title, 'slug' => $slug, 'template' => $template, 'created_by' => $request->user()->id]);
+            if ($mode === 'template') {
+                $sections = $cms->validateDocumentSections($page, $this->starterSections($template, $title));
+                $cms->applyDocumentSections($page, $sections);
+            }$cms->version($page, $request->user(), $mode === 'template' ? 'Page created from '.$template.' template' : 'Blank page created');
+            $cms->audit($request->user(), 'cms.page_created', $page, ['start_mode' => $mode, 'template' => $template]);
+
+            return $page->fresh();
+        });
+
+        return response()->json(['data' => $cms->snapshot($page) + ['id' => $page->id, 'status' => $page->status, 'published_at' => $page->published_at, 'lock_version' => $page->lock_version, 'public_path' => '/p/'.$page->slug]], 201);
+    }
+
+    public function update(Request $request, CmsPage $page, CmsService $cms): JsonResponse
+    {
+        $this->assertVersion($request, $page);
+        $data = $request->validate(['title' => ['required', 'string', 'max:150'], 'slug' => ['required', 'string', 'max:100', Rule::unique('cms_pages')->ignore($page)], 'template' => ['required', Rule::in(['standard', 'landing', 'resource'])], 'seo_title' => ['nullable', 'string', 'max:70'], 'seo_description' => ['nullable', 'string', 'max:170'], 'lock_version' => ['nullable', 'integer', 'min:0']]);
+        $this->assertSafeSlug($data['slug'], $page);
+        if ($data['title'] !== strip_tags($data['title'])) {
+            throw ValidationException::withMessages(['title' => 'Enter a plain-text page name.']);
+        }unset($data['lock_version']);
+        $page->update($data + ['status' => 'draft', 'lock_version' => $page->lock_version + 1]);
+        $cms->version($page, $request->user(), 'Page details updated');
+
+        return response()->json(['data' => $page]);
+    }
+
+    public function saveDraft(Request $request, CmsPage $page, CmsService $cms): JsonResponse
+    {
+        $data = $request->validate(['lock_version' => ['required', 'integer', 'min:0'], 'sections' => ['required', 'array']]);
+        $result = DB::transaction(function () use ($data, $page, $request, $cms) {
+            $locked = CmsPage::query()->lockForUpdate()->findOrFail($page->id);
+            $this->assertVersionValue((int) $data['lock_version'], $locked);
+            $sections = $cms->validateDocumentSections($locked, $data['sections']);
+            $before = $cms->snapshot($locked);
+            $cms->applyDocumentSections($locked, $sections);
+            $locked->update(['status' => 'draft', 'lock_version' => $locked->lock_version + 1]);
+            $cms->version($locked, $request->user(), 'Visual draft saved');
+            $cms->audit($request->user(), 'cms.visual_draft_saved', $locked, ['before_schema' => $before['schema_version'], 'after_schema' => 3, 'lock_version' => $locked->lock_version]);
+
+            return $locked->fresh();
+        });
+
+        return response()->json(['data' => $cms->snapshot($result) + ['id' => $result->id, 'status' => $result->status, 'published_at' => $result->published_at, 'lock_version' => $result->lock_version]]);
+    }
+
+    public function preview(Request $request, CmsPage $page, CmsService $cms): JsonResponse
+    {
+        $data = $request->validate(['lock_version' => ['nullable', 'integer', 'min:0'], 'sections' => ['nullable', 'array']]);
+        $snapshot = $cms->snapshot($page);
+        if (array_key_exists('sections', $data)) {
+            $this->assertVersionValue((int) ($data['lock_version'] ?? -1), $page);
+            $snapshot['sections'] = $cms->validateDocumentSections($page, $data['sections']);
+        } else {
+            $snapshot['sections'] = $cms->validateDocumentSections($page, $snapshot['sections']);
+        }$snapshot['sections'] = array_map(fn ($section) => Arr::except($section, 'id'), $snapshot['sections']);
+        $token = Str::random(64);
+        $expires = now()->addHour();
+        CmsPreviewToken::create(['cms_page_id' => $page->id, 'token_hash' => hash('sha256', $token), 'snapshot' => $snapshot, 'expires_at' => $expires, 'created_by' => $request->user()->id]);
+        $cms->audit($request->user(), 'cms.preview_created', $page, ['schema_version' => $snapshot['schema_version']]);
+
+        return response()->json(['preview_url' => url('/preview/'.$token), 'expires_at' => $expires->toIso8601String()]);
+    }
+
+    public function publish(Request $request, CmsPage $page, CmsService $cms): JsonResponse
+    {
+        $data = $request->validate(['lock_version' => ['nullable', 'integer', 'min:0'], 'sections' => ['nullable', 'array']]);
+        $published = DB::transaction(function () use ($data, $page, $request, $cms) {
+            $locked = CmsPage::query()->lockForUpdate()->findOrFail($page->id);
+            if (array_key_exists('sections', $data)) {
+                $this->assertVersionValue((int) ($data['lock_version'] ?? -1), $locked);
+                $sections = $cms->validateDocumentSections($locked, $data['sections']);
+                $cms->applyDocumentSections($locked, $sections);
+                $locked->update(['lock_version' => $locked->lock_version + 1]);
+            } else {
+                $cms->validateDocumentSections($locked, $cms->snapshot($locked)['sections']);
+            }if ($locked->published_snapshot) {
+                $previous = $locked->published_snapshot;
+                $next = ((int) $locked->versions()->max('version')) + 1;
+                $locked->versions()->create(['version' => $next, 'reason' => 'Previous published version', 'snapshot' => $previous, 'created_by' => $request->user()->id]);
+            }$cms->version($locked, $request->user(), 'Published version');
+            $snapshot = $cms->snapshot($locked);
+            $locked->update(['published_snapshot' => $snapshot, 'status' => 'published', 'published_at' => now(), 'published_by' => $request->user()->id]);
+            $cms->audit($request->user(), 'cms.page_published', $locked, ['schema_version' => $snapshot['schema_version'], 'lock_version' => $locked->lock_version]);
+
+            return $locked->fresh();
+        });
+
+        return response()->json(['data' => $cms->snapshot($published) + ['id' => $published->id, 'status' => $published->status, 'published_at' => $published->published_at, 'lock_version' => $published->lock_version]]);
+    }
+
+    public function unpublish(Request $request, CmsPage $page, CmsService $cms): JsonResponse
+    {
+        $cms->version($page, $request->user(), 'Before unpublish');
+        $page->update(['published_snapshot' => null, 'status' => 'draft', 'published_at' => null, 'published_by' => null, 'lock_version' => $page->lock_version + 1]);
+        $cms->audit($request->user(), 'cms.page_unpublished', $page);
+
+        return response()->json(['data' => $page]);
+    }
+
+    public function duplicate(Request $request, CmsPage $page, CmsService $cms): JsonResponse
+    {
+        $data = $request->validate(['title' => ['required', 'string', 'max:150'], 'slug' => ['required', 'string', 'max:100', 'unique:cms_pages,slug']]);
+        $this->assertSafeSlug($data['slug']);
+        if ($data['title'] !== strip_tags($data['title'])) {
+            throw ValidationException::withMessages(['title' => 'Enter a plain-text page name.']);
+        }$copy = DB::transaction(function () use ($data, $page, $request, $cms) {
+            $copy = CmsPage::create($data + ['template' => $page->template, 'seo_title' => $page->seo_title, 'seo_description' => $page->seo_description, 'status' => 'draft', 'created_by' => $request->user()->id]);
+            foreach ($page->sections as $section) {
+                $copy->sections()->create(['section_key' => (string) Str::uuid(), 'type' => $section->type, 'sort_order' => $section->sort_order, 'is_visible' => $section->is_visible, 'content' => $section->content, 'presentation' => $section->presentation]);
+            }$cms->version($copy, $request->user(), 'Page duplicated from '.$page->id);
+            $cms->audit($request->user(), 'cms.page_duplicated', $copy, ['source_page_id' => $page->id]);
+
+            return $copy;
+        });
+
+        return response()->json(['data' => $copy], 201);
+    }
+
+    public function versions(CmsPage $page): JsonResponse
+    {
+        return response()->json(['data' => $page->versions()->get(['id', 'version', 'reason', 'created_by', 'created_at'])]);
+    }
+
+    public function restore(Request $request, CmsPage $page, CmsVersion $version, CmsService $cms): JsonResponse
+    {
+        abort_unless($version->cms_page_id === $page->id, 404);
+        $cms->version($page, $request->user(), 'Before restore');
+        $snapshot = $version->snapshot;
+        DB::transaction(function () use ($page, $snapshot) {
+            $page->update(['title' => $snapshot['title'], 'slug' => $snapshot['slug'], 'template' => $snapshot['template'], 'seo_title' => $snapshot['seo']['title'] ?? null, 'seo_description' => $snapshot['seo']['description'] ?? null, 'status' => 'draft', 'lock_version' => $page->lock_version + 1]);
+            $page->sections()->delete();
+            foreach ($snapshot['sections'] as $section) {
+                $page->sections()->create(Arr::except($section, 'id'));
+            }
+        });
+        $cms->version($page, $request->user(), 'Restored version '.$version->version);
+
+        return response()->json(['data' => $cms->snapshot($page)]);
+    }
+
+    public function rollback(Request $request, CmsPage $page, CmsVersion $version, CmsService $cms): JsonResponse
+    {
+        abort_unless($version->cms_page_id === $page->id, 404);
+        $data = $request->validate(['lock_version' => ['required', 'integer', 'min:0']]);
+        $rolled = DB::transaction(function () use ($data, $page, $version, $request, $cms) {
+            $locked = CmsPage::query()->lockForUpdate()->findOrFail($page->id);
+            $this->assertVersionValue((int) $data['lock_version'], $locked);
+            $snapshot = $version->snapshot;
+            $sections = $cms->validateDocumentSections($locked, array_map(fn ($section) => Arr::except($section, 'id'), $snapshot['sections'] ?? []));
+            if ($locked->published_snapshot) {
+                $next = ((int) $locked->versions()->max('version')) + 1;
+                $locked->versions()->create(['version' => $next, 'reason' => 'Before published rollback', 'snapshot' => $locked->published_snapshot, 'created_by' => $request->user()->id]);
+            }$locked->update(['title' => $snapshot['title'], 'slug' => $snapshot['slug'], 'template' => $snapshot['template'], 'seo_title' => $snapshot['seo']['title'] ?? null, 'seo_description' => $snapshot['seo']['description'] ?? null]);
+            $cms->applyDocumentSections($locked, $sections);
+            $locked->update(['published_snapshot' => $cms->snapshot($locked), 'status' => 'published', 'published_at' => now(), 'published_by' => $request->user()->id, 'lock_version' => $locked->lock_version + 1]);
+            $cms->audit($request->user(), 'cms.page_rolled_back', $locked, ['version' => $version->version, 'lock_version' => $locked->lock_version]);
+
+            return $locked->fresh();
+        });
+
+        return response()->json(['data' => $cms->snapshot($rolled) + ['id' => $rolled->id, 'status' => $rolled->status, 'published_at' => $rolled->published_at, 'lock_version' => $rolled->lock_version]]);
+    }
+
+    private function assertVersion(Request $request, CmsPage $page): void
+    {
+        if ($request->has('lock_version') && (int) $request->input('lock_version') !== $page->lock_version) {
+            abort(409, 'This page changed in another editing session. Reload it before saving.');
+        }
+    }
+
+    private function assertVersionValue(int $version, CmsPage $page): void
+    {
+        if ($version !== $page->lock_version) {
+            abort(409, 'This page changed in another editing session. Reload it before saving.');
+        }
+    }
+
+    private function assertSafeSlug(string $slug, ?CmsPage $page = null): void
+    {
+        if (preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $slug) !== 1) {
+            throw ValidationException::withMessages(['slug' => 'Use lowercase letters and numbers separated by single hyphens.']);
+        }if (in_array($slug, self::PROTECTED, true) && $page?->slug !== $slug) {
+            throw ValidationException::withMessages(['slug' => 'That address is reserved by the website.']);
+        }
+    }
+
+    private function starterSections(string $template, string $title): array
+    {
+        $hero = ['id' => null, 'section_key' => (string) Str::uuid(), 'type' => 'hero', 'sort_order' => 0, 'is_visible' => true, 'content' => ['eyebrow' => 'New page', 'heading' => $title, 'text' => 'Replace this introduction with clear, approved information for visitors.', 'primary_label' => 'Contact the practice', 'primary_url' => '/contact', 'primary_action' => 'internal', 'primary_target' => '_self', 'primary_visibility' => 'show'], 'presentation' => ['background' => 'ivory', 'alignment' => 'left', 'width' => 'normal', 'spacing' => 'generous']];
+        $text = ['id' => null, 'section_key' => (string) Str::uuid(), 'type' => 'text', 'sort_order' => 1, 'is_visible' => true, 'content' => ['eyebrow' => 'Overview', 'heading' => 'Add a clear section heading', 'body' => 'Double-click this text in Edit Mode to add the approved page content.'], 'presentation' => ['background' => 'white', 'alignment' => 'left', 'width' => 'narrow', 'spacing' => 'normal']];
+        if ($template === 'landing') {
+            return [$hero, ['id' => null, 'section_key' => (string) Str::uuid(), 'type' => 'cards', 'sort_order' => 1, 'is_visible' => true, 'content' => ['eyebrow' => 'Explore', 'heading' => 'Helpful next steps', 'text' => 'Add the most useful destinations for visitors.', 'items' => [['key' => (string) Str::uuid(), 'heading' => 'Learn more', 'text' => 'Describe this destination clearly.', 'url' => '/about', 'is_visible' => true], ['key' => (string) Str::uuid(), 'heading' => 'Request an appointment', 'text' => 'Guide visitors to the appropriate care journey.', 'url' => '/book', 'is_visible' => true]]], 'presentation' => ['background' => 'white', 'alignment' => 'left', 'width' => 'wide', 'spacing' => 'normal', 'columns' => '2', 'gap' => 'normal']]];
+        }
+        if ($template === 'resource') {
+            return [$hero, $text, ['id' => null, 'section_key' => (string) Str::uuid(), 'type' => 'cta', 'sort_order' => 2, 'is_visible' => true, 'content' => ['eyebrow' => 'Next step', 'heading' => 'Need individual guidance?', 'text' => 'Website information does not replace an individual medical consultation.', 'button_label' => 'Book an appointment', 'button_url' => '/book', 'button_action' => 'internal', 'button_target' => '_self', 'button_visibility' => 'show'], 'presentation' => ['background' => 'blush', 'alignment' => 'center', 'width' => 'normal', 'spacing' => 'normal']]];
+        }
+
+        return [$hero, $text];
+    }
 }

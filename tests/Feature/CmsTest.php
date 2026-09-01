@@ -439,6 +439,39 @@ class CmsTest extends TestCase
         $this->assertDatabaseMissing('cms_settings', ['key' => 'navigation']);
     }
 
+    public function test_new_page_and_rendered_navigation_remain_private_then_publish_as_one_public_journey(): void
+    {
+        $this->power();
+        $original = [['key' => (string) \Illuminate\Support\Str::uuid(), 'label' => 'Original home', 'type' => 'internal', 'path' => '/', 'target' => '_self', 'is_visible' => true, 'children' => []]];
+        $this->putJson('/api/cms/settings/navigation', ['value' => $original])->assertOk();
+        $this->postJson('/api/cms/settings/navigation/publish')->assertOk();
+
+        $blank = $this->postJson('/api/cms/pages', ['title' => 'Private blank', 'start_mode' => 'blank'])->assertCreated()->assertJsonCount(0, 'data.sections')->json('data');
+        $guide = $this->postJson('/api/cms/pages', ['title' => 'Recovery Guide', 'start_mode' => 'template', 'template' => 'resource'])->assertCreated()->assertJsonCount(3, 'data.sections')->json('data');
+        $draftNavigation = [
+            ['key' => (string) \Illuminate\Support\Str::uuid(), 'label' => 'Recovery guide', 'type' => 'internal', 'path' => $guide['public_path'], 'target' => '_self', 'is_visible' => true, 'children' => [[
+                'key' => (string) \Illuminate\Support\Str::uuid(), 'label' => 'Hidden blank', 'type' => 'internal', 'path' => $blank['public_path'], 'target' => '_self', 'is_visible' => false, 'children' => [],
+            ]]],
+            ['key' => (string) \Illuminate\Support\Str::uuid(), 'label' => 'External evidence', 'type' => 'external', 'path' => 'https://example.org/evidence', 'target' => '_blank', 'is_visible' => true, 'children' => []],
+        ];
+        $this->putJson('/api/cms/settings/navigation', ['value' => $draftNavigation])->assertOk();
+
+        $this->getJson('/api/cms/settings')->assertOk()->assertJsonPath('data.navigation.draft_value.0.path', '/p/recovery-guide')->assertJsonPath('data.navigation.draft_value.0.children.0.is_visible', false);
+        $this->getJson('/api/cms/public-settings')->assertOk()->assertJsonPath('data.navigation.0.label', 'Original home')->assertJsonMissing(['label' => 'Recovery guide']);
+        $this->getJson('/api/content/pages/recovery-guide')->assertNotFound();
+        $this->getJson('/api/content/pages/private-blank')->assertNotFound();
+        $previewUrl = $this->postJson("/api/cms/pages/{$guide['id']}/preview")->assertOk()->json('preview_url');
+        $this->getJson('/api/cms/preview/'.basename(parse_url($previewUrl, PHP_URL_PATH)))->assertOk()->assertJsonPath('data.sections.0.content.heading', 'Recovery Guide')->assertJsonPath('data.sections.2.type', 'cta');
+
+        $this->postJson("/api/cms/pages/{$guide['id']}/publish")->assertOk();
+        $this->getJson('/api/content/pages/recovery-guide')->assertOk()->assertJsonCount(3, 'data.sections');
+        $this->getJson('/api/cms/public-settings')->assertJsonPath('data.navigation.0.label', 'Original home');
+        $this->postJson('/api/cms/settings/navigation/publish')->assertOk();
+        $this->getJson('/api/cms/public-settings')->assertOk()->assertJsonPath('data.navigation.0.label', 'Recovery guide')->assertJsonPath('data.navigation.0.path', '/p/recovery-guide')->assertJsonPath('data.navigation.0.children.0.is_visible', false)->assertJsonPath('data.navigation.1.path', 'https://example.org/evidence')->assertJsonPath('data.navigation.1.target', '_blank');
+        $this->get('/p/recovery-guide')->assertOk();
+        $this->get('/p/private-blank')->assertNotFound();
+    }
+
     private function power(): User
     {
         $user = User::factory()->create(['role' => UserRole::PowerAdmin]);

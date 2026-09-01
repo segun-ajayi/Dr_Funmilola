@@ -1,7 +1,7 @@
 # S4 — Visual Navigation and New Pages Build Plan
 
 Recorded: 31 August 2026
-Status: active source of truth; S4.1 complete, S4.2 active
+Status: active source of truth; S4.1 and S4.2 complete, S4.3 active
 Acceptance scope: VE-158 through VE-178, with draft/publication continuity shared with VE-179 through VE-200 and authorization evidence shared with VE-236
 
 ## Objective
@@ -114,3 +114,15 @@ S4 implementation is complete only when the rendered header can be selected and 
 - Fresh gate: backend 112 tests / 953 assertions; web 10 files / 38 tests; production build PASS; `git diff --check` PASS. The build retains the known non-blocking bundle-size warning. No database schema changed, so migration rollback/reapply was not required.
 - Automated evidence contributed: VE-158 through VE-169 foundations. The frontend regression exercises rendered selection, rename, external destination/target, hide/show, submenu creation/editing, reorder, confirmed deletion, private save and explicit publication; the logged-out renderer regression verifies safe external targets and hidden-item omission. The complete save/reload/logout publication continuity remains S4.3 and independent QA remains required.
 - Next task: S4.2 actual-site blank/template new-page workflow with exact slug safety and direct Edit Mode navigation.
+
+### S4.2 — Complete
+
+- Revision: `626f9d3`.
+- Delivered: a persistent `New Page` action in actual-site Edit Mode opens an accessible dialog for page name, generated/editable slug, blank or starter-template mode and Standard, Landing or Resource template selection. Creation invalidates the private page index and navigates directly to the returned canonical `/p/{slug}` route while Edit Mode remains active.
+- Starting points: blank pages contain no sections; Standard pages use safe Hero and Rich Text sections; Landing pages use safe Hero and Cards sections; Resource pages use safe Hero, Rich Text and CTA sections. Every starter passes through the same server component/presentation allow-list and ordinary atomic document renderer used by hand-built pages.
+- Slug safety: the server generates a slug when omitted and enforces the exact lowercase-letter/number/single-hyphen grammar; all application-owned core, care, account, staff, legal, content, preview, API and infrastructure top-level routes are reserved; database collisions and unsafe title markup are rejected without overwriting an existing page. Existing reserved core CMS pages may retain their own slug when their details are updated.
+- Privacy and authorization: the new page remains unavailable through the public content API and returns the status-preserving web 404 before publication, while the Power Admin can immediately render its protected draft on that same route. Patient, Moderator and Admin direct creation requests are denied without a page record.
+- Automated journey: a collision response preserves dialog fields for correction/retry; the selected template is then created, opened at its actual private route, rendered from the protected draft and registered with the normal Save Draft, Preview and Publish toolbar bridge. Backend coverage also proves blank/template creation, canonical path, exact preview, explicit publish and logged-out/public availability after publication.
+- Fresh gate: backend 114 tests / 1,005 assertions; web 10 files / 39 tests; production build PASS; `git diff --check` PASS. The known non-blocking bundle-size warning remains. No database schema changed, so migration rollback/reapply was not required.
+- Automated evidence contributed: VE-170 through VE-178 foundations. Linking the page from rendered navigation is supported by S4.1; the combined uninterrupted navigation/page privacy and publication evidence remains S4.3 and independent QA remains required.
+- Next task: S4.3 combined save/reload, logged-out isolation, navigation publication, blank/template page preview/publication and evidence gate.

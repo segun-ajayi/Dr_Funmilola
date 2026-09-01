@@ -1,7 +1,7 @@
 # S5 — Persistent Media and In-Place Images Build Plan
 
 Recorded: 1 September 2026
-Status: active source of truth; S5.1 pending
+Status: active source of truth; S5.1 complete, S5.2 active
 Acceptance scope: VE-048 through VE-065 and VE-206 through VE-214, with shared validation evidence for VE-225 and VE-226 and final uninterrupted image acceptance reserved for VE-233 and VE-236
 
 ## Objective
@@ -106,3 +106,17 @@ Every S5 task must pass:
 ## Completion rule
 
 S5 implementation is complete only when a Power Admin can upload or reuse a definitively scanned persistent asset, select the exact image where it appears, edit its complete supported accessible/presentation state live, save and reload the private draft, preview it exactly, publish it atomically and retain safe historical references through rollback. Automated implementation evidence may advance VE-048 through VE-065 and VE-206 through VE-214, but the uninterrupted image journey, role journey and independent release rows remain outside this agent's self-approval authority.
+
+## Implementation ledger
+
+### S5.1 — Complete
+
+- Revision: `7b23d96`.
+- Persistent library: `cms_media_assets` stores opaque UUID identity, private storage, detected type, byte/pixel dimensions, checksum, searchable title/alt/caption metadata, explicit decorative state, archive state, uploader and timestamps. API resources omit paths and checksums.
+- Upload safety: Power-Admin-only JPEG, PNG and WebP uploads use safe filenames, a 10 MB limit, server-detected image containers, 12,000-pixel/40-megapixel bounds, quarantine-first configured malware scanning and atomic release. Rejection, indeterminate scanning, release failure or record failure leaves no reusable record or retained file.
+- Access and reuse: protected browse/search returns paginated safe metadata and stable delivery URLs; metadata can be maintained; unreferenced assets can be archived without deleting the file. Public, Patient, Moderator, Admin, unverified Power Admin and inactive Power Admin access is denied without mutation.
+- Delivery and references: a private draft asset is available to a verified active Power Admin but returns 404 to logged-out visitors. Logged-out delivery begins only when a current published snapshot references the opaque asset. Current sections, published snapshots and retained versions are counted; referenced assets cannot be archived, and archived/missing assets cannot be newly saved, previewed or published.
+- Structured document: Image, Text + Image, Gallery and section-background schemas accept stable media identifiers; informative images require alt text while decorative images require an explicit boolean and empty alt. Width, height, alignment, fit, radius, nine-position crop/focus, overlay and opacity values are server allow-listed. Legacy safe URLs remain readable for continuity.
+- Fresh gate: focused media 8 tests / 100 assertions; backend 123 tests / 1,137 assertions; web 10 files / 39 tests; production build PASS; `git diff --check` PASS. Fresh isolated SQLite migration, full rollback and reapply PASS. The known non-blocking bundle-size warning remains.
+- Automated evidence contributed: VE-206 through VE-214 backend foundations plus shared VE-065, VE-225 and VE-226 validation/publication guards. Exact rendered-image interaction and uninterrupted image acceptance remain S5.2/S5.3 and independent QA.
+- Next task: S5.2 exact rendered-image selection, media library/upload dialog and live contextual image inspector.

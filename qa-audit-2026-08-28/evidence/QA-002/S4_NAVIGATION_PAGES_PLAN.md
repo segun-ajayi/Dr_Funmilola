@@ -1,7 +1,7 @@
 # S4 — Visual Navigation and New Pages Build Plan
 
 Recorded: 31 August 2026
-Status: active source of truth; S4.1 and S4.2 complete, S4.3 active
+Status: complete; S4.1 through S4.3 delivered, S5 active
 Acceptance scope: VE-158 through VE-178, with draft/publication continuity shared with VE-179 through VE-200 and authorization evidence shared with VE-236
 
 ## Objective
@@ -126,3 +126,13 @@ S4 implementation is complete only when the rendered header can be selected and 
 - Fresh gate: backend 114 tests / 1,005 assertions; web 10 files / 39 tests; production build PASS; `git diff --check` PASS. The known non-blocking bundle-size warning remains. No database schema changed, so migration rollback/reapply was not required.
 - Automated evidence contributed: VE-170 through VE-178 foundations. Linking the page from rendered navigation is supported by S4.1; the combined uninterrupted navigation/page privacy and publication evidence remains S4.3 and independent QA remains required.
 - Next task: S4.3 combined save/reload, logged-out isolation, navigation publication, blank/template page preview/publication and evidence gate.
+
+### S4.3 — Complete
+
+- Revision: `92c5597`.
+- Combined continuity: one uninterrupted backend journey publishes an original navigation state, creates both a private blank page and a private Resource template page, links them from a new draft navigation tree, reloads the protected draft and proves the public settings endpoint still returns only the original published navigation.
+- Page lifecycle: both created routes return 404 to logged-out visitors before publication; the Resource page exact preview contains its ordinary three-section document; publishing that page makes only its canonical route public while the blank page remains private.
+- Navigation lifecycle: publishing the page does not leak the draft navigation. A separate explicit navigation publication changes the public settings atomically to the internal Resource route plus the safe new-tab external destination, while retaining the hidden blank-page submenu as non-public state.
+- Fresh gate: backend 115 tests / 1,037 assertions; web 10 files / 39 tests; production build PASS; `git diff --check` PASS. The known non-blocking bundle-size warning remains. No database schema changed, so migration rollback/reapply was not required.
+- Evidence boundary: S4 now contributes the automated foundations for VE-158 through VE-178 and shared draft/publication continuity, but it does not self-approve VE-236, VE-242, VE-243, QA-002 or QA-003. The mandatory independent actual-browser and assistive-technology evidence remains a later release gate.
+- Next task: S5 actual-page media and image selection, replacement, focal/crop behavior, metadata and safe private/public continuity.

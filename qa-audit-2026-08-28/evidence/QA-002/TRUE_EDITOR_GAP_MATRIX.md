@@ -75,24 +75,24 @@ Source: `TRUE_IN_PLACE_VISUAL_EDITOR_ACCEPTANCE_CHECKLIST.md`
 | VE-045 | MISSING | S2 | Each typography change renders live on the selected element. | No qualifying actual-page implementation or evidence was found. |
 | VE-046 | PARTIAL — REBUILD/EXTEND | S2 | Typography changes save to the draft and survive a full refresh. | Related code exists, but is incomplete, dashboard-bound, modal-based, or lacks the exact persistence/runtime journey. |
 | VE-047 | PARTIAL — REBUILD/EXTEND | S2 | Typography controls can be used with a keyboard and expose accessible names and state. | Related code exists, but is incomplete, dashboard-bound, modal-based, or lacks the exact persistence/runtime journey. |
-| VE-048 | MISSING | S5 | Selecting an image on the rendered page selects that exact image element. | No qualifying actual-page implementation or evidence was found. |
-| VE-049 | MISSING | S5 | The selected image can be replaced by uploading a new image. | No qualifying actual-page implementation or evidence was found. |
-| VE-050 | MISSING | S5 | The selected image can be replaced from the media library. | No qualifying actual-page implementation or evidence was found. |
-| VE-051 | MISSING | S5 | Image alternative text can be edited. | No qualifying actual-page implementation or evidence was found. |
-| VE-052 | MISSING | S5 | Image caption can be added, changed, or removed. | No qualifying actual-page implementation or evidence was found. |
-| VE-053 | MISSING | S5 | Image crop can be adjusted. | No qualifying actual-page implementation or evidence was found. |
-| VE-054 | MISSING | S5 | Image width can be adjusted. | No qualifying actual-page implementation or evidence was found. |
-| VE-055 | MISSING | S5 | Image height can be adjusted. | No qualifying actual-page implementation or evidence was found. |
-| VE-056 | MISSING | S5 | Image alignment can be adjusted. | No qualifying actual-page implementation or evidence was found. |
-| VE-057 | MISSING | S5 | Image object-fit behavior can be adjusted. | No qualifying actual-page implementation or evidence was found. |
-| VE-058 | MISSING | S5 | Image border radius can be adjusted. | No qualifying actual-page implementation or evidence was found. |
-| VE-059 | MISSING | S5 | An image link can be added, changed, or removed. | No qualifying actual-page implementation or evidence was found. |
-| VE-060 | MISSING | S5 | Image overlay can be configured. | No qualifying actual-page implementation or evidence was found. |
-| VE-061 | MISSING | S5 | Image opacity can be adjusted. | No qualifying actual-page implementation or evidence was found. |
-| VE-062 | MISSING | S5 | Every image change is visibly reflected at the image's rendered location. | No qualifying actual-page implementation or evidence was found. |
-| VE-063 | PARTIAL — REBUILD/EXTEND | S5 | Image edits save to the draft and survive a full refresh. | Related code exists, but is incomplete, dashboard-bound, modal-based, or lacks the exact persistence/runtime journey. |
-| VE-064 | PARTIAL — REBUILD/EXTEND | S5 | Published image edits and alt text are visible to a logged-out visitor. | Related code exists, but is incomplete, dashboard-bound, modal-based, or lacks the exact persistence/runtime journey. |
-| VE-065 | MISSING | S5 | Invalid, unsafe, unscanned, or unauthorized media cannot be published. | No qualifying actual-page implementation or evidence was found. |
+| VE-048 | IMPLEMENTED — READY FOR RETEST | S5 | Selecting an image on the rendered page selects that exact image element. | Revisions `d6cdb02` and `35cb775`; S5.2 actual-page media regressions and `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-049 | IMPLEMENTED — READY FOR RETEST | S5 | The selected image can be replaced by uploading a new image. | Revisions `d6cdb02` and `35cb775`; S5.2 actual-page media regressions and `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-050 | IMPLEMENTED — READY FOR RETEST | S5 | The selected image can be replaced from the media library. | Revisions `d6cdb02` and `35cb775`; S5.2 actual-page media regressions and `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-051 | IMPLEMENTED — READY FOR RETEST | S5 | Image alternative text can be edited. | Revisions `d6cdb02` and `35cb775`; S5.2 actual-page media regressions and `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-052 | IMPLEMENTED — READY FOR RETEST | S5 | Image caption can be added, changed, or removed. | Revisions `d6cdb02` and `35cb775`; S5.2 actual-page media regressions and `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-053 | IMPLEMENTED — READY FOR RETEST | S5 | Image crop can be adjusted. | Revisions `d6cdb02` and `35cb775`; S5.2 actual-page media regressions and `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-054 | IMPLEMENTED — READY FOR RETEST | S5 | Image width can be adjusted. | Revisions `d6cdb02` and `35cb775`; S5.2 actual-page media regressions and `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-055 | IMPLEMENTED — READY FOR RETEST | S5 | Image height can be adjusted. | Revisions `d6cdb02` and `35cb775`; S5.2 actual-page media regressions and `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-056 | IMPLEMENTED — READY FOR RETEST | S5 | Image alignment can be adjusted. | Revisions `d6cdb02` and `35cb775`; S5.2 actual-page media regressions and `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-057 | IMPLEMENTED — READY FOR RETEST | S5 | Image object-fit behavior can be adjusted. | Revisions `d6cdb02` and `35cb775`; S5.2 actual-page media regressions and `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-058 | IMPLEMENTED — READY FOR RETEST | S5 | Image border radius can be adjusted. | Revisions `d6cdb02` and `35cb775`; S5.2 actual-page media regressions and `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-059 | IMPLEMENTED — READY FOR RETEST | S5 | An image link can be added, changed, or removed. | Revisions `d6cdb02` and `35cb775`; S5.2 actual-page media regressions and `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-060 | IMPLEMENTED — READY FOR RETEST | S5 | Image overlay can be configured. | Revisions `d6cdb02` and `35cb775`; S5.2 actual-page media regressions and `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-061 | IMPLEMENTED — READY FOR RETEST | S5 | Image opacity can be adjusted. | Revisions `d6cdb02` and `35cb775`; S5.2 actual-page media regressions and `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-062 | IMPLEMENTED — READY FOR RETEST | S5 | Every image change is visibly reflected at the image's rendered location. | Revisions `d6cdb02` and `35cb775`; S5.2 actual-page media regressions and `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-063 | IMPLEMENTED — READY FOR RETEST | S5 | Image edits save to the draft and survive a full refresh. | Revision `c0d80ec`; S5.3 fresh-session save/preview/publish/rollback continuity and media-safety regressions. Independent row retest remains. |
+| VE-064 | IMPLEMENTED — READY FOR RETEST | S5 | Published image edits and alt text are visible to a logged-out visitor. | Revision `c0d80ec`; S5.3 fresh-session save/preview/publish/rollback continuity and media-safety regressions. Independent row retest remains. |
+| VE-065 | IMPLEMENTED — READY FOR RETEST | S5 | Invalid, unsafe, unscanned, or unauthorized media cannot be published. | Revision `c0d80ec`; S5.3 fresh-session save/preview/publish/rollback continuity and media-safety regressions. Independent row retest remains. |
 | VE-066 | MISSING | S2 | Selecting a rendered button selects that exact button. | No qualifying actual-page implementation or evidence was found. |
 | VE-067 | PARTIAL — REBUILD/EXTEND | S2 | Button text can be edited in place. | Related code exists, but is incomplete, dashboard-bound, modal-based, or lacks the exact persistence/runtime journey. |
 | VE-068 | MISSING | S2 | Button action type can be selected. | No qualifying actual-page implementation or evidence was found. |
@@ -233,15 +233,15 @@ Source: `TRUE_IN_PLACE_VISUAL_EDITOR_ACCEPTANCE_CHECKLIST.md`
 | VE-203 | PARTIAL — REBUILD/EXTEND | S6 | A save failure preserves recoverable local edits and offers retry or manual save. | Related code exists, but is incomplete, dashboard-bound, modal-based, or lacks the exact persistence/runtime journey. |
 | VE-204 | PARTIAL — REBUILD/EXTEND | S6 | Refresh after a confirmed draft save restores the exact saved text, styles, media, structure, and responsive values. | Related code exists, but is incomplete, dashboard-bound, modal-based, or lacks the exact persistence/runtime journey. |
 | VE-205 | EXISTING EVIDENCE — REVERIFY | S6 | Concurrent Power Admin edits are conflict-detected or safely merged; silent overwrites do not occur. | Existing behavior or coverage may contribute, but needs fresh proof against the strict actual-page contract. |
-| VE-206 | MISSING | S5 | The editor uses a persistent media library rather than an upload field that loses reusable assets. | No qualifying actual-page implementation or evidence was found. |
-| VE-207 | MISSING | S5 | A Power Admin can upload an approved media asset. | No qualifying actual-page implementation or evidence was found. |
-| VE-208 | MISSING | S5 | A Power Admin can browse existing media. | No qualifying actual-page implementation or evidence was found. |
-| VE-209 | MISSING | S5 | A Power Admin can search media. | No qualifying actual-page implementation or evidence was found. |
-| VE-210 | MISSING | S5 | An existing asset can be reused without duplicate upload. | No qualifying actual-page implementation or evidence was found. |
-| VE-211 | MISSING | S5 | Media metadata can be viewed and maintained. | No qualifying actual-page implementation or evidence was found. |
-| VE-212 | MISSING | S5 | Alternative text is required or an explicit decorative choice is recorded where appropriate. | No qualifying actual-page implementation or evidence was found. |
-| VE-213 | MISSING | S5 | Media metadata, alt text, and references survive refresh and publication. | No qualifying actual-page implementation or evidence was found. |
-| VE-214 | MISSING | S5 | Media authorization, privacy, validation, malware scanning, failure handling, and deletion/reference safety pass. | No qualifying actual-page implementation or evidence was found. |
+| VE-206 | IMPLEMENTED — READY FOR RETEST | S5 | The editor uses a persistent media library rather than an upload field that loses reusable assets. | Revisions `7b23d96` and `c0d80ec`; secure persistent library plus S5.3 continuity/failure evidence in `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-207 | IMPLEMENTED — READY FOR RETEST | S5 | A Power Admin can upload an approved media asset. | Revisions `7b23d96` and `c0d80ec`; secure persistent library plus S5.3 continuity/failure evidence in `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-208 | IMPLEMENTED — READY FOR RETEST | S5 | A Power Admin can browse existing media. | Revisions `7b23d96` and `c0d80ec`; secure persistent library plus S5.3 continuity/failure evidence in `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-209 | IMPLEMENTED — READY FOR RETEST | S5 | A Power Admin can search media. | Revisions `7b23d96` and `c0d80ec`; secure persistent library plus S5.3 continuity/failure evidence in `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-210 | IMPLEMENTED — READY FOR RETEST | S5 | An existing asset can be reused without duplicate upload. | Revisions `7b23d96` and `c0d80ec`; secure persistent library plus S5.3 continuity/failure evidence in `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-211 | IMPLEMENTED — READY FOR RETEST | S5 | Media metadata can be viewed and maintained. | Revisions `7b23d96` and `c0d80ec`; secure persistent library plus S5.3 continuity/failure evidence in `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-212 | IMPLEMENTED — READY FOR RETEST | S5 | Alternative text is required or an explicit decorative choice is recorded where appropriate. | Revisions `7b23d96` and `c0d80ec`; secure persistent library plus S5.3 continuity/failure evidence in `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-213 | IMPLEMENTED — READY FOR RETEST | S5 | Media metadata, alt text, and references survive refresh and publication. | Revisions `7b23d96` and `c0d80ec`; secure persistent library plus S5.3 continuity/failure evidence in `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
+| VE-214 | IMPLEMENTED — READY FOR RETEST | S5 | Media authorization, privacy, validation, malware scanning, failure handling, and deletion/reference safety pass. | Revisions `7b23d96` and `c0d80ec`; secure persistent library plus S5.3 continuity/failure evidence in `S5_MEDIA_IMAGES_PLAN.md`. Independent row retest remains. |
 | VE-215 | EXISTING EVIDENCE — REVERIFY | S1 | The persisted model represents Page. | Existing behavior or coverage may contribute, but needs fresh proof against the strict actual-page contract. |
 | VE-216 | EXISTING EVIDENCE — REVERIFY | S1 | The persisted model represents Section. | Existing behavior or coverage may contribute, but needs fresh proof against the strict actual-page contract. |
 | VE-217 | MISSING | S1 | The persisted model represents Component. | No qualifying actual-page implementation or evidence was found. |
@@ -275,4 +275,3 @@ Source: `TRUE_IN_PLACE_VISUAL_EDITOR_ACCEPTANCE_CHECKLIST.md`
 ## Integrity check
 
 This matrix contains exactly one row for every identifier from VE-001 through VE-243. It must be updated with commit, test, environment, route and observed result as each row is implemented and freshly verified. Release rows VE-237 through VE-243 remain independent gates and cannot be self-certified by implementation work alone.
-

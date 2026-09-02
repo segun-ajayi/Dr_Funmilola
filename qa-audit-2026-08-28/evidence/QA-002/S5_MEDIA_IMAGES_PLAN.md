@@ -1,7 +1,7 @@
 # S5 — Persistent Media and In-Place Images Build Plan
 
 Recorded: 1 September 2026; updated 2 September 2026
-Status: active source of truth; S5.1 and S5.2 complete, S5.3 active
+Status: complete implementation source of truth; S5.1, S5.2 and S5.3 complete; independent acceptance remains
 Acceptance scope: VE-048 through VE-065 and VE-206 through VE-214, with shared validation evidence for VE-225 and VE-226 and final uninterrupted image acceptance reserved for VE-233 and VE-236
 
 ## Objective
@@ -133,3 +133,16 @@ S5 implementation is complete only when a Power Admin can upload or reuse a defi
 - Regression evidence: three new actual-page media journeys cover exact image reuse/live styling/atomic save, retained upload fields plus safe retry, and reusable background selection with Escape/selection focus return. Full gate: backend 123 tests / 1,138 assertions; web 10 files / 42 tests; TypeScript PASS; production build PASS (JS 578.80 KB / 168.74 KB gzip; CSS 324.18 KB / 48.05 KB gzip); `git diff --check` PASS. The known non-blocking bundle-size warning remains.
 - Automated evidence contributed: VE-048 through VE-062 interaction foundations, with stable-reference/background participation in VE-063 through VE-065. The uninterrupted persistence/publication/rollback image journey and independent acceptance remain S5.3; no QA finding or final VE release row is self-declared complete.
 - Next task: S5.3 draft reload, logged-out isolation, exact preview, publication, version retention, rollback and failure-continuity evidence across stable image and background references.
+
+### S5.3 — Complete
+
+- Revision: `c0d80ec`.
+- Uninterrupted backend continuity: one newly scanned asset is metadata-edited and reused by stable UUID in a standalone Image, a responsive section background and a nested Gallery item without duplicate media storage. Page-specific alternative text, caption and complete responsive image presentation remain distinct from library-level metadata.
+- Private/public boundary: private draft save and a fresh editor reload preserve the same media IDs, page-specific text and presentation. The exact preview snapshot contains those values while the logged-out content contract and media route retain the earlier published image. A separate unreferenced asset remains unavailable before and after publication.
+- Publication/version/rollback: explicit publication atomically exposes the reused safe asset, page-specific alt text, Gallery reference and background to logged-out visitors. The earlier published snapshot is retained as an immutable version. Direct rollback restores its earlier image/background references and public delivery while the later asset remains safely retained by version history but no longer publicly deliverable.
+- Real integration correction: Laravel's empty-string conversion exposed that switching from a legacy URL to a stable media ID could submit a `null` optional legacy URL. Structured content, Gallery items and responsive background validation now normalize only optional blank text/media URL fields to empty strings while preserving required, structured and boolean validation. The actual visual-editor payload therefore passes the real server contract.
+- Failure continuity: the focused media suite covers forbidden Public/Patient/Moderator/Admin access, unverified/inactive Power Admin denial, invalid metadata, unsafe and unavailable scanning, malformed containers, byte oversize, over-dimension images, unsafe names, unsupported types, missing released files and referenced/archived asset rules. Rejection leaves no reusable record or retained quarantine/released file.
+- Browser continuity: a separate fresh-session actual-page test edits and saves an image, unmounts the editor, reloads the persisted draft, previews and publishes the exact snapshot, then proves a logged-out renderer receives it only after publication.
+- Fresh gate: focused media 9 tests / 162 assertions; backend 124 tests / 1,200 assertions; web 10 files / 43 tests; PHP formatting PASS; TypeScript PASS; production build PASS (JS 578.80 KB / 168.74 KB gzip; CSS 324.18 KB / 48.05 KB gzip); `git diff --check` PASS. A disposable SQLite database completed fresh migration, full rollback, complete reapply and all-migrations-ran status; its temporary file was removed. The known non-blocking bundle-size warning remains.
+- Automated evidence contributed: VE-048 through VE-065 and VE-206 through VE-214 are implemented and ready for independent row-level retest. The automated image journey contributes to VE-233, but VE-233, VE-236, VE-242, VE-243, QA-002 and QA-003 remain outside self-approval and are not marked complete.
+- Next slice: S6 save-state resilience, conflict recovery, accessibility and viewport/error-matrix hardening.

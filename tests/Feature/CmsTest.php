@@ -290,7 +290,7 @@ class CmsTest extends TestCase
             'hero' => ['eyebrow' => 'Care', 'heading' => 'Hero', 'text' => 'Intro', 'primary_label' => 'Book', 'primary_url' => '/book', 'secondary_label' => 'Learn', 'secondary_url' => 'https://example.test/learn'],
             'text' => ['eyebrow' => 'Profile', 'heading' => 'Text', 'body' => "First paragraph\nSecond paragraph"],
             'image' => ['heading' => 'Image', 'image_url' => '/media/photo.jpg', 'image_alt' => 'Clinician speaking with a patient', 'caption' => 'Patient-centred care', 'image_link' => '/about'],
-            'image_text' => ['eyebrow' => 'Team', 'heading' => 'Image and text', 'text' => 'Approved photograph', 'image_url' => 'https://example.test/photo.jpg', 'image_alt' => 'Clinician speaking with a patient'],
+            'image_text' => ['eyebrow' => 'Team', 'heading' => 'Image and text', 'text' => 'Approved photograph', 'image_url' => 'https://example.test/photo.jpg', 'image_alt' => 'Clinician speaking with a patient', 'caption' => 'Private consultation room'],
             'cards' => ['eyebrow' => 'Explore', 'heading' => 'Cards', 'text' => 'Resources', 'items' => [['key' => $itemKey(), 'heading' => 'Guide', 'text' => 'Helpful guide', 'url' => '/guide', 'is_visible' => true]]],
             'services' => ['eyebrow' => 'Care', 'heading' => 'Services', 'text' => 'Care options', 'items' => [['key' => $itemKey(), 'heading' => 'Consultation', 'text' => 'Specialist review', 'url' => '/book', 'is_visible' => true]]],
             'cta' => ['eyebrow' => 'Next', 'heading' => 'CTA', 'text' => 'Act now', 'button_label' => 'Contact', 'button_url' => '/contact'],
@@ -313,7 +313,7 @@ class CmsTest extends TestCase
                 'is_visible' => false,
             ])->assertCreated()->assertJsonPath('data.presentation.width', 'wide')->assertJsonPath('data.is_visible', false);
         }
-        $this->getJson("/api/cms/pages/{$page->id}")->assertOk()->assertJsonCount(18, 'data.sections')->assertJsonPath('data.sections.12.content.items.0.label', 'Years')->assertJsonPath('data.sections.17.type', 'spacer');
+        $this->getJson("/api/cms/pages/{$page->id}")->assertOk()->assertJsonCount(18, 'data.sections')->assertJsonPath('data.sections.3.content.caption', 'Private consultation room')->assertJsonPath('data.sections.12.content.items.0.label', 'Years')->assertJsonPath('data.sections.17.type', 'spacer');
     }
 
     public function test_page_and_section_lifecycle_supports_duplicate_unpublish_seo_and_conflict_detection(): void

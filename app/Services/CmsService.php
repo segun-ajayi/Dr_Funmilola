@@ -20,7 +20,7 @@ class CmsService
         'hero' => ['eyebrow', 'eyebrow_marks', 'heading', 'heading_marks', 'text', 'text_marks', 'primary_label', 'primary_url', 'primary_action', 'primary_style', 'primary_icon', 'primary_icon_position', 'primary_target', 'primary_visibility', 'secondary_label', 'secondary_url', 'secondary_action', 'secondary_style', 'secondary_icon', 'secondary_icon_position', 'secondary_target', 'secondary_visibility'],
         'text' => ['eyebrow', 'eyebrow_marks', 'heading', 'heading_marks', 'body', 'body_marks'],
         'image' => ['heading', 'heading_marks', 'image_url', 'image_media_id', 'image_alt', 'image_is_decorative', 'caption', 'caption_marks', 'image_link'],
-        'image_text' => ['eyebrow', 'eyebrow_marks', 'heading', 'heading_marks', 'text', 'text_marks', 'image_url', 'image_media_id', 'image_alt', 'image_is_decorative', 'image_link'],
+        'image_text' => ['eyebrow', 'eyebrow_marks', 'heading', 'heading_marks', 'text', 'text_marks', 'image_url', 'image_media_id', 'image_alt', 'image_is_decorative', 'caption', 'caption_marks', 'image_link'],
         'cards' => ['eyebrow', 'eyebrow_marks', 'heading', 'heading_marks', 'text', 'text_marks', 'items'],
         'services' => ['eyebrow', 'eyebrow_marks', 'heading', 'heading_marks', 'text', 'text_marks', 'items'],
         'cta' => ['eyebrow', 'eyebrow_marks', 'heading', 'heading_marks', 'text', 'text_marks', 'button_label', 'button_url', 'button_action', 'button_style', 'button_icon', 'button_icon_position', 'button_target', 'button_visibility'],

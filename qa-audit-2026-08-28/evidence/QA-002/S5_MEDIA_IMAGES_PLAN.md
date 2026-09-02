@@ -1,7 +1,7 @@
 # S5 — Persistent Media and In-Place Images Build Plan
 
-Recorded: 1 September 2026
-Status: active source of truth; S5.1 complete, S5.2 active
+Recorded: 1 September 2026; updated 2 September 2026
+Status: active source of truth; S5.1 and S5.2 complete, S5.3 active
 Acceptance scope: VE-048 through VE-065 and VE-206 through VE-214, with shared validation evidence for VE-225 and VE-226 and final uninterrupted image acceptance reserved for VE-233 and VE-236
 
 ## Objective
@@ -120,3 +120,16 @@ S5 implementation is complete only when a Power Admin can upload or reuse a defi
 - Fresh gate: focused media 8 tests / 100 assertions; backend 123 tests / 1,137 assertions; web 10 files / 39 tests; production build PASS; `git diff --check` PASS. Fresh isolated SQLite migration, full rollback and reapply PASS. The known non-blocking bundle-size warning remains.
 - Automated evidence contributed: VE-206 through VE-214 backend foundations plus shared VE-065, VE-225 and VE-226 validation/publication guards. Exact rendered-image interaction and uninterrupted image acceptance remain S5.2/S5.3 and independent QA.
 - Next task: S5.2 exact rendered-image selection, media library/upload dialog and live contextual image inspector.
+
+### S5.2 — Complete
+
+- Revisions: exact image inspector and upload/reuse workflow `d6cdb02`; reusable section-background selection and keyboard-focus completion `35cb775`.
+- Exact rendered selection: Image, Text + Image and individual Gallery images are click- and keyboard-selectable in the actual public-page renderer while Edit Mode is active. Selection prevents an optional public image link from navigating and exposes the visible Page › Section › Component › Image hierarchy.
+- Persistent chooser: `Replace image` opens the searchable Power-Admin media library. Cards show preview, title, original filename, detected format, intrinsic dimensions, size and alt/decorative state. Existing assets are reused by stable ID without duplicate storage; new JPG/PNG/WebP files use the S5.1 quarantine-and-scan upload path.
+- Recoverable upload: title, alternative text, decorative state and the selected browser file remain in the dialog after a recoverable upload/scanner failure, and a retry can select the scanned asset. Closing with Escape or the close control, and choosing an asset, restores focus to the originating image/background control.
+- Live inspector: page-specific alt/decorative state, caption, safe link, nine-position crop/focus, width, height, alignment, object fit, radius, overlay colour/opacity and image opacity apply immediately at the selected rendered image. Stable `/media/{uuid}` delivery is resolved at render time; legacy safe URLs still render but are no longer the primary selection workflow.
+- Backgrounds and layouts: the section inspector uses the same library for responsive background media IDs, supports removal, resolves stable delivery URLs and preserves Image + Text grid/right/mobile layout behavior. Text + Image captions now round-trip through the server allowlist and render with the image.
+- Accessibility and status: the modal has a labelled dialog, initial search focus, Escape close, visible selected/focus states, decorative/alt semantics and live success/error announcements. The underlying image inspector is removed from the accessibility tree while the modal is open.
+- Regression evidence: three new actual-page media journeys cover exact image reuse/live styling/atomic save, retained upload fields plus safe retry, and reusable background selection with Escape/selection focus return. Full gate: backend 123 tests / 1,138 assertions; web 10 files / 42 tests; TypeScript PASS; production build PASS (JS 578.80 KB / 168.74 KB gzip; CSS 324.18 KB / 48.05 KB gzip); `git diff --check` PASS. The known non-blocking bundle-size warning remains.
+- Automated evidence contributed: VE-048 through VE-062 interaction foundations, with stable-reference/background participation in VE-063 through VE-065. The uninterrupted persistence/publication/rollback image journey and independent acceptance remain S5.3; no QA finding or final VE release row is self-declared complete.
+- Next task: S5.3 draft reload, logged-out isolation, exact preview, publication, version retention, rollback and failure-continuity evidence across stable image and background references.

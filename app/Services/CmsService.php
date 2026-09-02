@@ -61,6 +61,10 @@ class CmsService
             throw ValidationException::withMessages(['content' => 'This section contains unsupported fields.']);
         }
         foreach ($content as $key => $value) {
+            if ($value === null && $key !== 'items' && ! str_ends_with($key, '_marks') && $key !== 'image_is_decorative') {
+                $value = '';
+                $content[$key] = '';
+            }
             if ($key === 'items') {
                 $content[$key] = $this->items($type, $value);
 
@@ -128,6 +132,10 @@ class CmsService
             throw ValidationException::withMessages(['presentation' => 'Unsupported presentation setting.']);
         }
         foreach ($data as $key => $value) {
+            if ($value === null && in_array($key, ['background_image', 'background_media_id'], true)) {
+                $value = '';
+                $data[$key] = '';
+            }
             if ($key === 'text_styles') {
                 $data[$key] = $this->textStyles($value);
 
@@ -250,6 +258,11 @@ class CmsService
                     throw ValidationException::withMessages(["content.items.{$index}.{$required}" => 'This item field is required.']);
                 }
             }foreach ($item as $key => $value) {
+                if ($value === null && $key !== 'is_visible' && $key !== 'image_is_decorative') {
+                    $value = '';
+                    $item[$key] = '';
+                    $items[$index][$key] = '';
+                }
                 if ($key === 'is_visible' || $key === 'image_is_decorative') {
                     if (! is_bool($value)) {
                         throw ValidationException::withMessages(["content.items.{$index}.{$key}" => 'This item state must be true or false.']);
@@ -392,6 +405,10 @@ class CmsService
             if (! is_array($values) || array_diff(array_keys($values), [...array_keys($allowed), 'background_image', 'background_media_id'])) {
                 throw ValidationException::withMessages(["presentation.responsive.{$scope}" => 'This viewport contains unsupported presentation settings.']);
             }foreach ($values as $key => $value) {
+                if ($value === null && in_array($key, ['background_image', 'background_media_id'], true)) {
+                    $value = '';
+                    $responsive[$scope][$key] = '';
+                }
                 if (! is_string($value)) {
                     throw ValidationException::withMessages(["presentation.responsive.{$scope}.{$key}" => 'Choose a supported option.']);
                 }if ($key === 'background_image') {

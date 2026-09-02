@@ -6,6 +6,7 @@ use App\Contracts\FileScannerInterface;
 use App\Enums\UserRole;
 use App\Models\CmsMedia;
 use App\Models\CmsPage;
+use App\Models\CmsVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -117,6 +118,7 @@ class CmsMediaTest extends TestCase
         $headers = ['Accept' => 'application/json'];
         $this->post('/api/cms/media', $this->payload(UploadedFile::fake()->createWithContent('malformed.png', "\x89PNG\r\n\x1A\nnot-an-image")), $headers)->assertUnprocessable();
         $this->post('/api/cms/media', $this->payload(UploadedFile::fake()->create('oversized.jpg', 10241, 'image/jpeg')), $headers)->assertUnprocessable();
+        $this->post('/api/cms/media', $this->payload(UploadedFile::fake()->image('dimension-bomb.jpg', 12001, 1)), $headers)->assertUnprocessable()->assertJsonValidationErrors('image');
         $this->post('/api/cms/media', $this->payload(UploadedFile::fake()->image('double.name.jpg')), $headers)->assertUnprocessable();
         $this->post('/api/cms/media', $this->payload(UploadedFile::fake()->create('vector.svg', 10, 'image/svg+xml')), $headers)->assertUnprocessable();
         $this->assertDatabaseCount('cms_media_assets', 0);
@@ -176,6 +178,141 @@ class CmsMediaTest extends TestCase
         $this->postJson('/api/cms/pages/'.$page->id.'/preview')->assertUnprocessable()->assertJsonValidationErrors('content.image_media_id');
         $this->postJson('/api/cms/pages/'.$page->id.'/publish')->assertUnprocessable()->assertJsonValidationErrors('content.image_media_id');
         $this->assertDatabaseHas('cms_pages', ['id' => $page->id, 'published_snapshot' => null]);
+    }
+
+    public function test_reused_image_and_background_survive_private_reload_preview_publish_versions_and_rollback(): void
+    {
+        Storage::fake('local');
+        $power = $this->power();
+        $oldId = $this->upload('original-care.jpg', 'Original care image', 'Original consultation room')->assertCreated()->json('data.id');
+        $newId = $this->upload('updated-care.jpg', 'Updated care image', 'Library-level description')->assertCreated()->json('data.id');
+        $privateId = $this->upload('private-only.jpg', 'Private unused image', 'Private unused image')->assertCreated()->json('data.id');
+        $this->putJson('/api/cms/media/'.$newId, [
+            'title' => 'Updated reusable care image',
+            'alt_text' => 'Reusable media-library description',
+            'caption' => 'Reusable media caption',
+            'is_decorative' => false,
+        ])->assertOk();
+
+        $pageData = $this->postJson('/api/cms/pages', ['title' => 'Media Continuity', 'slug' => 'media-continuity', 'start_mode' => 'blank'])->assertCreated()->json('data');
+        $originalImage = $this->imageSection($oldId);
+        $originalImage['content']['image_url'] = '';
+        $background = [
+            'id' => null,
+            'section_key' => (string) Str::uuid(),
+            'type' => 'text',
+            'sort_order' => 1,
+            'is_visible' => true,
+            'content' => ['heading' => 'Care background', 'body' => 'A stable background reference.'],
+            'presentation' => ['responsive' => ['desktop' => ['background_media_id' => $oldId, 'background_image' => '', 'overlay_color' => 'wine', 'overlay_opacity' => '20']]],
+        ];
+        $initial = $this->putJson('/api/cms/pages/'.$pageData['id'].'/visual-draft', [
+            'lock_version' => $pageData['lock_version'],
+            'sections' => [$originalImage, $background],
+        ])->assertOk()->json('data');
+        $this->postJson('/api/cms/pages/'.$pageData['id'].'/publish', [
+            'lock_version' => $initial['lock_version'],
+            'sections' => $initial['sections'],
+        ])->assertOk()->json('data');
+
+        $this->actingAsGuest('web')->actingAsGuest('sanctum');
+        $this->getJson('/api/content/pages/media-continuity')->assertOk()
+            ->assertJsonPath('data.sections.0.content.image_media_id', $oldId)
+            ->assertJsonPath('data.sections.1.presentation.responsive.desktop.background_media_id', $oldId);
+        $this->get('/media/'.$oldId)->assertOk();
+        $this->get('/media/'.$newId)->assertNotFound();
+        $this->get('/media/'.$privateId)->assertNotFound();
+
+        $this->actingAs($power);
+        $draft = $this->getJson('/api/cms/pages/'.$pageData['id'])->assertOk()->json('data');
+        $draft['sections'][0]['content']['image_media_id'] = $newId;
+        $draft['sections'][0]['content']['image_alt'] = 'Page-specific description of the consultation room';
+        $draft['sections'][0]['content']['caption'] = 'Page-specific care caption';
+        $draft['sections'][0]['presentation']['responsive'] = ['desktop' => [
+            'image_width' => 'large', 'image_height' => 'medium', 'image_alignment' => 'center',
+            'image_fit' => 'contain', 'image_radius' => 'round', 'crop_position' => 'bottom_right',
+            'image_overlay_color' => 'wine', 'image_overlay_opacity' => '40', 'image_opacity' => '80',
+        ]];
+        $draft['sections'][1]['presentation']['responsive']['desktop']['background_media_id'] = $newId;
+        $draft['sections'][] = [
+            'id' => null,
+            'section_key' => (string) Str::uuid(),
+            'type' => 'gallery',
+            'sort_order' => 2,
+            'is_visible' => true,
+            'content' => [
+                'heading' => 'Reused care image',
+                'items' => [[
+                    'key' => (string) Str::uuid(), 'image_media_id' => $newId, 'image_url' => '',
+                    'image_alt' => 'The same approved image reused in the gallery', 'image_is_decorative' => false,
+                    'caption' => 'One stored asset, another page location', 'is_visible' => true,
+                ]],
+            ],
+            'presentation' => ['columns' => '1', 'gap' => 'normal'],
+        ];
+        $saved = $this->putJson('/api/cms/pages/'.$pageData['id'].'/visual-draft', [
+            'lock_version' => $draft['lock_version'],
+            'sections' => $draft['sections'],
+        ])->assertOk()
+            ->assertJsonPath('data.sections.0.content.image_media_id', $newId)
+            ->assertJsonPath('data.sections.0.content.image_url', '')
+            ->assertJsonPath('data.sections.0.content.image_alt', 'Page-specific description of the consultation room')
+            ->assertJsonPath('data.sections.1.presentation.responsive.desktop.background_media_id', $newId)
+            ->assertJsonPath('data.sections.2.content.items.0.image_media_id', $newId)
+            ->assertJsonPath('data.sections.0.presentation.responsive.desktop.crop_position', 'bottom_right')
+            ->json('data');
+        $this->assertDatabaseCount('cms_media_assets', 3);
+
+        $this->getJson('/api/cms/pages/'.$pageData['id'])->assertOk()
+            ->assertJsonPath('data.sections.0.content.caption', 'Page-specific care caption')
+            ->assertJsonPath('data.sections.1.presentation.responsive.desktop.background_media_id', $newId)
+            ->assertJsonPath('data.sections.2.content.items.0.image_media_id', $newId);
+        $previewUrl = $this->postJson('/api/cms/pages/'.$pageData['id'].'/preview')->assertOk()->json('preview_url');
+        $previewToken = basename(parse_url($previewUrl, PHP_URL_PATH));
+        $this->getJson('/api/cms/preview/'.$previewToken)->assertOk()
+            ->assertJsonPath('data.sections.0.content.image_media_id', $newId)
+            ->assertJsonPath('data.sections.1.presentation.responsive.desktop.background_media_id', $newId)
+            ->assertJsonPath('data.sections.2.content.items.0.image_media_id', $newId);
+
+        $this->actingAsGuest('web')->actingAsGuest('sanctum');
+        $this->getJson('/api/content/pages/media-continuity')->assertJsonPath('data.sections.0.content.image_media_id', $oldId)->assertJsonCount(2, 'data.sections');
+        $this->get('/media/'.$newId)->assertNotFound();
+        $this->get('/media/'.$privateId)->assertNotFound();
+
+        $this->actingAs($power);
+        $published = $this->postJson('/api/cms/pages/'.$pageData['id'].'/publish', [
+            'lock_version' => $saved['lock_version'],
+            'sections' => $saved['sections'],
+        ])->assertOk()->json('data');
+        $previous = CmsVersion::where('cms_page_id', $pageData['id'])->where('reason', 'Previous published version')->latest('version')->firstOrFail();
+        $this->assertSame($oldId, $previous->snapshot['sections'][0]['content']['image_media_id']);
+
+        $this->actingAsGuest('web')->actingAsGuest('sanctum');
+        $this->getJson('/api/content/pages/media-continuity')->assertOk()
+            ->assertJsonCount(3, 'data.sections')
+            ->assertJsonPath('data.sections.0.content.image_media_id', $newId)
+            ->assertJsonPath('data.sections.0.content.image_alt', 'Page-specific description of the consultation room')
+            ->assertJsonPath('data.sections.1.presentation.responsive.desktop.background_media_id', $newId)
+            ->assertJsonPath('data.sections.2.content.items.0.image_media_id', $newId);
+        $this->get('/media/'.$newId)->assertOk();
+        $this->get('/media/'.$privateId)->assertNotFound();
+
+        $this->actingAs($power);
+        $rolled = $this->postJson('/api/cms/pages/'.$pageData['id'].'/versions/'.$previous->id.'/rollback', ['lock_version' => $published['lock_version']])
+            ->assertOk()->assertJsonCount(2, 'data.sections')
+            ->assertJsonPath('data.sections.0.content.image_media_id', $oldId)
+            ->assertJsonPath('data.sections.1.presentation.responsive.desktop.background_media_id', $oldId)
+            ->json('data');
+        $this->assertGreaterThan($published['lock_version'], $rolled['lock_version']);
+        $this->deleteJson('/api/cms/media/'.$newId)->assertUnprocessable()->assertJsonValidationErrors('media');
+
+        $this->actingAsGuest('web')->actingAsGuest('sanctum');
+        $this->getJson('/api/content/pages/media-continuity')->assertOk()
+            ->assertJsonCount(2, 'data.sections')
+            ->assertJsonPath('data.sections.0.content.image_media_id', $oldId);
+        $this->get('/media/'.$oldId)->assertOk();
+        $this->get('/media/'.$newId)->assertNotFound();
+        $this->get('/media/'.$privateId)->assertNotFound();
     }
 
     private function power(): User

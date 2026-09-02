@@ -332,3 +332,46 @@ test('a section background uses the same media library, restores focus after Esc
  fireEvent.click(screen.getByRole('button',{name:'Save Draft'}));
  await waitFor(()=>expect(put).toHaveBeenCalledWith('/cms/pages/1/visual-draft',expect.objectContaining({lock_version:60,sections:[expect.objectContaining({presentation:expect.objectContaining({responsive:expect.objectContaining({desktop:expect.objectContaining({background_media_id:'background-image',background_image:''})})})})]})));
 },30000);
+
+test('image edits survive a fresh page session, preview exactly, and reach logged-out visitors only after publish',async()=>{
+ const original={id:10,section_key:'continuity-image',type:'image',sort_order:0,is_visible:true,content:{heading:'Care environment',image_media_id:'original-image',image_url:'',image_alt:'Earlier published consultation room',image_is_decorative:false,caption:'Earlier public caption',image_link:''},presentation:{}},asset={id:'continuity-image',title:'Updated care environment',original_name:'updated-care.webp',url:'/media/continuity-image',alt_text:'Reusable library description',caption:'Reusable caption',is_decorative:false,width_pixels:1800,height_pixels:1200,mime_type:'image/webp',size_bytes:280000};
+ let signedIn=true,published={title:'Home',sections:[structuredClone(original)]},persisted={id:1,title:'Home',slug:'home',lock_version:70,sections:[structuredClone(original)]};
+ get.mockImplementation(async(url:string)=>url==='/me'?{data:{user:signedIn?{role:'power_admin'}:null}} as any:url==='/cms/public-settings'?{data:{data:{}}} as any:url==='/content/pages/home'?{data:{data:structuredClone(published)}} as any:url==='/cms/pages'?{data:{data:[{id:1,slug:'home'}]}} as any:url==='/cms/pages/1'?{data:{data:structuredClone(persisted)}} as any:url==='/cms/media'?{data:{data:[asset]}} as any:{data:{data:[]}} as any);
+ put.mockImplementation(async(_url:string,payload:any)=>{persisted={...persisted,lock_version:persisted.lock_version+1,sections:structuredClone(payload.sections)};return{data:{data:structuredClone(persisted)}} as any});
+ post.mockImplementation(async(url:string,payload:any)=>{if(url==='/cms/pages/1/preview')return{data:{preview_url:'/preview/exact-media-preview'}} as any;if(url==='/cms/pages/1/publish'){published={title:'Home',sections:structuredClone(payload.sections)};persisted={...persisted,lock_version:persisted.lock_version+1,sections:structuredClone(payload.sections)};return{data:{data:structuredClone(persisted)}} as any}return{data:{}} as any});
+ const open=vi.spyOn(window,'open').mockImplementation(()=>null),confirm=vi.spyOn(window,'confirm').mockReturnValue(true);
+ const first=view(<Layout><CmsPublicPage slug="home"/></Layout>,'/');
+ expect(await screen.findByRole('img',{name:'Earlier published consultation room'})).toHaveAttribute('src','/media/original-image');
+ fireEvent.click(await screen.findByRole('button',{name:'Edit site'}));
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Save Draft'})).toBeEnabled());
+ fireEvent.click(await screen.findByRole('button',{name:'Edit standalone image'}));
+ fireEvent.click(screen.getByRole('button',{name:'Replace image'}));
+ fireEvent.click(await screen.findByRole('button',{name:'Use image: Updated care environment'}));
+ fireEvent.change(screen.getByLabelText('Alternative text'),{target:{value:'Page-specific updated consultation room'}});
+ fireEvent.change(screen.getByLabelText('Caption'),{target:{value:'Updated private draft caption'}});
+ fireEvent.change(screen.getByLabelText('Crop / focus'),{target:{value:'top_right'}});
+ fireEvent.change(screen.getByLabelText('Image opacity'),{target:{value:'80'}});
+ fireEvent.click(screen.getByRole('button',{name:'Save Draft'}));
+ await waitFor(()=>expect(put).toHaveBeenCalledWith('/cms/pages/1/visual-draft',expect.objectContaining({lock_version:70,sections:[expect.objectContaining({content:expect.objectContaining({image_media_id:'continuity-image',image_alt:'Page-specific updated consultation room',caption:'Updated private draft caption'}),presentation:expect.objectContaining({responsive:expect.objectContaining({desktop:expect.objectContaining({crop_position:'top_right',image_opacity:'80'})})})})]})));
+ first.unmount();
+
+ const second=view(<Layout><CmsPublicPage slug="home"/></Layout>,'/');
+ expect(await screen.findByRole('img',{name:'Earlier published consultation room'})).toHaveAttribute('src','/media/original-image');
+ fireEvent.click(await screen.findByRole('button',{name:'Edit site'}));
+ expect(await screen.findByRole('img',{name:'Page-specific updated consultation room'})).toHaveAttribute('src','/media/continuity-image');
+ expect(screen.getByText('Updated private draft caption')).toBeInTheDocument();
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Preview'})).toBeEnabled());
+ fireEvent.click(screen.getByRole('button',{name:'Preview'}));
+ await waitFor(()=>expect(post).toHaveBeenCalledWith('/cms/pages/1/preview',expect.objectContaining({lock_version:71,sections:[expect.objectContaining({content:expect.objectContaining({image_media_id:'continuity-image'}),presentation:expect.objectContaining({responsive:expect.objectContaining({desktop:expect.objectContaining({crop_position:'top_right',image_opacity:'80'})})})})]})));
+ expect(open).toHaveBeenCalledWith('/preview/exact-media-preview','_blank','noopener,noreferrer');
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Publish'})).toBeEnabled());
+ fireEvent.click(screen.getByRole('button',{name:'Publish'}));
+ await waitFor(()=>expect(post).toHaveBeenCalledWith('/cms/pages/1/publish',expect.objectContaining({lock_version:71,sections:[expect.objectContaining({content:expect.objectContaining({image_media_id:'continuity-image',image_alt:'Page-specific updated consultation room'})})]})));
+ second.unmount();signedIn=false;
+
+ view(<Layout><CmsPublicPage slug="home"/></Layout>,'/');
+ expect(await screen.findByRole('img',{name:'Page-specific updated consultation room'})).toHaveAttribute('src','/media/continuity-image');
+ expect(screen.getByText('Updated private draft caption')).toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:'Edit site'})).not.toBeInTheDocument();
+ open.mockRestore();confirm.mockRestore();
+},30000);

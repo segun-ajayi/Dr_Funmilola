@@ -311,3 +311,24 @@ test('image upload failure retains the chosen file metadata and a retry selects 
  expect(screen.getByRole('img',{name:'The specialist clinical team'})).toHaveAttribute('src','/media/uploaded-image');
  expect(post).toHaveBeenLastCalledWith('/cms/media',expect.any(FormData));
 },30000);
+
+test('a section background uses the same media library, restores focus after Escape, and saves a stable asset reference',async()=>{
+ const section={id:10,section_key:'copy-background',type:'text',sort_order:0,is_visible:true,content:{heading:'Support and care',body:'Trusted information'},presentation:{}},draft={id:1,title:'Home',slug:'home',lock_version:60,sections:[section]},asset={id:'background-image',title:'Quiet practice texture',original_name:'practice-texture.webp',url:'/media/background-image',alt_text:null,caption:null,is_decorative:true,width_pixels:1920,height_pixels:1080,mime_type:'image/webp',size_bytes:310000};
+ get.mockImplementation(async(url:string)=>url==='/me'?{data:{user:{role:'power_admin'}}} as any:url==='/cms/public-settings'?{data:{data:{}}} as any:url==='/content/pages/home'?{data:{data:{title:'Home',sections:[section]}}} as any:url==='/cms/pages'?{data:{data:[{id:1,slug:'home'}]}} as any:url==='/cms/pages/1'?{data:{data:draft}} as any:url==='/cms/media'?{data:{data:[asset]}} as any:{data:{data:[]}} as any);
+ put.mockImplementation(async(_url:string,payload:any)=>({data:{data:{...draft,lock_version:61,sections:payload.sections}}}) as any);
+ const rendered=view(<Layout><CmsPublicPage slug="home"/></Layout>,'/');
+ fireEvent.click(await screen.findByRole('button',{name:'Edit site'}));
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Save Draft'})).toBeEnabled());
+ fireEvent.click(screen.getByRole('button',{name:'Edit text section properties'}));
+ const choose=screen.getByRole('button',{name:'Choose from media library'});
+ fireEvent.click(choose);
+ expect(await screen.findByText('practice-texture.webp · WEBP')).toBeInTheDocument();
+ fireEvent.keyDown(screen.getByLabelText('Search media'),{key:'Escape'});
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Choose from media library'})).toHaveFocus());
+ fireEvent.click(screen.getByRole('button',{name:'Choose from media library'}));
+ fireEvent.click(await screen.findByRole('button',{name:'Use image: Quiet practice texture'}));
+ expect(rendered.container.querySelector<HTMLElement>('.cms-text')?.style.backgroundImage).toContain('/media/background-image');
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Replace library background'})).toHaveFocus());
+ fireEvent.click(screen.getByRole('button',{name:'Save Draft'}));
+ await waitFor(()=>expect(put).toHaveBeenCalledWith('/cms/pages/1/visual-draft',expect.objectContaining({lock_version:60,sections:[expect.objectContaining({presentation:expect.objectContaining({responsive:expect.objectContaining({desktop:expect.objectContaining({background_media_id:'background-image',background_image:''})})})})]})));
+},30000);

@@ -99,6 +99,7 @@ S6 implementation is complete only when a Power Admin can keep editing through o
 ### S6.1 — Complete
 
 - Planning revision: `211e7a5`, committed and pushed before implementation.
+- Implementation revision: `575cd5d`, committed and pushed after the task gates. The local Laravel preview was restarted and `/about` returned HTTP 200 against the completed production assets.
 - Single-flight state: the actual-site editor now serializes save/publication/preview operations. Typing while a save or publication is in flight is retained; the confirmed server lock advances while newer content remains explicitly unsaved/private. Undo to the unchanged server baseline clears the unsaved indication. Historical/restored section IDs are reconciled by stable section key before a new save.
 - Truthful recovery: network/no-response, 401/419 session expiry, 403 permission denial, 409 conflict, 422 validation, 429 throttling and unconfirmed server errors receive safe, specific messages. Prior success is cleared when a request starts or fails. A lost publication response is described as unconfirmed, never as proof that nothing was published.
 - Retry and identity: the toolbar exposes Retry Save and a separate-tab sign-in link when relevant. A retry after session expiry verifies the same original Power Admin account before sending content; a different account cannot reuse the pending save, including on repeated retries. Failed autosave pauses until manual retry and never retries in a loop.

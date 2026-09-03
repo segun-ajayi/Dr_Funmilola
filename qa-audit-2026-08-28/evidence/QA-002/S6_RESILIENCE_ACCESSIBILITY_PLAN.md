@@ -1,7 +1,7 @@
 # S6 — Editor Resilience, Accessibility and Viewport Build Plan
 
-Recorded: 2 September 2026
-Status: active implementation source of truth; S6.1 in progress
+Recorded: 2 September 2026; updated 3 September 2026
+Status: active implementation source of truth; S6.1 complete; S6.2 next
 Acceptance scope: VE-199 through VE-205 and VE-227 through VE-231, with shared validation evidence for VE-225 and VE-226 and final uninterrupted release journeys reserved for VE-232 through VE-236 and VE-242 through VE-243
 
 ## Objective
@@ -21,7 +21,7 @@ Make Power Admin Edit Mode safe during unreliable networks, expired sessions, co
 
 - Only an active, verified Power Admin may enter or mutate Edit Mode. Recovery, retry and autosave must not weaken that boundary or persist authentication material.
 - Autosave is opt-in, never publishes, never runs while another mutation is active, and never claims success until the server confirms the exact document version.
-- Store at most one bounded recovery snapshot per page and signed-in editor in browser-local storage. Store structured CMS draft content and timestamps only; never store tokens, cookies, passwords, scanner details or unrelated patient/clinical data.
+- Store at most one bounded recovery snapshot per page and signed-in editor in the current tab's `sessionStorage`. The implementation limit is 1,000,000 serialized characters with a 24-hour recovery window; closing the tab ends recovery. Tab scoping prevents another editing tab from replacing this copy. Store structured CMS draft sections, opaque account/page identifiers, lock version and timestamp only; never store tokens, cookies, passwords, scanner details or unrelated patient/clinical data. Store only the account-specific autosave preference in persistent `localStorage`.
 - Keep local work after network, 401/419 session expiry, 409 conflict, 422 validation, 429 throttling and 5xx failure. Do not redirect away, reload automatically, overwrite the server version or clear recovery data on failure.
 - A 409 conflict must be explicit. The editor may reload the server copy only after a deliberate user action; it must never automatically resubmit stale content or merge ambiguously.
 - Clear the recovery snapshot only after the same document is successfully saved, deliberately discarded or safely replaced by a user-confirmed server reload. Published state remains an explicit separate action.
@@ -96,10 +96,18 @@ S6 implementation is complete only when a Power Admin can keep editing through o
 
 ## Implementation ledger
 
-### S6.1 — In progress
+### S6.1 — Complete
 
-- Source-of-truth plan recorded before implementation.
-- Next task: implement the state classifier, retry, opt-in autosave, bounded local recovery and explicit conflict/session-expiry behavior with actual-page regression coverage.
+- Planning revision: `211e7a5`, committed and pushed before implementation.
+- Single-flight state: the actual-site editor now serializes save/publication/preview operations. Typing while a save or publication is in flight is retained; the confirmed server lock advances while newer content remains explicitly unsaved/private. Undo to the unchanged server baseline clears the unsaved indication. Historical/restored section IDs are reconciled by stable section key before a new save.
+- Truthful recovery: network/no-response, 401/419 session expiry, 403 permission denial, 409 conflict, 422 validation, 429 throttling and unconfirmed server errors receive safe, specific messages. Prior success is cleared when a request starts or fails. A lost publication response is described as unconfirmed, never as proof that nothing was published.
+- Retry and identity: the toolbar exposes Retry Save and a separate-tab sign-in link when relevant. A retry after session expiry verifies the same original Power Admin account before sending content; a different account cannot reuse the pending save, including on repeated retries. Failed autosave pauses until manual retry and never retries in a loop.
+- Optional autosave: an account-specific toggle is off by default and saves a private draft after 15 seconds without another edit. Editing, operation-in-flight, recovery-choice and conflict guards prevent overlapping or unintended writes. Autosave never invokes publication.
+- Local copy: every local change is protected synchronously in a bounded, account/page/tab-specific recovery snapshot. A later full page session offers Restore or Discard; neither writes the server. Unknown, renderer-invalid, oversized, expired or wrong-identity copies are rejected. Storage failure is explicitly announced with advice to keep the tab open and save manually. Unload protection remains active for unsaved content even after exiting Edit Mode.
+- Concurrent edits: a conflict disables stale resubmission. Load server draft retains the local copy before showing the latest server content; if the user types during loading, the working page is not replaced. Restoring a copy from an older server lock requires an explicit warning that saving will replace the newer whole-page draft. No automatic merge or silent overwrite is performed.
+- Focused evidence: 22 tests pass across actual-page resilience journeys and recovery/error helpers. They cover interrupted-save retry, save/preview/publication typing races, Undo-to-baseline, refresh recovery, account isolation, conflict review/restore/cancel, 401/419 same-account retry, repeated wrong-account retry denial, opt-in/idle autosave and paused failure, storage failure, unload protection, bounded/expired/malformed copies, safe error classification and uncertain-publication messaging.
+- Fresh task gate: backend 124 tests / 1,200 assertions; full web 12 files / 65 tests; focused recovery 22 tests; TypeScript; production build (JS 591.33 KB / 173.08 KB gzip; CSS 324.73 KB / 48.20 KB gzip); `git diff --check`; changed-file PHP formatting all pass. No PHP or database migration changed. A whole-repository PHP formatting audit reports pre-existing style debt in unchanged files (including older controllers, commands, migrations and tests); this was not rewritten or represented as a clean repository-wide gate. The known non-blocking bundle-size warning remains.
+- Scope retained: VE-204 full-document refresh evidence and the complete operation/error cross-product remain S6.3. S6.2 keyboard/modal/viewport work and independent physical browser/device/screen-reader acceptance remain outstanding. QA-002, QA-003 and final uninterrupted release rows are not self-approved.
 
 ### S6.2 — Pending
 

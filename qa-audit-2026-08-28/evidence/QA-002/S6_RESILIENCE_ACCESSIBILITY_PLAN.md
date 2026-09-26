@@ -1,7 +1,7 @@
 # S6 — Editor Resilience, Accessibility and Viewport Build Plan
 
 Recorded: 2 September 2026; updated 26 September 2026
-Status: active implementation source of truth; S6.1 and S6.2 complete; S6.3 in progress
+Status: complete implementation source of truth; S6.1, S6.2 and S6.3 complete; independent acceptance remains
 Acceptance scope: VE-199 through VE-205 and VE-227 through VE-231, with shared validation evidence for VE-225 and VE-226 and final uninterrupted release journeys reserved for VE-232 through VE-236 and VE-242 through VE-243
 
 ## Objective
@@ -121,10 +121,12 @@ S6 implementation is complete only when a Power Admin can keep editing through o
 - Fresh task gate: backend 124 tests / 1,200 assertions; full web 12 files / 68 tests; focused accessibility/editor checks 28 tests; TypeScript; production build (JS 595.41 KB / 174.35 KB gzip; CSS 329.35 KB / 48.94 KB gzip); and `git diff --check` all pass. No PHP or database migration changed. The known non-blocking bundle-size warning remains.
 - Scope retained: physical device, browser zoom/reflow and named screen-reader acceptance remain independent manual evidence; they are not inferred from automation. The complete failure/audit matrix remains S6.3. QA-002, QA-003 and final uninterrupted release rows are not self-approved.
 
-### S6.3 — In progress
+### S6.3 — Complete
 
-- Source-of-truth activation: 26 September 2026, after S6.2 was implemented, tested, committed, pushed and recorded above.
-- Active slice: force network/no-response, 401, 419, 409, 422, 429 and 500 outcomes across save, preview and publication and prove truthful state, retained content and no unintended retry or publication.
-- Active slice: prove successful save plus fresh reload preserves the exact structured document and that recovery/concurrency choices never silently replace newer server work.
-- Active slice: verify CMS audit records contain useful actor, page, action, version and publication/rollback references while excluding page bodies and secret-bearing data.
-- Evidence gate: focused failure/audit regressions, complete backend and web suites, TypeScript, production build and `git diff --check`; final independent release journeys and QA closure remain outside self-approval.
+- Planning revision: `aedf594`, committed and pushed before implementation. Test-evidence revision: `05bf35a`, committed and pushed after the complete gate.
+- Failure matrix: 21 actual-editor cases force network/no-response, 401, 419, 409, 422, 429 and 500 outcomes across Save Draft, Preview and Publish. Every case proves that the exact working document and bounded recovery copy remain, safe operation-specific failure guidance is announced, server detail is not exposed, success is not displayed, a preview window is not opened, no extra request is sent and server/public state is not unintentionally changed.
+- Reload and concurrency continuity: the existing real API journey re-ran successfully for simple, responsive, media-backed and nested content through save, complete reload, preview, publication and rollback. The resilience suite also re-proved that a stale editor cannot silently resubmit, that loading the newer server draft first retains the local copy, and that restoring older local work requires an explicit replacement warning and user choice.
+- Audit proof: an end-to-end CMS lifecycle regression performs initial publication, atomic visual-draft save, preview, publication and rollback, then verifies accountable actor/action/page subject data and schema, lock and rollback-version metadata. It also proves the private page marker is absent and rejects body/content/password/token/secret-bearing metadata keys.
+- Fresh completion gate: backend 125 tests / 1,227 assertions; full web 12 files / 89 tests, including the 21-case failure cross-product; TypeScript; production build (JS 595.41 KB / 174.35 KB gzip; CSS 329.35 KB / 48.94 KB gzip); changed-file PHP formatting; and `git diff --check` all pass. No production code or database migration changed in S6.3. The known non-blocking bundle-size warning remains.
+- Evidence record: `S6_3_FAILURE_AUDIT_EVIDENCE.md` maps the automated proof, revisions, environment and retained independent checks without converting implementation evidence into independent acceptance.
+- Scope retained: physical-device, browser zoom/reflow and named screen-reader checks remain independent; VE-232 through VE-243 continuous journeys and row-level acceptance remain S7. VE-242 and VE-243, QA-002 and QA-003 are not self-approved.

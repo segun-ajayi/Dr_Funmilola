@@ -1,7 +1,7 @@
 # S6 — Editor Resilience, Accessibility and Viewport Build Plan
 
 Recorded: 2 September 2026; updated 26 September 2026
-Status: active implementation source of truth; S6.1 and S6.2 complete; S6.3 next
+Status: active implementation source of truth; S6.1 and S6.2 complete; S6.3 in progress
 Acceptance scope: VE-199 through VE-205 and VE-227 through VE-231, with shared validation evidence for VE-225 and VE-226 and final uninterrupted release journeys reserved for VE-232 through VE-236 and VE-242 through VE-243
 
 ## Objective
@@ -121,6 +121,10 @@ S6 implementation is complete only when a Power Admin can keep editing through o
 - Fresh task gate: backend 124 tests / 1,200 assertions; full web 12 files / 68 tests; focused accessibility/editor checks 28 tests; TypeScript; production build (JS 595.41 KB / 174.35 KB gzip; CSS 329.35 KB / 48.94 KB gzip); and `git diff --check` all pass. No PHP or database migration changed. The known non-blocking bundle-size warning remains.
 - Scope retained: physical device, browser zoom/reflow and named screen-reader acceptance remain independent manual evidence; they are not inferred from automation. The complete failure/audit matrix remains S6.3. QA-002, QA-003 and final uninterrupted release rows are not self-approved.
 
-### S6.3 — Pending
+### S6.3 — In progress
 
-- Begins after S6.2 is implemented, tested, committed, pushed and recorded here.
+- Source-of-truth activation: 26 September 2026, after S6.2 was implemented, tested, committed, pushed and recorded above.
+- Active slice: force network/no-response, 401, 419, 409, 422, 429 and 500 outcomes across save, preview and publication and prove truthful state, retained content and no unintended retry or publication.
+- Active slice: prove successful save plus fresh reload preserves the exact structured document and that recovery/concurrency choices never silently replace newer server work.
+- Active slice: verify CMS audit records contain useful actor, page, action, version and publication/rollback references while excluding page bodies and secret-bearing data.
+- Evidence gate: focused failure/audit regressions, complete backend and web suites, TypeScript, production build and `git diff --check`; final independent release journeys and QA closure remain outside self-approval.

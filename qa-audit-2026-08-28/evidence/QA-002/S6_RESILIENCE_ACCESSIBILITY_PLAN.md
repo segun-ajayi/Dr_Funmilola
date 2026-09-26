@@ -1,7 +1,7 @@
 # S6 — Editor Resilience, Accessibility and Viewport Build Plan
 
 Recorded: 2 September 2026; updated 26 September 2026
-Status: active implementation source of truth; S6.1 complete; S6.2 in progress
+Status: active implementation source of truth; S6.1 and S6.2 complete; S6.3 next
 Acceptance scope: VE-199 through VE-205 and VE-227 through VE-231, with shared validation evidence for VE-225 and VE-226 and final uninterrupted release journeys reserved for VE-232 through VE-236 and VE-242 through VE-243
 
 ## Objective
@@ -110,13 +110,16 @@ S6 implementation is complete only when a Power Admin can keep editing through o
 - Fresh task gate: backend 124 tests / 1,200 assertions; full web 12 files / 65 tests; focused recovery 22 tests; TypeScript; production build (JS 591.33 KB / 173.08 KB gzip; CSS 324.73 KB / 48.20 KB gzip); `git diff --check`; changed-file PHP formatting all pass. No PHP or database migration changed. A whole-repository PHP formatting audit reports pre-existing style debt in unchanged files (including older controllers, commands, migrations and tests); this was not rewritten or represented as a clean repository-wide gate. The known non-blocking bundle-size warning remains.
 - Scope retained: VE-204 full-document refresh evidence and the complete operation/error cross-product remain S6.3. S6.2 keyboard/modal/viewport work and independent physical browser/device/screen-reader acceptance remain outstanding. QA-002, QA-003 and final uninterrupted release rows are not self-approved.
 
-### S6.2 — In progress
+### S6.2 — Complete
 
-- Source-of-truth activation: 26 September 2026, after S6.1 was implemented, tested, committed, pushed and recorded above.
-- Active slice: labelled modal semantics, predictable initial focus, contained Tab/Shift+Tab navigation, Escape close and exact focus return for the component chooser, media chooser and page dialog.
-- Active slice: complete editor control names and states, visible focus, keyboard-operable actions, touch-size controls, safe-area spacing and scrollable overlays.
-- Active slice: responsive toolbar, breadcrumb, inspector, chooser and dialog behavior at 320, 390, 768, 1024 and 1440 CSS pixels, with reduced-motion, forced-colour and zoom/reflow safeguards.
-- Evidence gate: semantic and interaction regressions, viewport structural assertions, full web tests, TypeScript, production build and `git diff --check`. Physical device and screen-reader acceptance remains independent evidence and will not be inferred from automation.
+- Planning revision: `539691e`, committed and pushed before implementation. Implementation revision: `2eb78b2`, committed and pushed after the task gates.
+- Modal contract: the component chooser, media chooser and page dialog now share predictable initial focus, contained Tab/Shift+Tab navigation, safe Escape behavior, body scroll locking and exact focus return to the invoking control. Dialog names, descriptions, busy states and opener expanded/controlled relationships are programmatic.
+- Keyboard editing: visible text enters in-place editing with Enter or F2 and exits with Escape; rendered components, buttons and images expose selected/pressed state; section drag handles describe adjacent keyboard move controls; Save, Undo and Redo advertise their shortcuts. Toolbar, chooser, inspector and nested actions retain native keyboard paths and visible focus.
+- Assistive feedback: chooser result counts and loading/empty/failure states are live, invalid image/page fields expose invalid state, selection breadcrumbs and save/failure messages remain announced, and decorative controls retain explicit labels.
+- Responsive overlays: the toolbar has a bounded scrollable action group rather than widening the page. Dialogs and inspectors use dynamic viewport height, internal scrolling, safe-area spacing and bottom-sheet treatment on narrow screens. Coarse-pointer targets are at least 44 CSS pixels, selected state remains visible, and forced-colour/reduced-motion support is preserved.
+- Viewport evidence: resize-driven rendering assertions cover 320, 390, 768, 1024 and 1440 CSS pixels, alongside CSS rules for those boundaries. Automated dialog tests cover initial focus, both focus-loop directions, Escape and exact opener return for page, component and media flows.
+- Fresh task gate: backend 124 tests / 1,200 assertions; full web 12 files / 68 tests; focused accessibility/editor checks 28 tests; TypeScript; production build (JS 595.41 KB / 174.35 KB gzip; CSS 329.35 KB / 48.94 KB gzip); and `git diff --check` all pass. No PHP or database migration changed. The known non-blocking bundle-size warning remains.
+- Scope retained: physical device, browser zoom/reflow and named screen-reader acceptance remain independent manual evidence; they are not inferred from automation. The complete failure/audit matrix remains S6.3. QA-002, QA-003 and final uninterrupted release rows are not self-approved.
 
 ### S6.3 — Pending
 

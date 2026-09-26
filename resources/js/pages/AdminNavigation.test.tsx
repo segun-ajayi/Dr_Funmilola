@@ -55,7 +55,12 @@ test('Edit Mode creates a safe template page and opens its actual private URL',a
  post.mockRejectedValueOnce({response:{data:{errors:{slug:['That page address is already in use.']}}}}).mockResolvedValueOnce({data:{data:{id:7,slug:'patient-support-guide',public_path:'/p/patient-support-guide'}}} as any);
  view(<Layout><Routes><Route path="/about" element={<h1>About</h1>}/><Route path="/p/:slug" element={<CmsPublicPage/>}/></Routes></Layout>,'/about');
  fireEvent.click(await screen.findByRole('button',{name:'Edit site'}));
- fireEvent.click(screen.getByRole('button',{name:'New Page'}));
+ const newPage=screen.getByRole('button',{name:'New Page'});fireEvent.click(newPage);
+ const newPageDialog=screen.getByRole('dialog',{name:'New page'});expect(newPageDialog).toHaveAttribute('aria-modal','true');expect(newPage).toHaveAttribute('aria-expanded','true');
+ await waitFor(()=>expect(screen.getByLabelText('Page name')).toHaveFocus());
+ const closeNewPage=screen.getByRole('button',{name:'Close new page dialog'});closeNewPage.focus();fireEvent.keyDown(newPageDialog,{key:'Tab',shiftKey:true});expect(screen.getByRole('button',{name:'Cancel'})).toHaveFocus();
+ fireEvent.keyDown(newPageDialog,{key:'Escape'});await waitFor(()=>expect(newPage).toHaveFocus());expect(newPage).toHaveAttribute('aria-expanded','false');
+ fireEvent.click(newPage);await waitFor(()=>expect(screen.getByLabelText('Page name')).toHaveFocus());
  fireEvent.change(screen.getByLabelText('Page name'),{target:{value:'Patient support guide'}});
  expect(screen.getByRole('textbox',{name:/Page address/})).toHaveValue('patient-support-guide');
  fireEvent.click(screen.getByRole('radio',{name:/Starter template/}));
@@ -173,6 +178,15 @@ test('selected sections support responsive styling, lifecycle controls, drag reo
  const confirm=vi.spyOn(window,'confirm').mockReturnValue(false);fireEvent.click(screen.getByRole('button',{name:'Delete'}));expect(rendered.container.querySelectorAll('.cms-section')).toHaveLength(3);confirm.mockReturnValue(true);fireEvent.click(screen.getByRole('button',{name:'Delete'}));expect(rendered.container.querySelectorAll('.cms-section')).toHaveLength(2);fireEvent.click(screen.getByRole('button',{name:'Undo'}));expect(rendered.container.querySelectorAll('.cms-section')).toHaveLength(3);confirm.mockRestore();
 });
 
+test('visible page text enters and leaves in-place editing entirely from the keyboard',async()=>{
+ const section={id:10,section_key:'keyboard-copy',type:'text',sort_order:0,is_visible:true,content:{heading:'Keyboard editing',body:'Focus this copy'},presentation:{}},draft={id:1,title:'Home',slug:'home',lock_version:19,sections:[section]};
+ get.mockImplementation(async(url:string)=>url==='/me'?{data:{user:{role:'power_admin'}}} as any:url==='/cms/public-settings'?{data:{data:{}}} as any:url==='/content/pages/home'?{data:{data:{title:'Home',sections:[section]}}} as any:url==='/cms/pages'?{data:{data:[{id:1,slug:'home'}]}} as any:url==='/cms/pages/1'?{data:{data:draft}} as any:{data:{data:[]}} as any);
+ view(<Layout><CmsPublicPage slug="home"/></Layout>,'/');fireEvent.click(await screen.findByRole('button',{name:'Edit site'}));
+ const copy=await screen.findByText('Focus this copy');expect(copy).toHaveAttribute('aria-keyshortcuts','Enter F2');copy.focus();fireEvent.keyDown(copy,{key:'Enter'});
+ await waitFor(()=>expect(screen.getByRole('textbox',{name:'Editing Body text'})).toHaveFocus());fireEvent.keyDown(copy,{key:'Escape'});
+ await waitFor(()=>expect(screen.queryByRole('textbox',{name:'Editing Body text'})).not.toBeInTheDocument());expect(copy).toHaveAttribute('aria-keyshortcuts','Enter F2');
+});
+
 test('Add Section library exposes and inserts every required component in the actual page',async()=>{
  const anchor={id:10,section_key:'anchor',type:'text',sort_order:0,is_visible:true,content:{heading:'Existing page section',body:'Existing copy'},presentation:{}},draft={id:1,title:'Home',slug:'home',lock_version:20,sections:[anchor]};
  get.mockImplementation(async(url:string)=>url==='/me'?{data:{user:{role:'power_admin'}}} as any:url==='/cms/public-settings'?{data:{data:{}}} as any:url==='/content/pages/home'?{data:{data:{title:'Home',sections:[anchor]}}} as any:url==='/cms/pages'?{data:{data:[{id:1,slug:'home'}]}} as any:url==='/cms/pages/1'?{data:{data:draft}} as any:{data:{data:[]}} as any);
@@ -182,8 +196,13 @@ test('Add Section library exposes and inserts every required component in the ac
  const add=await screen.findByRole('button',{name:'Add Section'}),choices:[string,string][]=[['Hero','hero'],['Rich Text','text'],['Image','image'],['Text + Image','image_text'],['Cards','cards'],['Services','services'],['CTA','cta'],['Publications','publications'],['Career Timeline','career_timeline'],['Achievements','achievements'],['FAQ','faq'],['Gallery','gallery'],['Statistics','stats'],['Contact','contact'],['Appointment Widget','appointment'],['Video','video'],['Divider','divider'],['Spacer','spacer']];
  await waitFor(()=>expect(add).toBeEnabled());
  fireEvent.click(add);
+ const componentDialog=screen.getByRole('dialog',{name:'Choose a page component'});expect(componentDialog).toHaveAttribute('aria-modal','true');expect(add).toHaveAttribute('aria-expanded','true');
  expect(screen.getByRole('heading',{name:'Choose a page component'})).toBeInTheDocument();
+ await waitFor(()=>expect(screen.getByLabelText('Search components')).toHaveFocus());
  choices.forEach(([label])=>expect(screen.getByRole('button',{name:`Add ${label} section`})).toBeInTheDocument());
+ const closeLibrary=screen.getByRole('button',{name:'Close component library'});closeLibrary.focus();fireEvent.keyDown(componentDialog,{key:'Tab',shiftKey:true});expect(screen.getByRole('button',{name:'Add Spacer section'})).toHaveFocus();
+ fireEvent.keyDown(componentDialog,{key:'Escape'});await waitFor(()=>expect(add).toHaveFocus());expect(add).toHaveAttribute('aria-expanded','false');
+ fireEvent.click(add);await waitFor(()=>expect(screen.getByLabelText('Search components')).toHaveFocus());
  fireEvent.change(screen.getByLabelText('Search components'),{target:{value:'career'}});
  expect(screen.getByRole('button',{name:'Add Career Timeline section'})).toBeInTheDocument();
  expect(screen.queryByRole('button',{name:'Add Hero section'})).not.toBeInTheDocument();
@@ -323,6 +342,9 @@ test('a section background uses the same media library, restores focus after Esc
  const choose=screen.getByRole('button',{name:'Choose from media library'});
  fireEvent.click(choose);
  expect(await screen.findByText('practice-texture.webp · WEBP')).toBeInTheDocument();
+ const mediaDialog=screen.getByRole('dialog',{name:'Choose or upload an image'});expect(mediaDialog).toHaveAttribute('aria-busy','false');await waitFor(()=>expect(screen.getByLabelText('Search media')).toHaveFocus());
+ const closeMedia=screen.getByRole('button',{name:'Close media library'});closeMedia.focus();fireEvent.keyDown(mediaDialog,{key:'Tab',shiftKey:true});expect(screen.getByLabelText('Alternative text')).toHaveFocus();
+ screen.getByLabelText('Search media').focus();
  fireEvent.keyDown(screen.getByLabelText('Search media'),{key:'Escape'});
  await waitFor(()=>expect(screen.getByRole('button',{name:'Choose from media library'})).toHaveFocus());
  fireEvent.click(screen.getByRole('button',{name:'Choose from media library'}));

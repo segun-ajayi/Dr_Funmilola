@@ -10,6 +10,7 @@ export type CmsEditorBridge={
  busy:boolean;
  hasUnsavedChanges:boolean;
  recoveryPending:boolean;
+ componentLibraryOpen:boolean;
  canUndo:boolean;
  canRedo:boolean;
  select:()=>void;

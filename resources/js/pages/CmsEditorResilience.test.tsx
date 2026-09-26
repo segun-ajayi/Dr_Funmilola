@@ -42,6 +42,55 @@ function editBody(value: string) {
   fireEvent.input(paragraph);
 }
 
+const failureOperations = [
+  { operation: 'save', button: 'Save Draft', endpoint: '/cms/pages/1/visual-draft', action: 'The draft could not be saved.' },
+  { operation: 'preview', button: 'Preview', endpoint: '/cms/pages/1/preview', action: 'Preview could not be opened.' },
+  { operation: 'publish', button: 'Publish', endpoint: '/cms/pages/1/publish', action: 'Publication could not be confirmed.' },
+] as const;
+const forcedFailures = [
+  { label: 'network', error: () => new Error('Network Error'), message: 'connection was interrupted' },
+  { label: '401', error: () => ({ response: { status: 401 } }), message: 'editing session expired' },
+  { label: '419', error: () => ({ response: { status: 419 } }), message: 'editing session expired' },
+  { label: '409', error: () => ({ response: { status: 409 } }), message: 'Another editing session changed this page' },
+  { label: '422', error: () => ({ response: { status: 422, data: { errors: { sections: ['Correct the page heading before retrying.'] } } } }), message: 'failed validation' },
+  { label: '429', error: () => ({ response: { status: 429 } }), message: 'Too many requests were sent' },
+  { label: '500', error: () => ({ response: { status: 500, data: { message: 'database password=must-not-leak' } } }), message: 'server could not confirm' },
+] as const;
+
+test.each(failureOperations.flatMap(operation => forcedFailures.map(failure => ({ ...operation, ...failure }))))(
+  '$operation failure $label retains the exact document without false success or unintended publication',
+  async ({ operation, button, endpoint, action, error, message, label }) => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    operation === 'save' ? put.mockRejectedValueOnce(error()) : post.mockRejectedValueOnce(error());
+    await openEditor();
+    const retained = `Retained ${operation} document after ${label}`;
+    editBody(retained);
+    fireEvent.click(screen.getByRole('button', { name: button }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(action);
+    expect(alert).toHaveTextContent(message);
+    expect(alert).toHaveTextContent('Your local edits are retained');
+    expect(alert).not.toHaveTextContent('must-not-leak');
+    expect(screen.getByRole('textbox', { name: 'Editing Body text' })).toHaveTextContent(retained);
+    expect(JSON.parse(sessionStorage.getItem(recoveryKey(41, 1))!).sections[0].content.body).toBe(retained);
+    expect(server.sections[0].content.body).toBe('Server paragraph');
+    expect(screen.queryByText('Draft saved')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Published successfully/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Exact draft preview opened/)).not.toBeInTheDocument();
+    expect(open).not.toHaveBeenCalled();
+    if (operation === 'save') {
+      expect(put).toHaveBeenCalledTimes(1);
+      expect(put).toHaveBeenCalledWith(endpoint, expect.objectContaining({ lock_version: 3 }));
+      expect(post).not.toHaveBeenCalled();
+    } else {
+      expect(post).toHaveBeenCalledTimes(1);
+      expect(post).toHaveBeenCalledWith(endpoint, expect.objectContaining({ lock_version: 3 }));
+      expect(put).not.toHaveBeenCalled();
+    }
+  },
+);
+
 test('interrupted save retains exact edits and retry clears recovery only after confirmation', async () => {
   put.mockRejectedValueOnce(new Error('Network Error'));
   await openEditor(); editBody('Retain this exact paragraph');

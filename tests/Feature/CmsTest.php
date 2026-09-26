@@ -3,12 +3,14 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Models\AuditLog;
 use App\Models\CmsPage;
 use App\Models\CmsPreviewToken;
 use App\Models\CmsSection;
 use App\Models\CmsVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -108,10 +110,10 @@ class CmsTest extends TestCase
         $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
         $payload['content']['items'] = array_fill(0, 13, ['heading' => 'Card', 'text' => 'Safe text']);
         $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
-        $key = (string) \Illuminate\Support\Str::uuid();
+        $key = (string) Str::uuid();
         $payload['content']['items'] = [['key' => $key, 'heading' => 'One', 'text' => 'Safe', 'is_visible' => true], ['key' => $key, 'heading' => 'Two', 'text' => 'Safe', 'is_visible' => true]];
         $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
-        $payload['content']['items'] = [['key' => (string) \Illuminate\Support\Str::uuid(), 'heading' => 'One', 'text' => 'Safe', 'is_visible' => 'yes']];
+        $payload['content']['items'] = [['key' => (string) Str::uuid(), 'heading' => 'One', 'text' => 'Safe', 'is_visible' => 'yes']];
         $this->postJson("/api/cms/pages/{$page->id}/sections", $payload)->assertUnprocessable();
     }
 
@@ -136,7 +138,7 @@ class CmsTest extends TestCase
         $document = $this->getJson("/api/cms/pages/{$page->id}")->assertOk()->json('data');
         $document['sections'][0]['content']['heading'] = 'Atomic draft';
         $document['sections'][] = [
-            'section_key' => (string) \Illuminate\Support\Str::uuid(),
+            'section_key' => (string) Str::uuid(),
             'type' => 'text',
             'sort_order' => 99,
             'is_visible' => true,
@@ -199,7 +201,7 @@ class CmsTest extends TestCase
         ];
         $document['sections'][] = [
             'id' => null,
-            'section_key' => (string) \Illuminate\Support\Str::uuid(),
+            'section_key' => (string) Str::uuid(),
             'type' => 'cards',
             'sort_order' => 1,
             'is_visible' => true,
@@ -207,7 +209,7 @@ class CmsTest extends TestCase
                 'heading' => 'Persisted cards',
                 'text' => 'Nested component proof',
                 'items' => [[
-                    'key' => (string) \Illuminate\Support\Str::uuid(),
+                    'key' => (string) Str::uuid(),
                     'heading' => 'Patient guide',
                     'text' => 'A safe nested card',
                     'url' => '/services',
@@ -253,6 +255,46 @@ class CmsTest extends TestCase
         $this->assertSame('Authorization proof', $page->fresh()->sections()->firstOrFail()->content['heading']);
     }
 
+    public function test_cms_lifecycle_audit_records_are_accountable_versioned_and_body_minimal(): void
+    {
+        $page = $this->page();
+        $this->section($page, 'Original audited version');
+        $this->postJson("/api/cms/pages/{$page->id}/publish")->assertOk();
+        $document = $this->getJson("/api/cms/pages/{$page->id}")->assertOk()->json('data');
+        $privateMarker = 'AUDIT_PRIVATE_BODY_MUST_NOT_APPEAR';
+        $document['sections'][0]['content']['heading'] = $privateMarker;
+
+        $saved = $this->putJson("/api/cms/pages/{$page->id}/visual-draft", [
+            'lock_version' => $document['lock_version'],
+            'sections' => $document['sections'],
+        ])->assertOk()->json('data');
+        $this->postJson("/api/cms/pages/{$page->id}/preview", [
+            'lock_version' => $saved['lock_version'],
+            'sections' => $saved['sections'],
+        ])->assertOk();
+        $published = $this->postJson("/api/cms/pages/{$page->id}/publish", [
+            'lock_version' => $saved['lock_version'],
+            'sections' => $saved['sections'],
+        ])->assertOk()->json('data');
+        $previous = CmsVersion::where('cms_page_id', $page->id)->where('reason', 'Previous published version')->latest('version')->firstOrFail();
+        $this->postJson("/api/cms/pages/{$page->id}/versions/{$previous->id}/rollback", ['lock_version' => $published['lock_version']])->assertOk();
+
+        $actions = ['cms.visual_draft_saved', 'cms.preview_created', 'cms.page_published', 'cms.page_rolled_back'];
+        foreach ($actions as $action) {
+            $log = AuditLog::where('subject_type', CmsPage::class)->where('subject_id', $page->id)->where('action', $action)->latest()->firstOrFail();
+            $this->assertSame($page->created_by, $log->actor_id);
+            $this->assertSame($page->id, $log->subject_id);
+            $this->assertStringNotContainsString($privateMarker, json_encode($log->metadata, JSON_THROW_ON_ERROR));
+            $this->assertDoesNotMatchRegularExpression('/password|token|secret|body|content/i', implode(' ', array_keys($log->metadata)));
+        }
+
+        $this->assertSame(3, AuditLog::where('subject_id', $page->id)->where('action', 'cms.preview_created')->orderByDesc('id')->firstOrFail()->metadata['schema_version']);
+        $this->assertSame($published['lock_version'], AuditLog::where('subject_id', $page->id)->where('action', 'cms.page_published')->orderByDesc('id')->firstOrFail()->metadata['lock_version']);
+        $rollback = AuditLog::where('subject_id', $page->id)->where('action', 'cms.page_rolled_back')->orderByDesc('id')->firstOrFail();
+        $this->assertSame($previous->version, $rollback->metadata['version']);
+        $this->assertGreaterThan($published['lock_version'], $rollback->metadata['lock_version']);
+    }
+
     public function test_version_restore_creates_new_draft_without_changing_published_snapshot(): void
     {
         $page = $this->page();
@@ -285,7 +327,7 @@ class CmsTest extends TestCase
     public function test_every_structured_section_and_presentation_control_round_trips(): void
     {
         $page = $this->page();
-        $itemKey = fn () => (string) \Illuminate\Support\Str::uuid();
+        $itemKey = fn () => (string) Str::uuid();
         $sections = [
             'hero' => ['eyebrow' => 'Care', 'heading' => 'Hero', 'text' => 'Intro', 'primary_label' => 'Book', 'primary_url' => '/book', 'secondary_label' => 'Learn', 'secondary_url' => 'https://example.test/learn'],
             'text' => ['eyebrow' => 'Profile', 'heading' => 'Text', 'body' => "First paragraph\nSecond paragraph"],
@@ -387,9 +429,9 @@ class CmsTest extends TestCase
     public function test_navigation_supports_visibility_reordering_and_one_safe_submenu_level(): void
     {
         $this->power();
-        $careKey = (string) \Illuminate\Support\Str::uuid();
-        $secondOpinionKey = (string) \Illuminate\Support\Str::uuid();
-        $externalKey = (string) \Illuminate\Support\Str::uuid();
+        $careKey = (string) Str::uuid();
+        $secondOpinionKey = (string) Str::uuid();
+        $externalKey = (string) Str::uuid();
         $navigation = [
             ['key' => $careKey, 'label' => 'Care', 'type' => 'internal', 'path' => '/services', 'target' => '_self', 'is_visible' => true, 'children' => [
                 ['key' => $secondOpinionKey, 'label' => 'Second opinion', 'type' => 'internal', 'path' => '/book', 'target' => '_self', 'is_visible' => true],
@@ -442,17 +484,17 @@ class CmsTest extends TestCase
     public function test_new_page_and_rendered_navigation_remain_private_then_publish_as_one_public_journey(): void
     {
         $this->power();
-        $original = [['key' => (string) \Illuminate\Support\Str::uuid(), 'label' => 'Original home', 'type' => 'internal', 'path' => '/', 'target' => '_self', 'is_visible' => true, 'children' => []]];
+        $original = [['key' => (string) Str::uuid(), 'label' => 'Original home', 'type' => 'internal', 'path' => '/', 'target' => '_self', 'is_visible' => true, 'children' => []]];
         $this->putJson('/api/cms/settings/navigation', ['value' => $original])->assertOk();
         $this->postJson('/api/cms/settings/navigation/publish')->assertOk();
 
         $blank = $this->postJson('/api/cms/pages', ['title' => 'Private blank', 'start_mode' => 'blank'])->assertCreated()->assertJsonCount(0, 'data.sections')->json('data');
         $guide = $this->postJson('/api/cms/pages', ['title' => 'Recovery Guide', 'start_mode' => 'template', 'template' => 'resource'])->assertCreated()->assertJsonCount(3, 'data.sections')->json('data');
         $draftNavigation = [
-            ['key' => (string) \Illuminate\Support\Str::uuid(), 'label' => 'Recovery guide', 'type' => 'internal', 'path' => $guide['public_path'], 'target' => '_self', 'is_visible' => true, 'children' => [[
-                'key' => (string) \Illuminate\Support\Str::uuid(), 'label' => 'Hidden blank', 'type' => 'internal', 'path' => $blank['public_path'], 'target' => '_self', 'is_visible' => false, 'children' => [],
+            ['key' => (string) Str::uuid(), 'label' => 'Recovery guide', 'type' => 'internal', 'path' => $guide['public_path'], 'target' => '_self', 'is_visible' => true, 'children' => [[
+                'key' => (string) Str::uuid(), 'label' => 'Hidden blank', 'type' => 'internal', 'path' => $blank['public_path'], 'target' => '_self', 'is_visible' => false, 'children' => [],
             ]]],
-            ['key' => (string) \Illuminate\Support\Str::uuid(), 'label' => 'External evidence', 'type' => 'external', 'path' => 'https://example.org/evidence', 'target' => '_blank', 'is_visible' => true, 'children' => []],
+            ['key' => (string) Str::uuid(), 'label' => 'External evidence', 'type' => 'external', 'path' => 'https://example.org/evidence', 'target' => '_blank', 'is_visible' => true, 'children' => []],
         ];
         $this->putJson('/api/cms/settings/navigation', ['value' => $draftNavigation])->assertOk();
 

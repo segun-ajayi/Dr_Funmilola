@@ -89,5 +89,4 @@ The existing dashboard editor remains available as an operational fallback while
 
 ## Immediate next action
 
-Implement S1 only. Do not begin surface-area controls until the structured atomic save/preview/publish/rollback and actual-page toolbar foundation is green and pushed.
-
+Execute S7 from `S7_RELEASE_HANDOFF_PLAN.md`. Run the uninterrupted actual-site text, image, section and rollback journeys first; then complete the role/API matrix and exact VE-001–VE-243 evidence handoff without self-approving the independent release gates.
